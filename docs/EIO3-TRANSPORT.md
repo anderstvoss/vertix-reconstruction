@@ -21,7 +21,7 @@ Tests include archived framing examples, multiple packets and unicode, malformed
 ## Next integration gates
 
 1. Implement strict JSON parsing for the `42` event array with numeric event names and positional values; reject malformed or unknown data without panics.
-2. Implement HTTP polling sessions and heartbeat with bounded queues, HEAD assets, dynamic `/getIP` and privacy-safe localhost binding. Reference [research runtime probes](https://github.com/anderstvoss/vertix-research/blob/main/runtime/TWO-CLIENT-VALIDATION.md); **no archived assets in the public repository**.
+2. Implement HTTP polling sessions and heartbeat with bounded queues, HEAD assets, dynamic `/getIP` and a documented loopback-only bind policy. Reference [research runtime probes](https://github.com/anderstvoss/vertix-research/blob/main/runtime/TWO-CLIENT-VALIDATION.md); **no archived assets in the public repository**.
 3. Run the two real-browser client probe against this Rust adapter and the pinned private archive, recording the original-client runtime trace.
 4. Connect decoded `4` input / `1` shot / `r` reload to the deterministic authoritative FFA core introduced separately.
 
