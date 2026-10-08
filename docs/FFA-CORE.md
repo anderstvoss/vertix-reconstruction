@@ -30,4 +30,4 @@ cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 cargo test --locked --all-features
 ```
 
-The repository currently **skips GitHub Actions jobs while private**. These tests are authored but must be executed in an active Rust build environment before the PR is considered verified. In particular, this PR must not be mistaken for a full running-server test.
+The repository is public and has active GitHub Actions Rust build/test, formatting, lint and security jobs. The latest PR checks must pass before integration. A green unit-test run still does **not** establish historical browser interoperability or a playable server.
