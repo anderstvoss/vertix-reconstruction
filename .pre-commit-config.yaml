@@ -80,7 +80,7 @@ repos:
         types: [text]
         entry: '(\b(localhost|host\.docker\.internal|0\.0\.0\.0|127\.0\.0\.1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})\b|(?<![:\w])::1(?![:\w]))'
         # Loopback is intentional only for the local browser/HTTP test harness.
-        exclude: '^(\.pre-commit-config\.yaml|scripts/sanitize_scan\.py|scripts/tests/test_sanitize_scan\.py|web/serve\.py|web/pvp_server\.py|scripts/tests/test_boot_server\.py|scripts/tests/test_pvp_server\.py|docs/GAMEPLAY-BRANCH-STATUS\.md)$'
+        exclude: '^(\.pre-commit-config\.yaml|scripts/sanitize_scan\.py|scripts/tests/test_sanitize_scan\.py|web/serve\.py|web/pvp_server\.py|scripts/tests/test_boot_server\.py|scripts/tests/test_pvp_server\.py|docs/GAMEPLAY-BRANCH-STATUS\.md|config/server\.toml)$'
 
       - id: block-binary-artifacts
         name: block local binary artifacts

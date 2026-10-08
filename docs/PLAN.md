@@ -19,6 +19,9 @@ and records what was tested and what was not.
   original servers; outbound requests are blocked while testing.
 - **Done when:** the unmodified client reaches a rendered game state in a
   real browser, with a startup trace and screenshots.
+- **Status:** done for polling. `scripts/e2e_boot.py` passes 11 checks with
+  two browsers (join, move, see each other, ping, leave, no outside
+  requests, no page errors). WebSocket upgrade not started.
 
 ## 2. Event contracts
 

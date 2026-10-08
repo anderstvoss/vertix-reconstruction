@@ -4,6 +4,24 @@ Branch: `work/gameplay-pvp-compat-2026-10-08`. Source: reconstruction `main` at
 `9b078203ffd2d8eaa3583e7810e3afdb9b67a287`. Do not merge until
 the authentic-client acceptance gates below pass.
 
+## M1 boot merge (2026-10-08)
+
+Merged `reconstruction-m1-boot` at `d83b6f7bfa78f1167da73077c4741fe48adb34da` as a second parent
+into this gameplay branch, preserving M1's full Rust server, SHA-256
+archive loader, original browser boot route, transport stack, map,
+configurable assumptions, and `scripts/e2e_boot.py`.
+
+**Integration status:** the M1 Rust executable runs `src/game/mod.rs`
+(join, movement, collision, class setup, weapon swap) but not yet
+`src/gameplay.rs` (standalone combat/reload simulation). The alternate
+`web/pvp_server.py` supplies synthetic PvP networking with provisional
+combat, but is not connected to the Rust server. The fixed input shim is
+also **not injected** by M1's `src/originals/page.rs`. No merge to main.
+
+M1 CI passed 29 Rust and 8 Python tests before this merge, and M1 PR #11
+reported 11/11 authentic Chromium browser boot checks; the latter remain
+an external report, not a reproduced acceptance result on this merged branch.
+
 ## Repositories reviewed and evidence authority
 
 - `anderstvoss/vertix-archive` `master`, `a059176db6671db6f35c1a3e2457495c08c846ac`:

@@ -3,13 +3,13 @@
 Runs the original 2016 Vertix.io browser client against a local,
 reverse-engineered server, so the game can be played and studied again.
 
-> **Status:** WIP, not yet playable. The isolated branch has a hash-verified
-> original-client HTTP bootstrap, a non-networked Rust gameplay simulation,
-> and an opposite-key input compatibility shim, plus an experimental single-origin
-> Engine.IO 3 polling/Socket.IO 1.x Python PvP runner. **Full browser PvP is
-> not verified and projectile/map physics remain incomplete.** See
-> [docs/GAMEPLAY-BRANCH-STATUS.md](docs/GAMEPLAY-BRANCH-STATUS.md),
-> [docs/PLAN.md](docs/PLAN.md), and [CHANGELOG.md](CHANGELOG.md).
+> **Status:** early WIP. The 2016-08-06 client boots and two players
+> can join and move via the M1 Rust server. Combat and rounds are **not yet
+> connected to that server**. This integration branch also preserves an
+> experimental Python PvP prototype, a standalone Rust gameplay model and
+> an opposite-key input shim, but these are not integrated into the M1 boot
+> path. See [docs/GAMEPLAY-BRANCH-STATUS.md](docs/GAMEPLAY-BRANCH-STATUS.md),
+> [docs/DEVIATIONS.md](docs/DEVIATIONS.md), and [docs/PLAN.md](docs/PLAN.md).
 
 ## What is and isn't in this repository
 
@@ -50,6 +50,56 @@ paths and private IPs, a blocker for original game files, and
 personal identifiers you list in the git-ignored `.sanitize-denylist`).
 Set `VERTIX_ARCHIVE` to your archive clone so the scan can also confirm
 that no tracked file is byte-identical to an archive original.
+
+## Running
+
+You need a clone of the private archive with its LFS files pulled (the
+2016-08-06 client, its page capture and the August 2016 APK). Then:
+
+```bash
+cargo run --release -- --archive PATH/TO/vertix-archive
+```
+
+and open the address it prints. The server checks every original against
+`data/boot/20160806061006.json` before serving anything and refuses to
+start on a mismatch. The bind address, port, map and assumptions file are
+in `config/server.toml`; `--port`, `--trace out/trace.jsonl` and the
+`VERTIX_ARCHIVE` variable override it.
+
+Step-by-step instructions, including Windows, are in
+[docs/RUNNING.md](docs/RUNNING.md).
+
+`--trace` writes every event in and out as JSON lines, which is how the
+protocol behaviour is checked against the client.
+
+The browser check plays the game in Chromium with every outside request
+blocked:
+
+```bash
+python3 -m pip install playwright
+python3 scripts/e2e_boot.py --url http://HOST:PORT/ [--chromium PATH]
+```
+
+`data/boot/` and `data/contracts/` are derived, code-free facts from the
+research repository, regenerated with `scripts/import_research.py`.
+
+## Experimental gameplay components (this integration branch)
+
+- `src/gameplay.rs` contains a **standalone**, tested PvP reference model
+  with provisional damage, ammunition, reload deadlines and kill handling.
+  The M1 Rust transport currently drives `src/game/mod.rs`, not this model.
+- `web/pvp_server.py` is an **alternative**, experimental Python networked
+  PvP prototype with synthetic-protocol tests, not the main Rust server.
+- `web/input-opposites.js` corrects simultaneous opposing movement keys in
+  the original client. It is currently served through the experimental
+  Python boot shell; the M1 Rust page path has **not** injected it yet.
+- Run the standalone regressions with
+  `node --test scripts/tests/input-opposites.test.cjs` and
+  `python3 -m unittest discover -s scripts/tests -p 'test_*.py'`.
+
+The gameplay prototypes are preserved for consolidation; passing their
+synthetic protocol tests does **not** demonstrate a complete authentic-client
+PvP round. No archived game assets are checked in.
 
 ## Development
 

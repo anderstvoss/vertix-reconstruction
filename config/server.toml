@@ -1,0 +1,25 @@
+# Server settings. Relative paths are resolved from the directory the
+# server is started in (the repository root).
+#
+# This is the only file that names a bind address; the template's
+# loopback blocker in .pre-commit-config.yaml excludes this file alone.
+bind = "127.0.0.1"
+port = 8080
+
+# Path to a vertix-archive clone with its LFS files pulled. The
+# VERTIX_ARCHIVE environment variable or --archive override it.
+archive = ""
+
+manifest = "data/boot/20160806061006.json"
+assumptions = "data/assumptions.toml"
+map = "data/maps/arena.txt"
+
+# JSON-lines trace of every event; empty for none. --trace overrides it.
+trace = ""
+# Events traced by name only, because they fire every frame or tick.
+trace_brief = ["rsd", "4", "0", "ping1", "pong1"]
+
+[engine_io]
+# The values in the archived 2016 handshakes.
+ping_interval_ms = 25000
+ping_timeout_ms = 60000
