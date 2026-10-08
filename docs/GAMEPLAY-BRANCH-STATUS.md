@@ -25,8 +25,9 @@ Original client / APK binaries are not copied into this public repository.
 |---|---|---|
 | Opposite-key behavior | `web/input-opposites.js` | Original key handler clears `keyMap` for the opposite key. New post-app listener restores physical held states and computes canceled directions. Does not modify original `app.js`. |
 | Provenance-gated browser shell | `config/boot-20160806.json`, `web/serve.py` | Exact SHA-256 checks, ZIP APK-member support, HEAD `/res.zip`, local CDN URLs, local `/getIP` and shim after `app.js`; no original files committed. |
+| Experimental socket/PvP runner | `web/pvp_server.py` | Pure-Python, loopback-only EIO3 Socket.IO 1.x polling, independent sessions, synthetic FFA map, `welcome`/`gameSetup`, `rsd`, hit/damage/kill events and targeted `r` completion. Experimental bridge is **not coupled** to the Rust reference core and must be consolidated. |
 | Isolated gameplay model | `src/gameplay.rs` | Client-version-appropriate nine class/weapon mappings; per-slot reload deadlines and completion acknowledgements; per-player ammo, damage, kill, score and respawn; bounded movement inputs. **Standalone Rust simulation; no connected network adapter.** |
-| Automated tests | `scripts/tests/*`, `.github/workflows/gameplay-validation.yml` | CI cargo tests, synthetic archive boot HTTP tests, VM input-event tests; see latest Actions run. |
+| Automated tests | `scripts/tests/*`, `.github/workflows/gameplay-validation.yml` | Rust model, synthetic EIO3 two-HTTP-session PvP wire regression, archive boot HTTP and VM input-event tests. Strict Rust fmt/Clippy gates. |
 
 ### Reload protocol
 
@@ -59,16 +60,24 @@ To serve the original archive **without modifying it**:
 python3 web/serve.py --archive ../vertix-archive --port 8000 --socket-port 8001
 ```
 
-This is an HTTP asset server only. The target Socket.IO endpoint on port
-8001 **is not started by this command** and the game will not become playable
-until a compatible network adapter is connected to authoritative gameplay.
+That command runs the archival **HTTP bootstrap only**. The target Socket.IO
+port 8001 is not started by it. To run the **experimental networked** PvP
+compatibility server on a single loopback origin, instead use:
+
+```sh
+python3 -m web.pvp_server --archive ../vertix-archive --port 8000
+```
+
+The experimental Python backend and the separately-tested Rust reference
+simulation currently have different code paths. They are **not production
+complete** and must be consolidated and validated against two real clients.
 The archival files must exist locally, including LFS content referenced by
 the manifest. The shell is served over HTTP because the original client
 hardcodes an HTTP socket URL.
 
 ## Acceptance gates remaining (NOT PASSED)
 
-1. Implement an Engine.IO 3 polling and Socket.IO 1.x connection with
+1. **Implement and verify on authentic clients** the provisional Engine.IO 3 polling and Socket.IO 1.x connection with
    `welcome` (2 args), `gotit` (4), `gameSetup` (JSON string + 2 args),
    `yourRoom`, positional update and `ping1`/`pong1` contracts.
 2. Connect both client sessions to independent authoritative player
@@ -90,7 +99,10 @@ hardcodes an HTTP socket URL.
    tick/frame rate, map walls, jumping and latency. Preserve traces/screenshots.
 9. Only after gates pass claim **full PvP working build**.
 
-The existing research two-client probe is an authentic-client synthetic fixture,
-not a pass for the above full-PvP gates. All validation in this branch so far
-is unit/integration testing of standalone components with synthetic mock assets,
-not an actual game played by two browsers.
+The research two-client probe exercises two authentic clients against a separate
+synthetic research harness, not this new game's authoritative server. The branch's
+new `test_pvp_server.py` exercises two **synthetic Engine.IO browser-equivalent
+HTTP clients**, server side join/snapshot/damage/death and reload. It does **not**
+exercise two authentic browser renderers, wall/projectile collisions, full game
+round completion, or real network latency. Do not equate the passing synthetic
+protocol tests with full PvP completion.
