@@ -1,0 +1,25 @@
+map_id,krp_mode_codes,krp_mode_names,red_pixels,blue_pixels,yellow_pixels,green_pixels,nonstandard_pixels,png_time_utc,source_blob_sha
+0,ffa+tdm,Free For All+Team Deathmatch,4,4,4,8,1,,7e530c534521b70c6c7c86b11635efa5ea68553e
+1,lc,Lootcrate,9,9,8,4,0,2016-05-16T07:18:57Z,a2b5f49f5f0f1364ea1ac684858b604d0eda5cc8
+2,hp,Hardpoint,8,8,4,4,1,2016-05-16T07:19:15Z,eaa5c9926a75df42e4297d8929930ae65e91cb05
+3,ffa+snipe+rckt+pyro,Free For All+Sniper War+Rocket War+Pyro War,41,0,0,5,0,2016-04-25T04:01:07Z,c966f8ddd9df0d91ac4902fb4040b1d8705f4289
+4,hp,Hardpoint,14,14,4,4,1,2016-05-16T07:19:45Z,4e9496d873a2e983b22981d30f3edf75cb797c2f
+5,ffa+snipe+rckt+pyro,Free For All+Sniper War+Rocket War+Pyro War,17,0,0,4,2,2016-05-13T02:51:52Z,8a0af5b6a9b2f30b1bdbec7132f2ebf7224a2b65
+6,lc,Lootcrate,13,13,16,6,0,2016-05-16T07:17:32Z,9f878cdb7b9ac8d7e6760d9bdebd9acf70688895
+7,boss,Boss Hunt,16,1,0,0,1,2016-04-08T23:56:13Z,01b858ee6d54c68d19551b45bd2ff9b490e2600a
+8,ffa+snipe+rckt+pyro,Free For All+Sniper War+Rocket War+Pyro War,8,0,0,4,1,2016-08-03T03:56:27Z,52bb885a84dd244292f891b897107e231f9d8ffd
+9,ffa+snipe+rckt+pyro,Free For All+Sniper War+Rocket War+Pyro War,8,0,0,4,1,2016-08-03T03:56:50Z,a146c182e8dd1c37858859df3816e376b4c29339
+10,lc,Lootcrate,14,14,5,4,0,2016-05-16T07:17:53Z,1da087d45923d737efbe9ea9adc3564d73d3b185
+11,boss,Boss Hunt,20,1,0,0,1,2016-05-13T02:36:55Z,347759e288a292cff35eeefbe73b35aad17ed5e1
+12,hp,Hardpoint,9,9,4,4,1,2016-05-16T07:18:14Z,be82a0f197d2be4bc26392f91db2c6c905d2bd0c
+13,tdm,Team Deathmatch,12,12,0,4,1,2016-05-16T07:16:40Z,4d8118ad3ed5ba1230dfe8848aa143252920452b
+14,hp,Hardpoint,10,10,4,4,0,2016-06-17T07:22:30Z,adf7665b2ed3495ffdae1e0a899f98b179642354
+15,tdm,Team Deathmatch,6,6,0,4,0,2016-06-17T07:50:38Z,4aa785ab450a422618986a21668f83ff5aed6e35
+16,ffa+snipe+rckt+pyro,Free For All+Sniper War+Rocket War+Pyro War,20,0,0,4,1,2016-06-16T05:32:57Z,a8706d387e696f978a4d57d0b912cbf5d7dead50
+17,lc,Lootcrate,7,7,5,4,0,2016-06-17T06:46:34Z,62148d08d245ae2485718c6ea7333b18c9fd909c
+18,ffa+snipe+rckt+pyro,Free For All+Sniper War+Rocket War+Pyro War,21,0,0,4,0,2016-06-17T06:51:53Z,5aedc3094e6601bacae79ac486bf5f92b9bdc393
+19,hp,Hardpoint,6,6,4,4,0,2016-06-17T07:32:39Z,3c82338dc9310a204161a56772b85b54af6f5ecd
+20,zmtch,Zone War,2,2,4,0,0,2016-06-26T07:19:33Z,1652d60157e91693d8ff0a991ff595b1b0bb442a
+21,boss,Boss Hunt,36,1,0,0,0,2016-06-26T07:06:23Z,5e976619adaf16af367ed685b4d026dd4767a19e
+22,zmtch,Zone War,4,4,4,0,0,2016-06-30T12:11:42Z,c1a9a48f1b36138295d0adcd0503fc2bf0b48ce6
+23,zmtch,Zone War,2,2,4,0,0,2016-08-03T04:01:53Z,c8275221c3ac1db4b5b6afb39bbc81e8ce3ca1eb
