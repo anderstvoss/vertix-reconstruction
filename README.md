@@ -3,8 +3,12 @@
 Runs the original 2016 Vertix.io browser client against a local,
 reverse-engineered server, so the game can be played and studied again.
 
-> **Status:** early WIP. Nothing runs yet; see [docs/PLAN.md](docs/PLAN.md)
-> for the milestones and [CHANGELOG.md](CHANGELOG.md) for changes.
+> **Status:** WIP, not yet playable. The isolated branch has a hash-verified
+> original-client HTTP bootstrap, a non-networked Rust gameplay simulation,
+> and an opposite-key input compatibility shim. **Full browser PvP has not been
+> implemented or verified.** See
+> [docs/GAMEPLAY-BRANCH-STATUS.md](docs/GAMEPLAY-BRANCH-STATUS.md),
+> [docs/PLAN.md](docs/PLAN.md), and [CHANGELOG.md](CHANGELOG.md).
 
 ## What is and isn't in this repository
 
