@@ -48,7 +48,7 @@ def encode_packets(packets: list[str]) -> bytes:
 def decode_packets(body: bytes) -> list[str]:
     if len(body) > MAX_PACKET_BYTES:
         raise ValueError("oversized Engine.IO message")
-    if body.startswith(b"\\x00"):
+    if body.startswith(b"\x00"):
         # EIO3 XHR2 binary framing (prefix 0 = UTF-8 text packet).
         packets, i = [], 0
         while i < len(body):
