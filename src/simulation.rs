@@ -63,9 +63,13 @@ impl Rules {
         }
     }
 
+    /// # Errors
+    /// Returns `InvalidRules` if any executable configuration is unknown,
+    /// non-finite, out of bounds or otherwise invalid.
     pub fn validate(self) -> Result<Self, Error> {
         if self.status == EvidenceStatus::Unresolved
             || self.tick_ms == 0
+            || self.tick_ms > u64::from(u32::MAX)
             || self.projectile_lifetime_ms == 0
             || self.fire_cooldown_ms == 0
             || self.reload_ms == 0
@@ -194,6 +198,8 @@ pub struct Match {
 }
 
 impl Match {
+    /// # Errors
+    /// Returns `InvalidRules` when the new rules fail validation.
     pub fn new(rules: Rules) -> Result<Self, Error> {
         let rules = rules.validate()?;
         Ok(Self {
@@ -206,6 +212,8 @@ impl Match {
         })
     }
 
+    /// # Errors
+    /// Returns an error for an existing player, invalid spawn position or finished match.
     pub fn join(&mut self, id: PlayerId, x: f64, y: f64) -> Result<(), Error> {
         if self.phase != Phase::Running {
             return Err(Error::RoundFinished);
@@ -244,6 +252,8 @@ impl Match {
         Ok(())
     }
 
+    /// # Errors
+    /// Returns `MissingPlayer` when the identifier is not present.
     pub fn disconnect(&mut self, id: PlayerId) -> Result<(), Error> {
         if self.players.remove(&id).is_none() {
             return Err(Error::MissingPlayer);
@@ -255,6 +265,9 @@ impl Match {
     /// Only one input accepted per server tick per player (NEW anti-abuse
     /// policy). One unique isn moves a fixed step; the client timestamp is
     /// recorded, but does not grant extra distance or time authority.
+    /// # Errors
+    /// Returns an error for invalid or stale input, a disconnected/dead player,
+    /// excessive input frequency, or a finished match.
     pub fn input(&mut self, id: PlayerId, input: Input) -> Result<(), Error> {
         if self.phase != Phase::Running {
             return Err(Error::RoundFinished);
@@ -280,7 +293,8 @@ impl Match {
         let (dx, dy) = if len == 0.0 {
             (0.0, 0.0)
         } else {
-            let distance = self.rules.move_units_per_ms * self.rules.tick_ms as f64;
+            let tick = u32::try_from(self.rules.tick_ms).map_err(|_| Error::InvalidRules)?;
+            let distance = self.rules.move_units_per_ms * f64::from(tick);
             (input.hdt / len * distance, input.vdt / len * distance)
         };
         p.x = (p.x + dx).clamp(0.0, self.rules.world_width);
@@ -299,6 +313,9 @@ impl Match {
 
     /// A new directional projectile policy. Does not trust claimed shot
     /// position, client timestamp or hit notification for damage authority.
+    /// # Errors
+    /// Returns an error for invalid direction, unavailable player, cooldown,
+    /// insufficient ammo or a completed round.
     pub fn fire(&mut self, id: PlayerId, angle_rad: f64) -> Result<(), Error> {
         if self.phase != Phase::Running {
             return Err(Error::RoundFinished);
@@ -335,7 +352,7 @@ impl Match {
         Ok(())
     }
 
-    /// Advance exactly one server-owned fixed tick. BTreeMap ordering and
+    /// Advance exactly one server-owned fixed tick. `BTreeMap` ordering and
     /// fixed player/projectile iteration order make replays reproducible.
     pub fn tick(&mut self) {
         self.now_ms = self.now_ms.saturating_add(self.rules.tick_ms);
@@ -368,6 +385,7 @@ impl Match {
 
         let mut hits = Vec::new();
         let dt = self.rules.tick_ms;
+        let dt_float = f64::from(u32::try_from(dt).unwrap_or(u32::MAX));
         for projectile in &mut self.projectiles {
             if projectile.remaining_ms <= dt {
                 projectile.remaining_ms = 0;
@@ -375,9 +393,9 @@ impl Match {
             }
             projectile.remaining_ms -= dt;
             projectile.x +=
-                self.rules.projectile_units_per_ms * dt as f64 * projectile.angle_rad.cos();
+                self.rules.projectile_units_per_ms * dt_float * projectile.angle_rad.cos();
             projectile.y +=
-                self.rules.projectile_units_per_ms * dt as f64 * projectile.angle_rad.sin();
+                self.rules.projectile_units_per_ms * dt_float * projectile.angle_rad.sin();
             if projectile.x < 0.0
                 || projectile.y < 0.0
                 || projectile.x > self.rules.world_width
@@ -407,10 +425,9 @@ impl Match {
             if !self.players.get(&target).is_some_and(|p| p.alive) {
                 continue;
             }
-            let p = self
-                .players
-                .get_mut(&target)
-                .expect("previously checked target");
+            let Some(p) = self.players.get_mut(&target) else {
+                continue;
+            };
             p.health = (p.health - self.rules.damage_per_hit).max(0);
             self.events.push(Event::Damaged {
                 owner,
