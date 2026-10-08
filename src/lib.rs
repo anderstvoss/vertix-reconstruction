@@ -1,14 +1,16 @@
-//! `vertix_reconstruction` — compatibility server for the original
-//! 2016 Vertix.io browser client.
+//! Vertix.io reconstruction compatibility core.
 //!
-//! The server speaks the wire protocol the archived client expects
-//! (Engine.IO 3 / Socket.IO 1.x) and reconstructs the game logic the
-//! original server held. Original client files and assets are never
-//! part of this crate; they are loaded from a local archive at run
-//! time and verified by hash.
+//! Original browser binaries are external and hash-verified. Server-side
+//! behavior is a documented reconstruction, not recovered server source.
+//! This crate is not yet a networked server: `gameplay` is an isolated
+//! authoritative simulation awaiting the Engine.IO 3 compatibility adapter.
+
+pub mod gameplay;
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn smoke() {}
+    fn smoke() {
+        assert_eq!(crate::gameplay::CLASSES.len(), 9);
+    }
 }
