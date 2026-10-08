@@ -17,7 +17,6 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
-import sys
 
 from png_to_gen_data import original_gen_data
 
@@ -38,7 +37,7 @@ def load_csv(name: str):
 
 
 def git_blob_sha(data: bytes):
-    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data, usedforsecurity=False).hexdigest()
 
 
 def find_png(base: Path, number: int):
