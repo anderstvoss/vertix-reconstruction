@@ -1,0 +1,28 @@
+name: Gameplay branch validation
+
+on:
+  push:
+    branches:
+      - work/gameplay-pvp-compat-2026-10-08
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gameplay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust
+        uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
+        with:
+          toolchain: stable
+      - name: Build and test Rust simulation
+        run: cargo test --locked --all-targets --all-features
+      - name: Verify opposite-key compatibility shim
+        run: node --test scripts/tests/input-opposites.test.cjs
