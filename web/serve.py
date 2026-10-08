@@ -51,9 +51,6 @@ class ArchiveAssets:
 
     def get(self, path: str) -> bytes | None:
         lookup = CDN.get(path, path.lstrip("/"))
-        if lookup == "js/app.js":
-            # Resolves to the exact Wayback byte sequence in the manifest.
-            pass
         pick = self.assets.get(lookup)
         return self.read_pinned(pick) if pick else None
 
@@ -71,7 +68,7 @@ class ArchiveAssets:
             html = html.replace(original, local)
         # Avoid connecting to archived external advertising infrastructure.
         html = re.sub(
-            r'<script\\s+async\\s+src="http://pagead2\\.googlesyndication\\.com/[^"]+"\\s*></script>',
+            r'<script\s+async\s+src="http://pagead2\.googlesyndication\.com/[^"]+"\s*></script>',
             "", html,
         )
         # The original client registers key handlers when app.js executes.
@@ -80,7 +77,7 @@ class ArchiveAssets:
         if html.count(tag) != 1:
             raise ValueError("expected exactly one game client script tag")
         html = html.replace(
-            tag, tag + '\\n<script src="/__compat/input-opposites.js"></script>',
+            tag, tag + '\n<script src="/__compat/input-opposites.js"></script>',
         )
         return html.encode("utf-8")
 
