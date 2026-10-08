@@ -57,7 +57,7 @@ impl Rules {
             damage_per_hit: 50,
             fire_cooldown_ms: 10,
             reload_ms: 100,
-            max_ammo: 3,
+            max_ammo: 4,
             respawn_ms: 20,
             score_limit: 2,
         }
@@ -428,7 +428,7 @@ mod tests {
         let inp = Input { hdt: 0.5, vdt: 0.5, isn: 7, client_ts_ms: u64::MAX, jump: false };
         w.input(PlayerId(3), inp).unwrap();
         let p = &w.players[&PlayerId(3)];
-        assert!((p.x - 10.0).hypot(p.y - 10.0) - 2.0 < 1e-9);
+        assert!(((p.x - 10.0).hypot(p.y - 10.0) - 2.0).abs() < 1e-9);
         assert_eq!(p.last_processed_isn, Some(7));
         assert_eq!(w.input(PlayerId(3), inp), Err(Error::StaleInput));
         let next = Input { isn: 8, ..inp };
