@@ -75,8 +75,10 @@ impl Rules {
             || self.max_health <= 0
             || self.damage_per_hit <= 0
             || ![
-                self.world_width, self.world_height,
-                self.move_units_per_ms, self.projectile_units_per_ms,
+                self.world_width,
+                self.world_height,
+                self.move_units_per_ms,
+                self.projectile_units_per_ms,
                 self.hit_radius,
             ]
             .iter()
@@ -141,13 +143,29 @@ pub enum Phase {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Event {
     Joined(PlayerId),
-    Movement { id: PlayerId, isn: u64, x: f64, y: f64 },
-    Fired { owner: PlayerId },
-    Damaged { owner: PlayerId, target: PlayerId, health: i32 },
-    Killed { killer: PlayerId, victim: PlayerId },
+    Movement {
+        id: PlayerId,
+        isn: u64,
+        x: f64,
+        y: f64,
+    },
+    Fired {
+        owner: PlayerId,
+    },
+    Damaged {
+        owner: PlayerId,
+        target: PlayerId,
+        health: i32,
+    },
+    Killed {
+        killer: PlayerId,
+        victim: PlayerId,
+    },
     Reloaded(PlayerId),
     Respawned(PlayerId),
-    RoundEnded { winner: PlayerId },
+    RoundEnded {
+        winner: PlayerId,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -192,7 +210,8 @@ impl Match {
         if self.phase != Phase::Running {
             return Err(Error::RoundFinished);
         }
-        if !x.is_finite() || !y.is_finite()
+        if !x.is_finite()
+            || !y.is_finite()
             || !(0.0..=self.rules.world_width).contains(&x)
             || !(0.0..=self.rules.world_height).contains(&y)
         {
@@ -201,14 +220,26 @@ impl Match {
         if self.players.contains_key(&id) {
             return Err(Error::DuplicatePlayer);
         }
-        self.players.insert(id, Player {
-            id, x, y, health: self.rules.max_health, score: 0,
-            alive: true, ammo: self.rules.max_ammo,
-            last_processed_isn: None, last_client_ts_ms: None,
-            spawn_x: x, spawn_y: y,
-            last_input_tick: None, last_fire_ms: None,
-            respawn_at_ms: None, reload_at_ms: None,
-        });
+        self.players.insert(
+            id,
+            Player {
+                id,
+                x,
+                y,
+                health: self.rules.max_health,
+                score: 0,
+                alive: true,
+                ammo: self.rules.max_ammo,
+                last_processed_isn: None,
+                last_client_ts_ms: None,
+                spawn_x: x,
+                spawn_y: y,
+                last_input_tick: None,
+                last_fire_ms: None,
+                respawn_at_ms: None,
+                reload_at_ms: None,
+            },
+        );
         self.events.push(Event::Joined(id));
         Ok(())
     }
@@ -228,8 +259,10 @@ impl Match {
         if self.phase != Phase::Running {
             return Err(Error::RoundFinished);
         }
-        if !input.hdt.is_finite() || !input.vdt.is_finite()
-            || input.hdt.abs() > 0.5 || input.vdt.abs() > 0.5
+        if !input.hdt.is_finite()
+            || !input.vdt.is_finite()
+            || input.hdt.abs() > 0.5
+            || input.vdt.abs() > 0.5
         {
             return Err(Error::InvalidInput);
         }
@@ -255,7 +288,12 @@ impl Match {
         p.last_processed_isn = Some(input.isn);
         p.last_client_ts_ms = Some(input.client_ts_ms);
         p.last_input_tick = Some(self.now_ms);
-        self.events.push(Event::Movement { id, isn: input.isn, x: p.x, y: p.y });
+        self.events.push(Event::Movement {
+            id,
+            isn: input.isn,
+            x: p.x,
+            y: p.y,
+        });
         Ok(())
     }
 
@@ -272,8 +310,8 @@ impl Match {
         if !p.alive {
             return Err(Error::DeadPlayer);
         }
-        if p.last_fire_ms.is_some_and(|last|
-            self.now_ms.saturating_sub(last) < self.rules.fire_cooldown_ms)
+        if p.last_fire_ms
+            .is_some_and(|last| self.now_ms.saturating_sub(last) < self.rules.fire_cooldown_ms)
             || p.reload_at_ms.is_some()
         {
             return Err(Error::Cooldown);
@@ -287,7 +325,10 @@ impl Match {
             p.reload_at_ms = Some(self.now_ms.saturating_add(self.rules.reload_ms));
         }
         self.projectiles.push(Projectile {
-            owner: id, x: p.x, y: p.y, angle_rad,
+            owner: id,
+            x: p.x,
+            y: p.y,
+            angle_rad,
             remaining_ms: self.rules.projectile_lifetime_ms,
         });
         self.events.push(Event::Fired { owner: id });
@@ -333,11 +374,12 @@ impl Match {
                 continue;
             }
             projectile.remaining_ms -= dt;
-            projectile.x += self.rules.projectile_units_per_ms
-                * dt as f64 * projectile.angle_rad.cos();
-            projectile.y += self.rules.projectile_units_per_ms
-                * dt as f64 * projectile.angle_rad.sin();
-            if projectile.x < 0.0 || projectile.y < 0.0
+            projectile.x +=
+                self.rules.projectile_units_per_ms * dt as f64 * projectile.angle_rad.cos();
+            projectile.y +=
+                self.rules.projectile_units_per_ms * dt as f64 * projectile.angle_rad.sin();
+            if projectile.x < 0.0
+                || projectile.y < 0.0
                 || projectile.x > self.rules.world_width
                 || projectile.y > self.rules.world_height
             {
@@ -365,13 +407,23 @@ impl Match {
             if !self.players.get(&target).is_some_and(|p| p.alive) {
                 continue;
             }
-            let p = self.players.get_mut(&target).expect("previously checked target");
+            let p = self
+                .players
+                .get_mut(&target)
+                .expect("previously checked target");
             p.health = (p.health - self.rules.damage_per_hit).max(0);
-            self.events.push(Event::Damaged { owner, target, health: p.health });
+            self.events.push(Event::Damaged {
+                owner,
+                target,
+                health: p.health,
+            });
             if p.health == 0 {
                 p.alive = false;
                 p.respawn_at_ms = Some(self.now_ms.saturating_add(self.rules.respawn_ms));
-                self.events.push(Event::Killed { killer: owner, victim: target });
+                self.events.push(Event::Killed {
+                    killer: owner,
+                    victim: target,
+                });
                 if let Some(killer) = self.players.get_mut(&owner) {
                     killer.score += 1;
                     if killer.score >= self.rules.score_limit {
@@ -425,7 +477,13 @@ mod tests {
     #[test]
     fn movement_normalizes_and_rejects_replay_and_clock_abuse() {
         let mut w = setup(2);
-        let inp = Input { hdt: 0.5, vdt: 0.5, isn: 7, client_ts_ms: u64::MAX, jump: false };
+        let inp = Input {
+            hdt: 0.5,
+            vdt: 0.5,
+            isn: 7,
+            client_ts_ms: u64::MAX,
+            jump: false,
+        };
         w.input(PlayerId(3), inp).unwrap();
         let p = &w.players[&PlayerId(3)];
         assert!(((p.x - 10.0).hypot(p.y - 10.0) - 2.0).abs() < 1e-9);
@@ -453,10 +511,25 @@ mod tests {
         w.tick(); // until shooter cooldown is over
         shot_that_hits(&mut w);
         shot_that_hits(&mut w);
-        assert_eq!(w.phase, Phase::Finished { winner: PlayerId(3) });
+        assert_eq!(
+            w.phase,
+            Phase::Finished {
+                winner: PlayerId(3)
+            }
+        );
         assert_eq!(w.fire(PlayerId(3), 0.0), Err(Error::RoundFinished));
-        assert!(w.event_log().iter().any(|e| matches!(e, Event::Respawned(PlayerId(4)))));
-        assert_eq!(w.event_log().iter().filter(|e| matches!(e, Event::Killed { .. })).count(), 2);
+        assert!(
+            w.event_log()
+                .iter()
+                .any(|e| matches!(e, Event::Respawned(PlayerId(4))))
+        );
+        assert_eq!(
+            w.event_log()
+                .iter()
+                .filter(|e| matches!(e, Event::Killed { .. }))
+                .count(),
+            2
+        );
     }
 
     #[test]
@@ -487,8 +560,18 @@ mod tests {
         let mut w = setup(2);
         assert_eq!(w.join(PlayerId(3), 50.0, 50.0), Err(Error::DuplicatePlayer));
         assert_eq!(w.join(PlayerId(7), -1.0, 5.0), Err(Error::InvalidInput));
-        assert_eq!(w.input(PlayerId(3), Input {
-            hdt: 2.0, vdt: 0.0, isn: 1, client_ts_ms: 0, jump: false,
-        }), Err(Error::InvalidInput));
+        assert_eq!(
+            w.input(
+                PlayerId(3),
+                Input {
+                    hdt: 2.0,
+                    vdt: 0.0,
+                    isn: 1,
+                    client_ts_ms: 0,
+                    jump: false,
+                }
+            ),
+            Err(Error::InvalidInput)
+        );
     }
 }
