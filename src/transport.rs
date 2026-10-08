@@ -222,7 +222,10 @@ mod tests {
     fn multipacket_and_unicode_text() {
         let input = ["40", "42[\"cht\",\"café\"]", "42[\"cht\",\"🗺\"]"];
         assert_eq!(decode_text(&encode_text(&input).unwrap()).unwrap(), input);
-        assert_eq!(decode_binary(&encode_binary(&input).unwrap()).unwrap(), input);
+        assert_eq!(
+            decode_binary(&encode_binary(&input).unwrap()).unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -239,7 +242,10 @@ mod tests {
         );
         assert_eq!(inspect_packet("40").unwrap(), SocketPacket::Connect);
         assert_eq!(inspect_packet("2").unwrap(), SocketPacket::EnginePing);
-        assert_eq!(inspect_packet("42no-array"), Err(FrameError::InvalidSocketPacket));
+        assert_eq!(
+            inspect_packet("42no-array"),
+            Err(FrameError::InvalidSocketPacket)
+        );
     }
 
     #[test]
@@ -252,8 +258,13 @@ mod tests {
 
     #[test]
     fn binary_rejects_truncation_and_bad_header() {
-        for bad in [vec![0, 3, 255, b'a'], vec![1, 1, 255, b'x'],
-                    vec![0, 255], vec![0, 10, 255, b'x'], vec![0, 2]] {
+        for bad in [
+            vec![0, 3, 255, b'a'],
+            vec![1, 1, 255, b'x'],
+            vec![0, 255],
+            vec![0, 10, 255, b'x'],
+            vec![0, 2],
+        ] {
             assert!(decode_binary(&bad).is_err(), "{bad:?}");
         }
     }
@@ -263,9 +274,13 @@ mod tests {
         let packets: Vec<&str> = vec!["40"; MAX_PACKETS + 1];
         assert_eq!(encode_text(&packets), Err(FrameError::TooManyPackets));
         assert_eq!(encode_binary(&packets), Err(FrameError::TooManyPackets));
-        assert_eq!(decode_text(&vec![b'x'; MAX_PAYLOAD_BYTES + 1]),
-                   Err(FrameError::TooLarge));
-        assert_eq!(decode_binary(&vec![0; MAX_PAYLOAD_BYTES + 1]),
-                   Err(FrameError::TooLarge));
+        assert_eq!(
+            decode_text(&vec![b'x'; MAX_PAYLOAD_BYTES + 1]),
+            Err(FrameError::TooLarge)
+        );
+        assert_eq!(
+            decode_binary(&vec![0; MAX_PAYLOAD_BYTES + 1]),
+            Err(FrameError::TooLarge)
+        );
     }
 }
