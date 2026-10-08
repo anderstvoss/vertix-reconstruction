@@ -6,7 +6,7 @@ reverse-engineered server, so the game can be played and studied again.
 > **Status:** WIP, not yet playable. The isolated branch has a hash-verified
 > original-client HTTP bootstrap, a non-networked Rust gameplay simulation,
 > and an opposite-key input compatibility shim, plus an experimental single-origin
-> Engine.IO 3 polling/Socke.IO 1.x Python PvP runner. **Full browser PvP is
+> Engine.IO 3 polling/Socket.IO 1.x Python PvP runner. **Full browser PvP is
 > not verified and projectile/map physics remain incomplete.** See
 > [docs/GAMEPLAY-BRANCH-STATUS.md](docs/GAMEPLAY-BRANCH-STATUS.md),
 > [docs/PLAN.md](docs/PLAN.md), and [CHANGELOG.md](CHANGELOG.md).
