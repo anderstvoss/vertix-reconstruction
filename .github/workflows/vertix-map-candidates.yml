@@ -1,0 +1,44 @@
+name: Verify candidate-map conversion
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/vertix_maps/**'
+      - 'scripts/tests/test_vertix_map_fixture.py'
+      - '.github/workflows/vertix-map-candidates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-map-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout reconstruction (no preserved client files)
+        uses: actions/checkout@v4
+      - name: Checkout immutable third-party candidate source commit
+        uses: actions/checkout@v4
+        with:
+          repository: KrunkerRevivalProject/vertix
+          ref: 2d35f665917c86691936d49079424521da6d80b6
+          path: external/krp-vertix
+          persist-credentials: false
+      - name: Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Synthetic converter regression tests
+        run: python -m unittest scripts/tests/test_vertix_map_fixture.py -v
+      - name: Convert source-pinned 24 maps and run 43 structural cases
+        run: |
+          python scripts/vertix_maps/run_candidate_matrix.py \
+            external/krp-vertix/server/maps \
+            candidate-map-output
+      - name: Persist derived maps and source-verified manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: derived-krp-candidate-maps-not-original-server
+          path: candidate-map-output/
+          retention-days: 30
