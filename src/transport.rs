@@ -38,6 +38,8 @@ pub enum SocketPacket<'a> {
     EventJsonArray(&'a str),
 }
 
+/// # Errors
+/// Returns `InvalidSocketPacket` for an unsupported or malformed envelope.
 pub fn inspect_packet(packet: &str) -> Result<SocketPacket<'_>, FrameError> {
     match packet {
         "2" => Ok(SocketPacket::EnginePing),
@@ -53,6 +55,8 @@ pub fn inspect_packet(packet: &str) -> Result<SocketPacket<'_>, FrameError> {
 }
 
 /// Serialize a bounded list of complete Engine.IO 3 text packets.
+/// # Errors
+/// Returns `TooLarge` or `TooManyPackets` if the output exceeds the new safety bounds.
 pub fn encode_text(packets: &[&str]) -> Result<Vec<u8>, FrameError> {
     if packets.len() > MAX_PACKETS {
         return Err(FrameError::TooManyPackets);
@@ -75,6 +79,9 @@ pub fn encode_text(packets: &[&str]) -> Result<Vec<u8>, FrameError> {
 
 /// Parse text packets, carefully distinguishing UTF-16 lengths from UTF-8
 /// byte positions. Reject partial surrogate pairs and trailing junk.
+/// # Errors
+/// Returns a framing error for malformed lengths, partial UTF-16 code units,
+/// invalid UTF-8, truncated frames or excessive input.
 pub fn decode_text(payload: &[u8]) -> Result<Vec<&str>, FrameError> {
     if payload.len() > MAX_PAYLOAD_BYTES {
         return Err(FrameError::TooLarge);
@@ -127,6 +134,8 @@ pub fn decode_text(payload: &[u8]) -> Result<Vec<&str>, FrameError> {
 /// Serialize Engine.IO v3 XHR2 binary payloads carrying *text* packets.
 /// Frame header: 0x00, decimal length digits encoded as numeric bytes,
 /// 0xff, and the exact UTF-8 payload.
+/// # Errors
+/// Returns `TooLarge` or `TooManyPackets` when the binary frame bound is exceeded.
 pub fn encode_binary(packets: &[&str]) -> Result<Vec<u8>, FrameError> {
     if packets.len() > MAX_PACKETS {
         return Err(FrameError::TooManyPackets);
@@ -152,6 +161,9 @@ pub fn encode_binary(packets: &[&str]) -> Result<Vec<u8>, FrameError> {
 /// Decode XHR2 binary payload headers without conflating numeric digit bytes
 /// with ASCII characters. This adapter deliberately disallows binary Socket.IO
 /// attachments: the recovered Vertix event subset requires JSON text frames.
+/// # Errors
+/// Returns a framing error for invalid types, numeric length headers,
+/// invalid UTF-8, truncation or excessive packets.
 pub fn decode_binary(payload: &[u8]) -> Result<Vec<&str>, FrameError> {
     if payload.len() > MAX_PAYLOAD_BYTES {
         return Err(FrameError::TooLarge);
