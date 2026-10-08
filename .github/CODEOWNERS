@@ -1,13 +1,13 @@
-* @TEMPLATE_OWNER
+* @anderstvoss
 
-/.github/                @TEMPLATE_OWNER
-/.pre-commit-config.yaml @TEMPLATE_OWNER
-/SECURITY.md             @TEMPLATE_OWNER
-/Cargo.toml              @TEMPLATE_OWNER
-/Cargo.lock              @TEMPLATE_OWNER
-/deny.toml               @TEMPLATE_OWNER
-/.gitignore              @TEMPLATE_OWNER
-/LICENSE                 @TEMPLATE_OWNER
-/.githooks/              @TEMPLATE_OWNER
-/ruff.toml               @TEMPLATE_OWNER
-/rust-toolchain.toml     @TEMPLATE_OWNER
+/.github/                @anderstvoss
+/.pre-commit-config.yaml @anderstvoss
+/SECURITY.md             @anderstvoss
+/Cargo.toml              @anderstvoss
+/Cargo.lock              @anderstvoss
+/deny.toml               @anderstvoss
+/.gitignore              @anderstvoss
+/LICENSE                 @anderstvoss
+/.githooks/              @anderstvoss
+/ruff.toml               @anderstvoss
+/rust-toolchain.toml     @anderstvoss

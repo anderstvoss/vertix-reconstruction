@@ -1,19 +1,33 @@
-# TEMPLATE_PROJECT_NAME
+# Vertix.io Reconstruction
 
-One-sentence description of what this project is.
+Runs the original 2016 Vertix.io browser client against a local,
+reverse-engineered server, so the game can be played and studied again.
 
-> **Status:** early WIP / alpha / stable — pick one. Link to
-> [CHANGELOG.md](CHANGELOG.md) for tracked changes.
+> **Status:** early WIP. Nothing runs yet; see [docs/PLAN.md](docs/PLAN.md)
+> for the milestones and [CHANGELOG.md](CHANGELOG.md) for changes.
 
-**Before doing anything else with this repo, read
-[READ_ME_FIRST.md](READ_ME_FIRST.md).** That file documents how to
-customise the template for your project (name, language, crate type,
-license, owner) and the one-time bootstrap procedure.
+## What is and isn't in this repository
+
+This repository holds only new code: the compatibility server, build and
+fetch scripts, and small shims. **It never contains original Vertix.io
+files** (the client's `app.js`, `res.zip`, the Android APK, sprites or
+sounds), and never a modified copy of them. At run time the build reads
+those files from a local copy of the archive, or fetches them from the
+Wayback Machine, and checks every one against a recorded SHA-256 before
+using it.
+
+The first target build is the 2016-08-06 web client with the assets from
+the August 2016 Android release.
+
+The server's game rules are a reconstruction. The original server code was
+never published, so anything the client cannot show us (damage, hit rules,
+spawn logic, score limits) is a documented assumption, not recovered
+behaviour.
 
 ## License
 
-[AGPL-3.0-only](LICENSE) (template default; adjust here and in
-`Cargo.toml`'s `[package].license` if you pick something else).
+[AGPL-3.0-only](LICENSE). This covers the code in this repository only, not
+the original game, its client or its assets.
 
 ## Setup
 
@@ -22,19 +36,15 @@ After cloning, run once:
 ```bash
 cargo install cargo-deny cargo-audit
 git config core.hooksPath .githooks
-
-# If you previously ran `pre-commit install` on this clone, remove the
-# now-stale wrappers in .git/hooks/ so git only consults .githooks/:
-rm -f .git/hooks/pre-commit .git/hooks/pre-push
 ```
 
-`core.hooksPath` redirects git to the committed `.githooks/`
-directory. The `pre-commit` wrapper delegates to the `pre-commit`
-Python package (install via pipx or pip — see
-<https://pre-commit.com/#install>); the `pre-push` wrapper runs the
-custom safety checks (gitleaks, tracked-file blocker, local-paths
-scan) and then hands off to pre-commit's pre-push-stage hooks
-(`cargo deny` + `cargo audit`).
+`pre-commit` must be installed (pipx or pip, see <https://pre-commit.com/#install>).
+The hooks run gitleaks, the template's blockers for keys, env files, local
+paths and private IPs, a blocker for original game files, and
+`scripts/sanitize_scan.py` (e-mails, local paths, private IPs and the
+personal identifiers you list in the git-ignored `.sanitize-denylist`).
+Set `VERTIX_ARCHIVE` to your archive clone so the scan can also confirm
+that no tracked file is byte-identical to an archive original.
 
 ## Development
 
@@ -43,36 +53,26 @@ cargo build
 cargo test
 ```
 
-Local gates (also run in CI on every PR):
+Local gates (also run in CI once the repository is public):
 
 ```bash
 cargo fmt --all -- --check
-cargo check --locked --all-targets --all-features
 cargo clippy --locked --all-targets --all-features -- -D warnings
 cargo test --locked --all-features
+python3 -m unittest discover -s scripts/tests
 gitleaks detect
-ruff check .    # only if the repo carries Python helpers under scripts/
 ```
 
-Before publishing or merging anything that matters, run a deep
-gitleaks scan across all branches and tags:
+Before publishing anything, run the full-history scan:
 
 ```bash
 scripts/deep-scan.sh
 ```
 
-Record user-visible changes in [`CHANGELOG.md`](CHANGELOG.md) under
-the `Unreleased` section as part of any feature, fix, or breaking
-change.
+## Contributing and security
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Security
-
-See [SECURITY.md](SECURITY.md). For the end-to-end hardening
-procedure (reusable across projects), see
-[`docs/REPO-SETUP.md`](docs/REPO-SETUP.md); for the tickable
-one-page bootstrap list, see
-[`docs/HARDENING-CHECKLIST.md`](docs/HARDENING-CHECKLIST.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+The hardening procedure this repository follows is in
+[docs/REPO-SETUP.md](docs/REPO-SETUP.md) and
+[docs/HARDENING-CHECKLIST.md](docs/HARDENING-CHECKLIST.md); the
+pre-publication checklist is [GOING_PUBLIC.md](GOING_PUBLIC.md).

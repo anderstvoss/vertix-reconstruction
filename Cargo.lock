@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "TEMPLATE_CRATE_NAME"
+name = "vertix_reconstruction"
 version = "0.1.0"

@@ -25,4 +25,7 @@ git fetch --all --tags --prune --quiet || echo "  (fetch skipped — no remote /
 echo "→ gitleaks detect --log-opts='--all'"
 gitleaks detect --no-banner --log-opts='--all'
 
+echo "→ sanitize scan over tree, history and commit metadata"
+python3 scripts/sanitize_scan.py --history
+
 echo "✓ deep scan PASS"

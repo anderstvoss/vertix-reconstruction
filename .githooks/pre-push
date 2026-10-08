@@ -21,6 +21,7 @@ fi
 local_paths="$(
   git grep -n -I -E '(/Users/|/home/[^/]+/|C:\\Users\\|/mnt/c/Users/)' \
     -- ':!.pre-commit-config.yaml' ':!.githooks/pre-push' ':!.git/hooks/pre-push' \
+       ':!scripts/sanitize_scan.py' ':!scripts/tests/test_sanitize_scan.py' \
     || true
 )"
 
