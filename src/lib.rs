@@ -7,6 +7,9 @@
 //! part of this crate; they are loaded from a local archive at run
 //! time and verified by hash.
 
+/// Bounded new-code framing for the 2016 Engine.IO 3 / Socket.IO 1.x client.
+pub mod transport;
+
 #[cfg(test)]
 mod tests {
     #[test]
