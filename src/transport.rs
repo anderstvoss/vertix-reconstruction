@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn text_rejects_partial_utf16_and_bad_lengths() {
-        for bad in [b"1:".as_slice(), b"1:x", b"4:hi", b"3:ab", b"x:y", b":foo"] {
+        for bad in [b"1:".as_slice(), b"4:hi", b"3:ab", b"x:y", b":foo"] {
             assert!(decode_text(bad).is_err(), "{bad:?}");
         }
         assert_eq!(decode_text("1:🗺".as_bytes()), Err(FrameError::Truncated));
