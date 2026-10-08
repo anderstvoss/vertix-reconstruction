@@ -38,7 +38,6 @@ pub enum SocketPacket<'a> {
     EventJsonArray(&'a str),
 }
 
-#[must_use]
 pub fn inspect_packet(packet: &str) -> Result<SocketPacket<'_>, FrameError> {
     match packet {
         "2" => Ok(SocketPacket::EnginePing),
@@ -222,14 +221,8 @@ mod tests {
     #[test]
     fn multipacket_and_unicode_text() {
         let input = ["40", "42[\"cht\",\"café\"]", "42[\"cht\",\"🗺\"]"];
-        for decode in [decode_text, decode_binary] {
-            let wire = if core::ptr::fn_addr_eq(decode, decode_text as fn(&[u8]) -> _ ) {
-                encode_text(&input).unwrap()
-            } else {
-                encode_binary(&input).unwrap()
-            };
-            assert_eq!(decode(&wire).unwrap(), input);
-        }
+        assert_eq!(decode_text(&encode_text(&input).unwrap()).unwrap(), input);
+        assert_eq!(decode_binary(&encode_binary(&input).unwrap()).unwrap(), input);
     }
 
     #[test]
