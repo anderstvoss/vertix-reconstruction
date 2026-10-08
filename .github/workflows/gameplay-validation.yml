@@ -28,7 +28,7 @@ jobs:
         run: cargo clippy --locked --all-targets --all-features -- -D warnings
       - name: Build and test Rust simulation
         run: cargo test --locked --all-targets --all-features
-      - name: Verify original-client archive bootstrap
-        run: python3 -m unittest discover -s scripts/tests -p 'test_boot_server.py'
+      - name: Verify original-client bootstrap and synthetic two-client PvP
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py'
       - name: Verify opposite-key compatibility shim
         run: node --test scripts/tests/input-opposites.test.cjs
