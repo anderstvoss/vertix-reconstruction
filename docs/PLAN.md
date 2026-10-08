@@ -42,6 +42,24 @@ Join, spawn, move, shoot, damage, kill, respawn, score and round end, played
 by two unmodified browser clients. Hit rules, spawn selection, score limit
 and anti-cheat are reconstruction choices and are labelled as such.
 
+## 5. Android 0.0.3 historical-client compatibility (after the browser baseline)
+
+- **Source identity.** Use the preserved authentic `tbs.vertix.io` v0.0.3
+  Cordova APK; the unrelated Xamarin project with the same name is **not**
+  a Vertix.io game source. Verify the APK hash from the private archive.
+- **Android bootstrap.** Redirect the original mobile discovery-script request
+  to a local test callback. The exact historical callback response is unknown,
+  so generated responses are compatibility fixtures, not recovered bytes.
+- **Protocol and input.** Test the real packaged Socket.IO 1.x client,
+  including the mobile-specific session event, analog input magnitude,
+  and fifth firing argument. The identical event names/arity alone do not
+  prove identical movement or weapon behavior.
+- **Done when:** one unmodified web client and one unmodified Android APK
+  share an authoritative match and complete movement, combat, death, respawn
+  and a full round. Any patched APK/runtime result is recorded separately.
+- **Tracking:** [issue #9](https://github.com/anderstvoss/vertix-reconstruction/issues/9);
+  [research protocol comparison](https://github.com/anderstvoss/vertix-research/blob/main/analyses/ANDROID-WEB-WIRE-DIFF.md).
+
 ## Notes
 
 - The template's `block-local-network-targets` hook rejects loopback
