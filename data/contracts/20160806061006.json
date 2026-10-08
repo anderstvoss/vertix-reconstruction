@@ -1,0 +1,577 @@
+{
+  "note": "Event names and argument counts for the 20160806061006 client, from the research repository's code-free contracts (RECOVERED from the client's own handlers and emit sites).",
+  "build": "20160806061006",
+  "client_sha256": "cbab5cd590ff0d3a9d01a60eba835cd885b715988d0d87a7d287321399df2f09",
+  "research_commit": "e6672ef9474ab01b2b328d3e27d32c2544b799b5",
+  "events": [
+    {
+      "event": "0",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "1",
+      "direction": "client->server",
+      "counts": [
+        6
+      ]
+    },
+    {
+      "event": "4",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "5",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cCamo",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cHat",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cSpray",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cSrv",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cht",
+      "direction": "client->server",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "create",
+      "direction": "client->server",
+      "counts": [
+        0,
+        1
+      ]
+    },
+    {
+      "event": "crtSpr",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "dbClanChatURL",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbClanCreate",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbClanInvite",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbClanJoin",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbClanKick",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbClanLeave",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "dbCngPass",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbEditUser",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbLogin",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbLogout",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "dbRecov",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbReg",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "ftc",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "gotit",
+      "direction": "client->server",
+      "counts": [
+        4
+      ]
+    },
+    {
+      "event": "kil",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "like",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "modeVote",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "ping1",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "r",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "respawn",
+      "direction": "client->server",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "sw",
+      "direction": "client->server",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "1",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "2",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "3",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "4",
+      "direction": "server->client",
+      "counts": [
+        3
+      ]
+    },
+    {
+      "event": "5",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "6",
+      "direction": "server->client",
+      "counts": [
+        3
+      ]
+    },
+    {
+      "event": "7",
+      "direction": "server->client",
+      "counts": [
+        4
+      ]
+    },
+    {
+      "event": "8",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "add",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cSrvRes",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "cht",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "cngPassRes",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "crtSpr",
+      "direction": "server->client",
+      "counts": [
+        3
+      ]
+    },
+    {
+      "event": "dbChangeUserR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "dbChatR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "dbClanCreateR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "dbClanInvR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "dbClanJoinR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "dbClanLevR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "dbClanStats",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "dbKickInvR",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "ex",
+      "direction": "server->client",
+      "counts": [
+        3
+      ]
+    },
+    {
+      "event": "gameSetup",
+      "direction": "server->client",
+      "counts": [
+        3
+      ]
+    },
+    {
+      "event": "jum",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "kick",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "lb",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "lobbyRes",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "logRes",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "pong1",
+      "direction": "server->client",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "r",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "recovRes",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "regRes",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "rem",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "rsd",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "tprt",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "ts",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "upd",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "updAccStat",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "updCmo",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "updHt",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "updSprs",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "vt",
+      "direction": "server->client",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "welcome",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "yourRoom",
+      "direction": "server->client",
+      "counts": [
+        2
+      ]
+    },
+    {
+      "event": "connect",
+      "direction": "socket.io built-in",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "connect_error",
+      "direction": "socket.io built-in",
+      "counts": [
+        1
+      ]
+    },
+    {
+      "event": "connect_failed",
+      "direction": "socket.io built-in",
+      "counts": [
+        0
+      ]
+    },
+    {
+      "event": "disconnect",
+      "direction": "socket.io built-in",
+      "counts": [
+        0,
+        1
+      ]
+    },
+    {
+      "event": "error",
+      "direction": "socket.io built-in",
+      "counts": [
+        1
+      ]
+    }
+  ]
+}

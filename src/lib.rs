@@ -6,9 +6,16 @@
 //! original server held. Original client files and assets are never
 //! part of this crate; they are loaded from a local archive at run
 //! time and verified by hash.
+//!
+//! Layers, bottom up: [`eio`] (Engine.IO long-polling) and [`sio`]
+//! (Socket.IO events) form the transport; [`game`] owns all game state and
+//! talks to clients only through [`eio::ClientHandle`]; [`originals`]
+//! loads and verifies the archived files; [`http`] wires them together.
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn smoke() {}
-}
+pub mod config;
+pub mod eio;
+pub mod game;
+pub mod http;
+pub mod originals;
+pub mod sio;
+pub mod trace;

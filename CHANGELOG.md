@@ -10,6 +10,10 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 ### Added
 
 - Repository created from the hardened baseline template, with an original-game-file blocker and a sanitization scan for e-mails, local paths, private IPs and personal identifiers.
+- Compatibility server (`vertix-server`): Engine.IO 3 long-polling with binary and base64 payloads, Socket.IO 1.x events, `/getIP`, and the 2016-08-06 client served from a local archive with every file hash-checked.
+- Joining, spawning, movement with the client's own collision, weapon swap, jumping and leaving, for any number of players in one free-for-all room.
+- Placeholder map and an assumptions file for every number no source recovers.
+- Event trace (`--trace`) and a browser check (`scripts/e2e_boot.py`).
 
 ### Changed
 

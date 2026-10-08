@@ -3,8 +3,11 @@
 Runs the original 2016 Vertix.io browser client against a local,
 reverse-engineered server, so the game can be played and studied again.
 
-> **Status:** early WIP. Nothing runs yet; see [docs/PLAN.md](docs/PLAN.md)
-> for the milestones and [CHANGELOG.md](CHANGELOG.md) for changes.
+> **Status:** early WIP. The unmodified 2016-08-06 client boots and two
+> players can join and move (milestone 1); combat and rounds are next. See
+> [docs/PLAN.md](docs/PLAN.md) for the milestones,
+> [docs/DEVIATIONS.md](docs/DEVIATIONS.md) for what differs from the
+> original, and [CHANGELOG.md](CHANGELOG.md) for changes.
 
 ## What is and isn't in this repository
 
@@ -45,6 +48,35 @@ paths and private IPs, a blocker for original game files, and
 personal identifiers you list in the git-ignored `.sanitize-denylist`).
 Set `VERTIX_ARCHIVE` to your archive clone so the scan can also confirm
 that no tracked file is byte-identical to an archive original.
+
+## Running
+
+You need a clone of the private archive with its LFS files pulled (the
+2016-08-06 client, its page capture and the August 2016 APK). Then:
+
+```bash
+cargo run --release -- --archive PATH/TO/vertix-archive
+```
+
+and open the address it prints. The server checks every original against
+`data/boot/20160806061006.json` before serving anything and refuses to
+start on a mismatch. The bind address, port, map and assumptions file are
+in `config/server.toml`; `--port`, `--trace out/trace.jsonl` and the
+`VERTIX_ARCHIVE` variable override it.
+
+`--trace` writes every event in and out as JSON lines, which is how the
+protocol behaviour is checked against the client.
+
+The browser check plays the game in Chromium with every outside request
+blocked:
+
+```bash
+python3 -m pip install playwright
+python3 scripts/e2e_boot.py --url http://HOST:PORT/ [--chromium PATH]
+```
+
+`data/boot/` and `data/contracts/` are derived, code-free facts from the
+research repository, regenerated with `scripts/import_research.py`.
 
 ## Development
 
