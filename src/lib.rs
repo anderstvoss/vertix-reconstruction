@@ -7,6 +7,9 @@
 //! part of this crate; they are loaded from a local archive at run
 //! time and verified by hash.
 
+/// Deterministic, explicitly NEW authoritative FFA simulation core.
+pub mod simulation;
+
 #[cfg(test)]
 mod tests {
     #[test]
