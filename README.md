@@ -64,6 +64,9 @@ start on a mismatch. The bind address, port, map and assumptions file are
 in `config/server.toml`; `--port`, `--trace out/trace.jsonl` and the
 `VERTIX_ARCHIVE` variable override it.
 
+Step-by-step instructions, including Windows, are in
+[docs/RUNNING.md](docs/RUNNING.md).
+
 `--trace` writes every event in and out as JSON lines, which is how the
 protocol behaviour is checked against the client.
 
