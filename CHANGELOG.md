@@ -9,6 +9,8 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 
 ### Added
 
+- Repository created from the hardened baseline template, with an original-game-file blocker and a sanitization scan for e-mails, local paths, private IPs and personal identifiers.
+
 ### Changed
 
 ### Deprecated
@@ -21,4 +23,4 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 
 [keep-a-changelog]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/spec/v2.0.0.html
-[Unreleased]: https://github.com/TEMPLATE_OWNER/TEMPLATE_REPO/compare/HEAD...HEAD
+[Unreleased]: https://github.com/anderstvoss/vertix-reconstruction/compare/HEAD...HEAD

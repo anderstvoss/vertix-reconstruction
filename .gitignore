@@ -32,6 +32,11 @@ id_ed25519*
 *.swo
 
 # Local notes / scratch / private context
+# Personal identifiers for scripts/sanitize_scan.py (never commit)
+.sanitize-denylist
+# Local archive checkouts and originals must never be committed
+vertix-archive/
+originals/
 notes/
 scratch/
 todo-private.md
@@ -55,3 +60,7 @@ dist/
 build/
 out/
 /bom.json
+
+# Python bytecode
+__pycache__/
+*.pyc

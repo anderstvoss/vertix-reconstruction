@@ -1,4 +1,4 @@
-# Contributing to TEMPLATE_PROJECT_NAME
+# Contributing to Vertix.io Reconstruction
 
 Thanks for your interest. Please read this file end-to-end before opening a PR.
 

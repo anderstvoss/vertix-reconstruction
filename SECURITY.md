@@ -9,11 +9,10 @@ Security updates are provided for the latest version on the `main` branch unless
 Please do not report security vulnerabilities through public GitHub issues.
 
 **Preferred:** open a private report at
-<https://github.com/TEMPLATE_OWNER/TEMPLATE_REPO/security/advisories/new>
+<https://github.com/anderstvoss/vertix-reconstruction/security/advisories/new>
 (GitHub Private Vulnerability Reporting).
 
-**Alternative:** email the maintainer at
-<TEMPLATE_MAINTAINER_EMAIL>.
+There is no email contact; use the private report above.
 
 Include:
 

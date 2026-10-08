@@ -4,10 +4,13 @@ Actions to take **before** flipping this repository from private to public on Gi
 
 ## 1. Secrets & history hygiene
 
-- [ ] Run `scripts/deep-scan.sh` (gitleaks over every branch and tag) and confirm it passes. This is a hard gate: the CI history scan only starts after the flip, when it is too late.
+- [ ] Fill `.sanitize-denylist` (git-ignored) with your real name, machine names, OS user names and private e-mails, set `VERTIX_ARCHIVE` to your archive clone, then run `scripts/deep-scan.sh` (gitleaks plus `scripts/sanitize_scan.py --history`) and confirm it passes. This is a hard gate: the CI history scan only starts after the flip, when it is too late.
 - [ ] Rotate any credential that ever touched this repo, even if it was removed in a later commit. History is forever once public.
 - [ ] Confirm `.env`, `.env.*` (except `.env.example`), private keys, and local config files are gitignored and absent from history.
 - [ ] If anything sensitive is found in history, rewrite with `git filter-repo` (or BFG) and force-push **before** going public.
+
+- [ ] Every commit's author and committer e-mail is a GitHub noreply address (the sanitize scan checks this).
+- [ ] No original Vertix.io file (client JS, res.zip, APK, sprites, sounds) is in any commit; the scan compares every tracked file with the archive manifest.
 
 ## 2. Repository metadata
 

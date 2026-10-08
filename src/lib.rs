@@ -1,9 +1,11 @@
-//! `TEMPLATE_CRATE_NAME` — one-sentence description.
+//! `vertix_reconstruction` — compatibility server for the original
+//! 2016 Vertix.io browser client.
 //!
-//! Replace this docstring with the crate's actual purpose. The
-//! backticks around the crate name are required by
-//! `clippy::doc_markdown` (enabled via `Cargo.toml`'s `[lints.clippy]`
-//! pedantic suite).
+//! The server speaks the wire protocol the archived client expects
+//! (Engine.IO 3 / Socket.IO 1.x) and reconstructs the game logic the
+//! original server held. Original client files and assets are never
+//! part of this crate; they are loaded from a local archive at run
+//! time and verified by hash.
 
 #[cfg(test)]
 mod tests {
