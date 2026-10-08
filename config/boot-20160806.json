@@ -1,0 +1,82 @@
+{
+  "target_build": "20160806061006",
+  "archive_commit": "a059176db6671db6f35c1a3e2457495c08c846ac",
+  "page_shell": {
+    "path": "vertix-preservation/originals/wayback/20160807195546/vertix.io_80/root.I35QF3OGUSBRICREPIY4SD6V657FSLI2",
+    "sha256": "1d1b3be40ad8567c17eddb6d884e28c67685f4c7191cdebbb5a681c629c02217"
+  },
+  "assets": {
+    "images/google-play-badge.png": {
+      "path": "vertix-preservation/originals/wayback/20160825094920/vertix.io/images/google-play-badge.png.ILEJ3GZTMMZC23I7UTWYOHMAWY64UG4Z",
+      "sha256": "215e46442382af6784b854e56f70c527d0d205a367c58567c308d3c3fbe31cc2"
+    },
+    "images/favicon.png": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/images/favicon.png",
+      "sha256": "1f7fd2a74a672444918dae7b7801be61e8ff4262354901bd351cf367c2275556"
+    },
+    "css/main.css": {
+      "path": "vertix-preservation/originals/wayback/20160806060840/vertix.io/css/main.css.A4QUY4KXDH2OCIKET5YQZ32UWNEI4RVB",
+      "sha256": "b911b6bb54f8f6a77244dd950d63ae88ab8d921aca219825953f8b556052a590"
+    },
+    "cdn.socket.io/socket.io-1.4.5.js": {
+      "path": "vertix-preservation/originals/external/socket.io-1.4.5.js",
+      "sha256": "9702309dfcdbb90b3ac680b42f37089032793f0978704495a0da53448c9059f9"
+    },
+    "code.jquery.com/jquery-2.1.4.min.js": {
+      "path": "vertix-preservation/originals/external/jquery-2.1.4.min.js",
+      "sha256": "f16ab224bb962910558715c82f58c10c3ed20f153ddfaa199029f141b5b0255c"
+    },
+    "js/app.js": {
+      "path": "vertix-preservation/originals/wayback/20160806061006/vertix.io/js/app.js.FEMVAY3YIDEPBGEXH32YHQNXPFQDB4N3",
+      "sha256": "cbab5cd590ff0d3a9d01a60eba835cd885b715988d0d87a7d287321399df2f09"
+    },
+    "js/lib/deflate.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/deflate.js",
+      "sha256": "338c3ada782fd49612344bc9c89f64dee2278ea165375bb443c82d93cdb368cc"
+    },
+    "js/lib/soundlib.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/soundlib.js",
+      "sha256": "ceccb7cc96f1d52297c5aca95e1c52597146e32d1e085a4bff8c9603f9d09c7d"
+    },
+    "js/lib/zip-ext.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/zip-ext.js",
+      "sha256": "af8f0b82cc755f5c254d11bea8235097eca01263967bcca6e58aa6e7855b22ca"
+    },
+    "js/lib/zip-fs.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/zip-fs.js",
+      "sha256": "d97c840a0d70ff258e33ac7708113b0ab96d987768fb9ba9b6205de6e8e2011e"
+    },
+    "js/lib/zip.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/zip.js",
+      "sha256": "172f4f30ee73195987a3a5dfa65a0371aac12fa3a52014ad874de460891e2d8e"
+    },
+    "res.zip": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/res.zip",
+      "sha256": "04fef398de195a3fe4fa54129644bb58c5bfac8395f89e6fe92b9fc31cd8d19e"
+    },
+    "sponsors.txt": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/sponsors.txt",
+      "sha256": "e123cbe6fd1ffe2c8aef582943261af5d443d17f0908493856280ad6abf83bf7"
+    },
+    "js/lib/z-worker.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/z-worker.js",
+      "sha256": "345b5f0b4b25fcff38b72773caa9d91c95e81486ce3ab0233d646e988980e833"
+    },
+    "js/lib/inflate.js": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/www/js/lib/inflate.js",
+      "sha256": "bba86a7db50b999dae3cf0417423f9f4fb8798aa437b3c65d97971f2b6179eaf"
+    },
+    "css/fonts/font2.ttf": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/css/fonts/font2.ttf",
+      "sha256": "ec44c1c0667e8b0251198a72ab5117e18bf2990f65960566ce4ef4c824627bb9"
+    },
+    "images/cursor_aim.png": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/images/cursor_aim.png",
+      "sha256": "02a563f40b7d9ca70880ad9c939be11c5b947b8b104b0e184ef557356eb0128b"
+    },
+    "images/hats/display.png": {
+      "path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk::assets/images/hats/display.png",
+      "sha256": "996b7f709ae279c946d5f6cd2bf2bf21c31af5306e62cbcf64a1a4b31bec284d"
+    }
+  }
+}
