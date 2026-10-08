@@ -25,4 +25,4 @@ Tests include archived framing examples, multiple packets and unicode, malformed
 3. Run the two real-browser client probe against this Rust adapter and the pinned private archive, recording the original-client runtime trace.
 4. Connect decoded `4` input / `1` shot / `r` reload to the deterministic authoritative FFA core introduced separately.
 
-The code is intentionally not advertised as a bootable Vertix server until those interfaces are implemented. Current CI in this repository is gated while private; test run status must be reported separately rather than assumed.
+The code is intentionally not advertised as a bootable Vertix server until those interfaces are implemented. The public repository runs Rust build/test, formatting, lint, policy and security jobs in GitHub Actions; check the latest PR run rather than assuming a pass.
