@@ -48,6 +48,28 @@ def encode_packets(packets: list[str]) -> bytes:
 def decode_packets(body: bytes) -> list[str]:
     if len(body) > MAX_PACKET_BYTES:
         raise ValueError("oversized Engine.IO message")
+    if body.startswith(b"\\x00"):
+        # EIO3 XHR2 binary framing (prefix 0 = UTF-8 text packet).
+        packets, i = [], 0
+        while i < len(body):
+            if body[i] != 0:
+                raise ValueError("unexpected binary Engine.IO packet")
+            i += 1
+            length_digits = []
+            while i < len(body) and body[i] != 0xFF:
+                if body[i] > 9 or len(length_digits) > 8:
+                    raise ValueError("invalid binary frame size")
+                length_digits.append(str(body[i]))
+                i += 1
+            if i == len(body) or not length_digits:
+                raise ValueError("truncated binary frame")
+            i += 1
+            size = int("".join(length_digits))
+            if size > MAX_PACKET_BYTES or size > len(body) - i:
+                raise ValueError("invalid binary frame length")
+            packets.append(body[i:i + size].decode("utf-8"))
+            i += size
+        return packets
     source = body.decode("utf-8")
     packets = []
     pos = 0
@@ -169,10 +191,13 @@ class Session:
         self.messages: list[str] = []
         self.closed = False
 
-    def emit(self, event: str, *args: object) -> None:
+    def packet(self, frame: str) -> None:
         with self.waiter:
-            self.messages.append(event_frame(event, *args))
+            self.messages.append(frame)
             self.waiter.notify_all()
+
+    def emit(self, event: str, *args: object) -> None:
+        self.packet(event_frame(event, *args))
 
     def drain(self, wait=0.5) -> list[str]:
         with self.waiter:
@@ -443,10 +468,10 @@ class PvpHandler(AssetHandler):
         try:
             for packet in decode_packets(self.rfile.read(size)):
                 if packet == "2":
-                    self.arena.sessions[sid].emit("__ping_internal")
-                    # Do not encode a ping as a Socket.IO event.
-                    with self.arena.sessions[sid].waiter:
-                        self.arena.sessions[sid].messages[-1] = "3"
+                    # Engine.IO pong is a raw type-3 packet, not Socket.IO.
+                    session = self.arena.sessions.get(sid)
+                    if session:
+                        session.packet("3")
                 elif packet == "1":
                     self.arena.disconnect(sid)
                 elif packet.startswith("42"):
