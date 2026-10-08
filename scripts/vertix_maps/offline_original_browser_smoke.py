@@ -142,7 +142,7 @@ def main():
             server.server_close()
         statuses = Counter()
         for _, log in requests:
-            found = re.search(r'" (\\d{3}) ', log)
+            found = re.search(r'"\s+(\d{3})\b', log)
             statuses[found.group(1) if found else "unknown"] += 1
         result = {
             "build": "2016-08-06",
