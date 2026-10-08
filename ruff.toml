@@ -1,0 +1,15 @@
+# Lint gate for the host/lab Python under scripts/. Selected for defects and
+# security footguns, not style: pyflakes (F) catches undefined names and dead
+# imports; flake8-bandit (S) flags shell=True, eval/exec, unsafe
+# deserialization, weak temp files and hardcoded credentials.
+target-version = "py312"
+include = ["scripts/**/*.py"]
+
+[lint]
+select = ["F", "S"]
+ignore = [
+  "S101", # assert is the intended failure mode in tests and live validators
+  "S603", # argv-list subprocess calls without a shell are the safe form
+  "S606", # same, for os.exec*/spawn*
+  "S607", # helpers deliberately resolve standard tools from PATH
+]

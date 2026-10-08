@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      cargo-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Hash-locked pre-commit install used by the CI policy job.
+  - package-ecosystem: pip
+    directory: /.github/requirements
+    schedule:
+      interval: weekly
+    groups:
+      pre-commit-toolchain:
+        patterns: ["*"]

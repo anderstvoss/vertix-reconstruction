@@ -1,0 +1,13 @@
+* @TEMPLATE_OWNER
+
+/.github/                @TEMPLATE_OWNER
+/.pre-commit-config.yaml @TEMPLATE_OWNER
+/SECURITY.md             @TEMPLATE_OWNER
+/Cargo.toml              @TEMPLATE_OWNER
+/Cargo.lock              @TEMPLATE_OWNER
+/deny.toml               @TEMPLATE_OWNER
+/.gitignore              @TEMPLATE_OWNER
+/LICENSE                 @TEMPLATE_OWNER
+/.githooks/              @TEMPLATE_OWNER
+/ruff.toml               @TEMPLATE_OWNER
+/rust-toolchain.toml     @TEMPLATE_OWNER

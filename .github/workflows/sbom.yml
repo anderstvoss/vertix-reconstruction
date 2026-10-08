@@ -1,0 +1,84 @@
+name: SBOM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbom-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate CycloneDX SBOM
+    # Visibility-gated like the rest of the remote-CI surface.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            uploads.github.com:443
+            static.rust-lang.org:443
+            static.crates.io:443
+            index.crates.io:443
+            crates.io:443
+            *.actions.githubusercontent.com:443
+            *.blob.core.windows.net:443
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        # The SHA-pinned dtolnay/rust-toolchain at this revision
+        # requires an explicit toolchain input. `stable` here is a
+        # baseline; rust-toolchain.toml at the repo root drives the
+        # actual cargo invocations via rustup.
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        with:
+          toolchain: stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          # Keep cargo-cyclonedx's binary cached alongside the build
+          # dependency graph so subsequent runs don't re-compile it.
+          cache-targets: "false"
+          key: sbom
+
+      - name: Install cargo-cyclonedx
+        # Pin a known-good version. Bump deliberately when CVEs or
+        # SPEC-format updates land; do not float to latest.
+        run: cargo install --locked --version 0.5.9 cargo-cyclonedx
+
+      - name: Generate SBOM
+        run: |
+          cargo cyclonedx --format json --override-filename bom
+          # Produces ./bom.json at the workspace root for a single
+          # crate; for workspaces it would also emit per-package files.
+          ls -la bom.json
+
+      - name: Upload SBOM as workflow artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-cyclonedx-${{ github.sha }}
+          path: bom.json
+          if-no-files-found: error
+          retention-days: 90
