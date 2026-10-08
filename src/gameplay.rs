@@ -125,6 +125,14 @@ pub enum ReloadStatus {
     MagazineFull,
 }
 
+/// When sent over the original Socket.IO protocol, `r` has exactly one
+/// positional argument: `slot`. Route the ack only to `player_id`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ReloadCompletion {
+    pub player_id: u64,
+    pub slot: usize,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FireResult {
     pub shooter: u64,
@@ -224,15 +232,22 @@ impl Match {
     }
 
     /// Advance all reloads independently, including unselected weapon slots.
-    pub fn tick(&mut self, now_ms: u64) {
+    #[must_use]
+    pub fn tick(&mut self, now_ms: u64) -> Vec<ReloadCompletion> {
+        let mut finished = Vec::new();
         for player in self.players.values_mut() {
-            for weapon in &mut player.weapons {
+            if !player.alive {
+                continue;
+            }
+            for (slot, weapon) in player.weapons.iter_mut().enumerate() {
                 if weapon.reload_complete_ms.is_some_and(|at| now_ms >= at) {
                     weapon.ammo = weapon.spec.magazine;
                     weapon.reload_complete_ms = None;
+                    finished.push(ReloadCompletion { player_id: player.id, slot });
                 }
             }
         }
+        finished
     }
 
     /// Client intent is a direction, never an asserted victim or damage value.
@@ -400,13 +415,35 @@ mod tests {
         assert_eq!(world.fire(shooter, 0.0, 10.0, 1400), Err(Reject::Reloading));
         world.switch_weapon(shooter, 1).unwrap();
         assert_eq!(world.players[&shooter].weapons[1].ammo, 1);
-        world.tick(2599);
+        assert!(world.tick(2599).is_empty());
         assert_eq!(world.players[&shooter].weapons[0].ammo, 23);
-        world.tick(2600);
+        assert_eq!(
+            world.tick(2600),
+            vec![ReloadCompletion { player_id: shooter, slot: 0 }]
+        );
         assert_eq!(world.players[&shooter].weapons[0].ammo, 24);
         assert!(world.players[&shooter].weapons[0].reload_complete_ms.is_none());
         world.switch_weapon(shooter, 0).unwrap();
         assert_eq!(world.reload(shooter, 2600), Ok(ReloadStatus::MagazineFull));
+    }
+
+    #[test]
+    fn reload_ack_is_slot_specific_even_after_switch_and_only_once() {
+        let mut world = Match::default();
+        let a = world.join(0, Position::new(0.0, 0.0)).unwrap();
+        let b = world.join(2, Position::new(100.0, 100.0)).unwrap();
+        world.fire(a, 0.0, 100.0, 100).unwrap();
+        world.fire(b, 0.0, 100.0, 100).unwrap();
+        world.reload(a, 200).unwrap();
+        world.reload(b, 200).unwrap();
+        world.switch_weapon(a, 1).unwrap();
+        assert_eq!(world.tick(1399), Vec::new());
+        assert_eq!(world.tick(1400), vec![ReloadCompletion { player_id: b, slot: 0 }]);
+        assert_eq!(world.players[&a].current_weapon, 1);
+        assert_eq!(world.tick(1700), vec![ReloadCompletion { player_id: a, slot: 0 }]);
+        assert!(world.tick(1701).is_empty());
+        assert_eq!(world.players[&a].weapons[0].ammo, 24);
+        assert_eq!(world.players[&a].weapons[1].ammo, 1);
     }
 
     #[test]
