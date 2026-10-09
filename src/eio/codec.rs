@@ -16,6 +16,12 @@
 
 use std::fmt;
 
+/// Most packets accepted in one POST body. The client batches what it
+/// queued since its last POST, which is a handful of packets per frame; the
+/// HTTP body limit alone would still allow ~20k empty packets. NEW limit,
+/// not taken from the original server.
+pub const MAX_PACKETS_PER_PAYLOAD: usize = 256;
+
 /// Engine.IO packet types (protocol 3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PacketType {
@@ -91,6 +97,7 @@ pub enum DecodeError {
     BadLength,
     BadType,
     BadUtf8,
+    TooManyPackets,
 }
 
 impl fmt::Display for DecodeError {
@@ -99,6 +106,7 @@ impl fmt::Display for DecodeError {
             Self::BadLength => "payload length prefix does not match its data",
             Self::BadType => "unknown packet type",
             Self::BadUtf8 => "packet data is not valid UTF-8",
+            Self::TooManyPackets => "payload holds too many packets",
         })
     }
 }
@@ -169,6 +177,9 @@ pub fn decode_payload_string(body: &str) -> Result<Vec<Packet>, DecodeError> {
             return Err(DecodeError::BadLength);
         }
         if len > 0 {
+            if packets.len() == MAX_PACKETS_PER_PAYLOAD {
+                return Err(DecodeError::TooManyPackets);
+            }
             packets.push(decode_packet(&raw[start..end])?);
         }
         i = end;
@@ -234,6 +245,50 @@ mod tests {
         assert_eq!(
             decode_payload_string("2:4\u{263a}"),
             Err(DecodeError::BadUtf8)
+        );
+    }
+
+    #[test]
+    fn rejects_malformed_prefixes() {
+        // Empty, signed, overflowing or unterminated lengths.
+        for bad in [":4", "+1:4", "-1:4", "99999999999999999999999:4", "12"] {
+            assert_eq!(
+                decode_payload_string(bad),
+                Err(DecodeError::BadLength),
+                "{bad:?}"
+            );
+        }
+        // A trailing packet cut short.
+        assert_eq!(decode_payload_string("1:22:4"), Err(DecodeError::BadLength));
+    }
+
+    #[test]
+    fn multibyte_text_survives_the_double_encoding() {
+        // Two-, three- and four-byte characters, as a name or chat line.
+        for text in ["é", "☺", "\u{1F5FA}"] {
+            let p = Packet::message(format!("2[\"cht\",\"{text}\"]"));
+            let wire = encode_payload_string(std::slice::from_ref(&p));
+            assert_eq!(decode_payload_string(&wire).unwrap(), vec![p], "{text}");
+        }
+        // A length that ends inside a multibyte character's bytes leaves
+        // the packet's data invalid.
+        let p = Packet::message("☺");
+        let mut wire = encode_payload_string(std::slice::from_ref(&p));
+        wire.replace_range(..1, "3");
+        assert_eq!(decode_payload_string(&wire), Err(DecodeError::BadUtf8));
+    }
+
+    #[test]
+    fn packet_count_is_bounded() {
+        let ok = "1:2".repeat(MAX_PACKETS_PER_PAYLOAD);
+        assert_eq!(
+            decode_payload_string(&ok).unwrap().len(),
+            MAX_PACKETS_PER_PAYLOAD
+        );
+        let over = "1:2".repeat(MAX_PACKETS_PER_PAYLOAD + 1);
+        assert_eq!(
+            decode_payload_string(&over),
+            Err(DecodeError::TooManyPackets)
         );
     }
 

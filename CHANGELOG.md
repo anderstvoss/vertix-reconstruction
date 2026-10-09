@@ -15,6 +15,7 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 - Joining, spawning, movement with the client's own collision, weapon swap, jumping and leaving, for any number of players in one free-for-all room.
 - Placeholder map and an assumptions file for every number no source recovers.
 - Event trace (`--trace`) and a browser check (`scripts/e2e_boot.py`).
+- POST bodies with more than 256 Engine.IO packets are rejected, and the codec has tests for malformed length prefixes and multibyte text.
 
 ### Changed
 
