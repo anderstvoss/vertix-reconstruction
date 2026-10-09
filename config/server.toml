@@ -10,11 +10,13 @@ port = 8080
 # VERTIX_ARCHIVE environment variable or --archive override it.
 archive = ""
 
-manifest = "data/boot/20160806061006.json"
+# The KrunkerRevival client, built by scripts/build-client.sh (or .ps1).
+# Never committed; the server serves whatever this directory holds.
+client_dir = "client/dist"
 
 # Game rules, as layers merged in order (later layers win, value by value).
 # Every value carries a status and source; `--explain-rules` lists them.
-rules = ["data/rules/base.toml", "data/rules/2016-08-06.toml"]
+rules = ["data/rules/base.toml", "data/rules/recovered.toml"]
 
 # JSON-lines trace of every event; empty for none. --trace overrides it.
 trace = ""
@@ -34,7 +36,31 @@ sources = ["archive"]
 archive_dir = "vertix-preservation/derived/maps/krp-2026-candidates"
 files = ["data/maps/arena.txt"]
 
+[game]
+# KrunkerRevival's classes, weapons, modes and cosmetics, converted by
+# scripts/import_krp.py.
+krp_data = "data/krp"
+# Balance presets laid over KRP's numbers (see data/balance/README.md):
+# "best" (default), "krp" (KRP's own numbers), or a game version such as
+# "v3.8".
+balance_dir = "data/balance"
+balance = "best"
+
+# The rooms opened at start, one per mode as in KRP's dev server. A client
+# picks one in the server browser; mode codes are those in data/krp.
+rooms = [
+  { name = "DEV0", mode = "ffa" },
+  { name = "DEV1", mode = "tdm" },
+  { name = "DEV2", mode = "hp" },
+  { name = "DEV3", mode = "lc" },
+  { name = "DEV4", mode = "snipe" },
+  { name = "DEV5", mode = "boss" },
+  { name = "DEV6", mode = "zmtch" },
+  { name = "DEV7", mode = "rckt" },
+  { name = "DEV8", mode = "pyro" },
+]
+
 [engine_io]
-# The values in the archived 2016 handshakes.
+# Socket.IO's defaults, which KRP's server uses.
 ping_interval_ms = 25000
-ping_timeout_ms = 60000
+ping_timeout_ms = 20000

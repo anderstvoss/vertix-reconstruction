@@ -1,31 +1,36 @@
 # Vertix.io Reconstruction
 
-Runs the original 2016 Vertix.io browser client against a local,
-reverse-engineered server, so the game can be played and studied again.
+A Rust reconstruction of Vertix.io's game mechanics, played in the browser.
 
-> **Status:** early WIP. The unmodified 2016-08-06 client boots and two
-> players can join and move (milestone 1); combat and rounds are next. See
-> [docs/PLAN.md](docs/PLAN.md) for the milestones,
-> [docs/DEVIATIONS.md](docs/DEVIATIONS.md) for what differs from the
-> original, and [CHANGELOG.md](CHANGELOG.md) for changes.
+> **Status:** early WIP. The server ports the game rules of
+> [KrunkerRevival](https://github.com/KrunkerRevivalProject/vertix) (KRP)
+> and serves KRP's browser client: rooms, spawning, movement, shooting,
+> explosions, kills, assists, KRP's nine modes, pickups, round end and
+> mode votes. See [docs/PLAN.md](docs/PLAN.md)
+> for what comes next, [docs/DEVIATIONS.md](docs/DEVIATIONS.md) for what
+> differs from KRP and from the original, and [CHANGELOG.md](CHANGELOG.md).
 
-## What is and isn't in this repository
+## Where things come from
 
-This repository holds only new code: the compatibility server, build and
-fetch scripts, and small shims. **It never contains original Vertix.io
-files** (the client's `app.js`, `res.zip`, the Android APK, sprites or
-sounds), and never a modified copy of them. At run time the build reads
-those files from a local copy of the archive, or fetches them from the
-Wayback Machine, and checks every one against a recorded SHA-256 before
-using it.
-
-The first target build is the 2016-08-06 web client with the assets from
-the August 2016 Android release.
-
-The server's game rules are a reconstruction. The original server code was
-never published, so anything the client cannot show us (damage, hit rules,
-spawn logic, score limits) is a documented assumption, not recovered
-behaviour.
+- **Rules and feel: KrunkerRevival.** KRP (`KrunkerRevivalProject/vertix`,
+  commit `1e302cb`) is the reference this server is ported from, so that the
+  game feels the same. Its classes, weapons, modes and cosmetic catalogues
+  are converted to `data/krp/` by `scripts/import_krp.py`, and the server
+  logic in `src/game/room.rs` and `src/game/projectile.rs` follows its
+  `server/room.ts`, `server/game.ts` and `core/src/logic/projectile.ts`.
+  Credit for that work goes to the KRP contributors.
+- **Numbers: the research.** Balance presets in `data/balance/` lay the
+  values recovered for each game version over KRP's numbers. `best` (the
+  default) takes the best-supported value for each stat; `krp` keeps KRP's
+  own; `v0.20` to `v3.8` follow one version. Every value records its basis
+  and source.
+- **The client: built locally.** `scripts/build-client.sh` (or `.ps1` on
+  Windows) builds KRP's client from a pinned commit into `client/dist`.
+  Nothing of the client is committed here, and never any original
+  Vertix.io file (`app.js`, `res.zip`, the Android APK, sprites or sounds).
+- **Maps: read at run time.** By default the server plays the 24 map
+  candidates from a local archive clone, each checked against its recorded
+  SHA-256 before use, or our own text maps.
 
 ## License
 
@@ -51,35 +56,20 @@ that no tracked file is byte-identical to an archive original.
 
 ## Running
 
-You need a clone of the private archive with its LFS files pulled (the
-2016-08-06 client, its page capture and the August 2016 APK). Then:
-
 ```bash
+scripts/build-client.sh            # once: needs git, Node.js and pnpm
 cargo run --release -- --archive PATH/TO/vertix-archive
 ```
 
-and open the address it prints. The server checks every original against
-`data/boot/20160806061006.json` before serving anything and refuses to
-start on a mismatch. The bind address, port, rule layers and map source
-are in `config/server.toml`; `--port`, `--trace out/trace.jsonl` and the
-`VERTIX_ARCHIVE` variable override it.
-
-Step-by-step instructions, including Windows, are in
+and open the address it prints. Settings (bind address, port, rooms,
+balance preset, rule layers, map sources) are in `config/server.toml`;
+`--port`, `--trace out/trace.jsonl` and the `VERTIX_ARCHIVE` variable
+override it, and `--explain-rules` prints every rule and balance value with
+its source. Step-by-step instructions, including Windows, are in
 [docs/RUNNING.md](docs/RUNNING.md).
 
-`--trace` writes every event in and out as JSON lines, which is how the
-protocol behaviour is checked against the client.
-
-The browser check plays the game in Chromium with every outside request
-blocked:
-
-```bash
-python3 -m pip install playwright
-python3 scripts/e2e_boot.py --url http://HOST:PORT/ [--chromium PATH]
-```
-
-`data/boot/` and `data/contracts/` are derived, code-free facts from the
-research repository, regenerated with `scripts/import_research.py`.
+`scripts/e2e_smoke.py` starts the server and plays through it over
+long-polling and WebSocket, with no archive or client build needed.
 
 ## Development
 
@@ -94,6 +84,7 @@ Local gates (also run in CI once the repository is public):
 cargo fmt --all -- --check
 cargo clippy --locked --all-targets --all-features -- -D warnings
 cargo test --locked --all-features
+python3 scripts/e2e_smoke.py
 python3 -m unittest discover -s scripts/tests
 gitleaks detect
 ```

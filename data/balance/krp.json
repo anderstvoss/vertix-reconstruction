@@ -1,0 +1,570 @@
+{
+  "id": "krp",
+  "title": "KrunkerRevival",
+  "kind": "krp",
+  "classes": {
+    "Triggerman": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Detective": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Hunter": {
+      "maxHealth": {
+        "value": 50,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Run 'N Gun": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.684,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Vince": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.5985,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Rocketeer": {
+      "maxHealth": {
+        "value": 120,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.513,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Spray N' Pray": {
+      "maxHealth": {
+        "value": 200,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.3876,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Arsonist": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Duck": {
+      "maxHealth": {
+        "value": 800,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.456,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Nademan": {
+      "maxHealth": {
+        "value": 110,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "???": {
+      "maxHealth": {
+        "value": 2000,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0.456,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "boss2": {
+      "maxHealth": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    }
+  },
+  "weapons": {
+    "smg": {
+      "dmg": {
+        "value": 25,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 24,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 800,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 143,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "revolver": {
+      "dmg": {
+        "value": 50,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 6,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1500,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 312,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "sniper": {
+      "dmg": {
+        "value": 100,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 1170,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "toygun": {
+      "dmg": {
+        "value": 17,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 8,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 500,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 78,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "shotgun": {
+      "dmg": {
+        "value": 22,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 3,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1000,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 455,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 4,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "grenades": {
+      "dmg": {
+        "value": 110,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 7500,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "rockets": {
+      "dmg": {
+        "value": 110,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "pistol": {
+      "dmg": {
+        "value": 12,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 5,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1000,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 130,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "minigun": {
+      "dmg": {
+        "value": 12,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 50,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1700,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 90,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "flamethrower": {
+      "dmg": {
+        "value": 11,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 30,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 1400,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 80,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "orblauncher": {
+      "dmg": {
+        "value": 70,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "maxAmmo": {
+        "value": 5,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "reloadSpeed": {
+        "value": 2000,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "fireRate": {
+        "value": 250,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    }
+  }
+}

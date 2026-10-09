@@ -1,0 +1,583 @@
+{
+  "id": "v3.81",
+  "title": "Version v3.81",
+  "kind": "version",
+  "evaluated_at": "2019-08-16",
+  "class_roster_from": "2019-07-21",
+  "classes": {
+    "Triggerman": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-02: Fandom 'Triggerman' revision 2019-02-02 (rev 1041)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Detective": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-02: Fandom 'Detective' revision 2019-02-02 (rev 1048)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Hunter": {
+      "maxHealth": {
+        "value": 50,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-02: Fandom 'Hunter' revision 2019-02-02 (rev 1045)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Run 'N Gun": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-02: Fandom 'Run_N_Gun' revision 2019-02-02 (rev 1050)"
+      },
+      "speed": {
+        "value": 0.684,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Vince": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Vince' revision 2019-02-03 (rev 1058)"
+      },
+      "speed": {
+        "value": 0.5985,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Rocketeer": {
+      "maxHealth": {
+        "value": 120,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Rocketeer' revision 2019-02-03 (rev 1054)"
+      },
+      "speed": {
+        "value": 0.513,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Spray N' Pray": {
+      "maxHealth": {
+        "value": 200,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Spray_N_Pray' revision 2019-02-03 (rev 1052)"
+      },
+      "speed": {
+        "value": 0.3876,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Slow"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Arsonist": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Arsonist' revision 2019-02-03 (rev 1060)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Duck": {
+      "maxHealth": {
+        "value": 800,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Duck' revision 2019-02-03 (rev 1062)"
+      },
+      "speed": {
+        "value": 0.456,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Slow"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Nademan": {
+      "maxHealth": {
+        "value": 110,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Nademan' revision 2019-02-03 (rev 1064)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "???": {
+      "maxHealth": {
+        "value": 2000,
+        "basis": "research",
+        "source": "INFERRED D, 2019-02-03: Fandom 'Boss' revision 2019-02-03 (rev 1066)"
+      },
+      "speed": {
+        "value": 0.456,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Slow"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "boss2": {
+      "maxHealth": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    }
+  },
+  "weapons": {
+    "smg": {
+      "dmg": {
+        "value": 25,
+        "basis": "research",
+        "source": "CORROBORATED D, 2017-07-21: Namu.wiki VERTIX ONLINE findings transcript"
+      },
+      "maxAmmo": {
+        "value": 24,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Machine Gun)"
+      },
+      "reloadSpeed": {
+        "value": 800,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Machine Gun)"
+      },
+      "fireRate": {
+        "value": 143,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Machine Gun)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "revolver": {
+      "dmg": {
+        "value": 50,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 6,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Desert Eagle) [later patch notes on this weapon: v3.04: Nerfed Detective Sligthly]"
+      },
+      "fireRate": {
+        "value": 390,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Desert Eagle) [later patch notes on this weapon: v3.04: Nerfed Detective Sligthly]"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "sniper": {
+      "dmg": {
+        "value": 100,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Sniper)"
+      },
+      "fireRate": {
+        "value": 1170,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Sniper)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "toygun": {
+      "dmg": {
+        "value": 17,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 8,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 500,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Toy Blaster)"
+      },
+      "fireRate": {
+        "value": 78,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Toy Blaster)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "shotgun": {
+      "dmg": {
+        "value": 22,
+        "basis": "research",
+        "source": "INFERRED D, 2018-05-03: Fandom 'Guns' revision 2018-05-03 (rev 870)"
+      },
+      "maxAmmo": {
+        "value": 3,
+        "basis": "research",
+        "source": "INFERRED D, 2019-06-13: Fandom 'Guns' revision 2019-06-13 (rev 1322)"
+      },
+      "reloadSpeed": {
+        "value": 1000,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Shotgun)"
+      },
+      "fireRate": {
+        "value": 455,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Shotgun)"
+      },
+      "bulletsPerShot": {
+        "value": 5,
+        "basis": "research",
+        "source": "INFERRED D, 2019-06-13: Fandom 'Guns' revision 2019-06-13 (rev 1322)"
+      }
+    },
+    "grenades": {
+      "dmg": {
+        "value": 110,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 7500,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Grenade Launcher)"
+      },
+      "fireRate": {
+        "value": 0,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Grenade Launcher)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "rockets": {
+      "dmg": {
+        "value": 110,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Rocket Laucher)"
+      },
+      "fireRate": {
+        "value": 0,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Rocket Laucher)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "pistol": {
+      "dmg": {
+        "value": 12,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 5,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 1000,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Machine Pistol)"
+      },
+      "fireRate": {
+        "value": 130,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Machine Pistol)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "minigun": {
+      "dmg": {
+        "value": 11,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 50,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 1700,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Minigun)"
+      },
+      "fireRate": {
+        "value": 90,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Minigun)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "flamethrower": {
+      "dmg": {
+        "value": 9,
+        "basis": "research",
+        "source": "INFERRED D, 2018-07-02: Fandom 'Guns' revision 2018-07-02 (rev 925)"
+      },
+      "maxAmmo": {
+        "value": 30,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 1400,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Flamethrower)"
+      },
+      "fireRate": {
+        "value": 80,
+        "basis": "research",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Flamethrower)"
+      },
+      "bulletsPerShot": {
+        "value": 2,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      }
+    },
+    "orblauncher": {
+      "dmg": {
+        "value": 110,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "maxAmmo": {
+        "value": 5,
+        "basis": "research",
+        "source": "INFERRED D, 2019-03-23: Fandom 'Guns' revision 2019-03-23 (rev 1268)"
+      },
+      "reloadSpeed": {
+        "value": 3000,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Nade Launch) [later patch notes on this weapon: v3.04: Buffed Nademan again]"
+      },
+      "fireRate": {
+        "value": 250,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Nade Launch) [later patch notes on this weapon: v3.04: Buffed Nademan again]"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    }
+  }
+}

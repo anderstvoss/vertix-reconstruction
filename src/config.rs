@@ -11,15 +11,30 @@ pub struct Config {
     pub port: u16,
     #[serde(default)]
     pub archive: String,
-    pub manifest: PathBuf,
+    /// The built `KrunkerRevival` client (`scripts/build-client.sh`).
+    pub client_dir: PathBuf,
     /// Rule layers, merged in order; later layers override earlier ones.
     pub rules: Vec<PathBuf>,
     pub maps: Maps,
+    pub game: Game,
     #[serde(default)]
     pub trace: String,
     #[serde(default)]
     pub trace_brief: Vec<String>,
     pub engine_io: EngineIo,
+}
+
+/// Game data and rooms.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Game {
+    /// KRP's classes, weapons, modes and cosmetics (`data/krp`).
+    pub krp_data: PathBuf,
+    /// Balance presets (`data/balance`).
+    pub balance_dir: PathBuf,
+    /// The preset applied over KRP's numbers; `best` by default.
+    pub balance: String,
+    /// The rooms opened at start, in the room list's order.
+    pub rooms: Vec<crate::game::RoomSpec>,
 }
 
 /// Where maps come from.
@@ -96,9 +111,11 @@ mod tests {
         )))
         .unwrap();
         assert_eq!(c.engine_io.ping_interval_ms, 25_000);
-        assert_eq!(c.engine_io.ping_timeout_ms, 60_000);
+        assert_eq!(c.engine_io.ping_timeout_ms, 20_000);
         assert!(c.trace_brief.iter().any(|e| e == "rsd"));
         assert_eq!(c.maps.sources, [MapSourceKind::Archive]);
         assert!(c.rules.len() >= 2);
+        assert_eq!(c.game.balance, "best");
+        assert_eq!(c.game.rooms.len(), 9);
     }
 }

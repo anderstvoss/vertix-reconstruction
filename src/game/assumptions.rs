@@ -1,8 +1,9 @@
 //! Typed view of the rule layers in `data/rules/`.
 //!
-//! Game logic reads numbers only from here, never from literals. The
+//! Server settings and game constants live here; class and weapon numbers
+//! come from KRP's data and a balance preset (see [`super::data`]). The
 //! numbers come from a stack of TOML layers: a provisional base, then
-//! dated evidence for the target build, then optional local tuning. A
+//! dated evidence, then optional local tuning. A
 //! later layer replaces individual values of an earlier one, and every
 //! value keeps the status and source of the layer entry that set it, so a
 //! correction is a data change and [`Provenance`] can say where each
@@ -20,11 +21,11 @@
 //! source = "app.js defaults"
 //! view_mult = 1
 //!
-//! [[weapons]]                     # arrays of tables merge by `name`
-//! name = "smg"
+//! [[things]]                      # arrays of tables merge by `name`
+//! name = "a"
 //! status = "INFERRED"             # optional: for the fields of this entry
-//! source = "wiki, 2016-07-22"
-//! reloadSpeed = 800
+//! source = "elsewhere"
+//! x = 1
 //! ```
 //!
 //! The same `name` may appear more than once in one layer, so values with
@@ -34,8 +35,7 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-use serde_json::{Value as Json, json};
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use toml::{Table, Value};
 
@@ -58,11 +58,7 @@ pub const STATUSES: &[&str] = &[
 pub struct Assumptions {
     pub world: World,
     pub net: Net,
-    pub round: Round,
-    pub modes: Vec<Mode>,
-    pub player: PlayerRules,
-    pub classes: Vec<Class>,
-    pub weapons: Vec<WeaponSpec>,
+    pub rules: Rules,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -75,111 +71,34 @@ pub struct World {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Net {
-    /// How often the server advances the world and sends `rsd`.
+    /// Server ticks per second: projectiles, timers and pickups advance on
+    /// this tick.
     pub update_hz: f64,
-    pub max_input_delta_ms: f64,
 }
 
+/// Game constants KRP's server hard-codes (`server/room.ts`, `game.ts`).
 #[derive(Debug, Clone, Deserialize)]
-pub struct Round {
-    /// `code` of the mode new rooms play.
-    pub mode: String,
-}
-
-/// A game mode. The client reads the fields it is sent in
-/// `mapData.gameMode`; the rest stay on the server.
-#[derive(Debug, Clone, Deserialize)]
-pub struct Mode {
-    pub name: String,
-    pub code: String,
-    pub desc1: String,
-    pub desc2: String,
-    pub score: u32,
-    pub teams: bool,
-    #[serde(default = "one")]
-    pub kill_score_mult: f64,
-    /// Map ids this mode rotates through.
-    #[serde(default)]
-    pub maps: Vec<String>,
-    /// Class every player plays, whatever they picked (by class name).
-    #[serde(default)]
-    pub forced_class: Option<String>,
-}
-
-fn one() -> f64 {
-    1.0
-}
-
-impl Mode {
-    /// `mapData.gameMode` as the client reads it.
-    #[must_use]
-    pub fn client_json(&self) -> Json {
-        json!({
-            "name": self.name,
-            "code": self.code,
-            "desc1": self.desc1,
-            "desc2": self.desc2,
-            "score": self.score,
-            "teams": self.teams,
-        })
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct PlayerRules {
-    pub spawn_protection_ms: u64,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Class {
-    pub name: String,
-    pub weapons: Vec<usize>,
-    pub max_health: f64,
-    pub width: f64,
-    pub height: f64,
-    pub speed: f64,
-    pub jump_strength: f64,
-    pub gravity_strength: f64,
-}
-
-/// A weapon's static numbers, named as the client reads them.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct WeaponSpec {
-    pub name: String,
-    pub weapon_index: usize,
-    pub dmg: f64,
-    pub ammo: u32,
-    pub max_ammo: u32,
-    pub reload_speed: f64,
-    pub fire_rate: f64,
-    pub spread: Vec<f64>,
-    pub width: f64,
-    pub length: f64,
-    pub y_offset: f64,
-    pub hold_dist: f64,
-    pub b_speed: f64,
-    pub b_width: f64,
-    pub b_height: f64,
-    #[serde(default)]
-    pub b_rand_scale: Option<[f64; 2]>,
-    pub c_acc: f64,
-    /// `maxLife` in ms; the client treats a missing or zero value as none.
-    #[serde(default)]
-    pub max_life: Option<f64>,
-    pub bullets_per_shot: u32,
-    pub pierce: u32,
-    pub bounce: bool,
-    pub dist_based: bool,
-    pub explode_on_death: bool,
-    pub b_dist: f64,
-    pub b_trail: f64,
-    pub b_sprite: u32,
-    #[serde(default)]
-    pub glow_width: Option<f64>,
-    #[serde(default)]
-    pub glow_height: Option<f64>,
-    pub shake: f64,
+pub struct Rules {
+    pub max_players: usize,
+    pub spawn_protection_ms: f64,
+    pub explosive_clutter_hit_damage: f64,
+    pub explosive_clutter_blast_radius: f64,
+    pub duck_hit_damage: f64,
+    pub duck_hit_radius: f64,
+    pub lootcrate_points: u32,
+    pub max_active_loot: usize,
+    pub loot_interval_ms: f64,
+    pub hardpoint_points: u32,
+    pub hardpoint_interval_ms: f64,
+    pub zone_war_points: u32,
+    pub healthpack_heal: f64,
+    pub healthpack_respawn_ms: f64,
+    pub boss_kill_score: u32,
+    pub kill_streak_window_ms: f64,
+    pub round_end_countdown_s: u32,
+    pub bullet_pool: usize,
+    pub chat_max_len: usize,
+    pub name_max_len: usize,
 }
 
 #[derive(Debug)]
@@ -442,61 +361,15 @@ impl Assumptions {
     }
 
     fn validate(&self) -> Result<(), Error> {
-        if self.classes.is_empty() {
-            return Err(Error("no classes".into()));
-        }
-        for (i, w) in self.weapons.iter().enumerate() {
-            if w.weapon_index != i {
-                return Err(Error(format!(
-                    "weapons must be listed in weaponIndex order; entry {i} is {}",
-                    w.weapon_index
-                )));
-            }
-            if w.spread.is_empty() {
-                return Err(Error(format!("weapon {} has an empty spread list", w.name)));
-            }
-        }
-        for c in &self.classes {
-            if let Some(&bad) = c.weapons.iter().find(|&&w| w >= self.weapons.len()) {
-                return Err(Error(format!("class {} uses unknown weapon {bad}", c.name)));
-            }
-        }
-        for m in &self.modes {
-            if let Some(f) = &m.forced_class
-                && !self.classes.iter().any(|c| &c.name == f)
-            {
-                return Err(Error(format!("mode {} forces unknown class {f}", m.code)));
-            }
-        }
-        if self.mode().is_none() {
-            return Err(Error(format!(
-                "round.mode {} is not a mode",
-                self.round.mode
-            )));
-        }
         if !(self.net.update_hz > 0.0 && self.net.update_hz <= 1000.0) {
             return Err(Error("net.update_hz must be in (0, 1000]".into()));
         }
+        if self.rules.max_players == 0 || self.rules.bullet_pool == 0 {
+            return Err(Error(
+                "rules.max_players and rules.bullet_pool must be positive".into(),
+            ));
+        }
         Ok(())
-    }
-
-    /// The mode new rooms play.
-    #[must_use]
-    pub fn mode(&self) -> Option<&Mode> {
-        self.modes.iter().find(|m| m.code == self.round.mode)
-    }
-
-    /// The class for a client-chosen index, falling back to the first.
-    #[must_use]
-    pub fn class(&self, index: usize) -> (usize, &Class) {
-        let i = if index < self.classes.len() { index } else { 0 };
-        (i, &self.classes[i])
-    }
-
-    /// The class index with this name.
-    #[must_use]
-    pub fn class_named(&self, name: &str) -> Option<usize> {
-        self.classes.iter().position(|c| c.name == name)
     }
 }
 
@@ -513,8 +386,8 @@ pub fn committed() -> (Assumptions, Provenance) {
             include_str!("../../data/rules/base.toml"),
         ),
         (
-            "2016-08-06".to_owned(),
-            include_str!("../../data/rules/2016-08-06.toml"),
+            "recovered".to_owned(),
+            include_str!("../../data/rules/recovered.toml"),
         ),
     ]
     .map(|(l, t)| (l, t.to_owned()));
@@ -528,34 +401,10 @@ mod tests {
     #[test]
     fn committed_layers_are_consistent() {
         let (a, prov) = committed();
-        // Class order and loadouts must match the 2016-08-06 client.
-        let names: Vec<_> = a.classes.iter().map(|c| c.name.as_str()).collect();
-        assert_eq!(
-            names,
-            [
-                "Triggerman",
-                "Detective",
-                "Hunter",
-                "Run 'N Gun",
-                "Vince",
-                "Rocketeer",
-                "Spray N' Pray",
-                "Arsonist",
-                "Duck"
-            ]
-        );
-        assert_eq!(a.classes[0].weapons, [0, 5]);
-        assert_eq!(a.weapons.len(), 10);
-        assert!((a.weapons[0].dmg - 20.0).abs() < f64::EPSILON);
-        // The dated layer replaces the provisional base.
-        assert!((a.weapons[1].reload_speed - 1200.0).abs() < f64::EPSILON);
-        let (_, o) = &prov.values["weapons.revolver.reloadSpeed"];
-        assert_eq!(o.status, "INFERRED");
-        let (_, o) = &prov.values["weapons.smg.bWidth"];
-        assert_eq!(o.status, "PROVISIONAL");
-        assert_eq!(a.mode().unwrap().code, "ffa");
-        let snipe = a.modes.iter().find(|m| m.code == "snipe").unwrap();
-        assert_eq!(snipe.forced_class.as_deref(), Some("Hunter"));
+        assert!((a.world.tile_scale - 256.0).abs() < f64::EPSILON);
+        assert_eq!(a.rules.max_players, 8);
+        assert_eq!(prov.values["world.view_mult"].1.status, "RECOVERED");
+        assert_eq!(prov.values["rules.duck_hit_damage"].1.status, "PROVISIONAL");
         assert_eq!(prov.hash.len(), 64);
     }
 
@@ -609,13 +458,5 @@ x = 4
         let bad = "[layer]\nstatus = \"MAYBE\"\nsource = \"x\"\n";
         assert!(merge_layers(&[("x".into(), bad.into())]).is_err());
         assert!(merge_layers(&[("x".into(), "[world]\na = 1\n".into())]).is_err());
-    }
-
-    #[test]
-    fn unknown_class_falls_back() {
-        let (a, _) = committed();
-        assert_eq!(a.class(99).0, 0);
-        assert_eq!(a.class(2).1.name, "Hunter");
-        assert_eq!(a.class_named("Rocketeer"), Some(5));
     }
 }

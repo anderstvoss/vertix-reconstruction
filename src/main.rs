@@ -1,5 +1,5 @@
-//! `vertix-server`: serves the archived 2016-08-06 client and runs the
-//! reconstructed game server behind it.
+//! `vertix-server`: the Rust reconstruction of the game's server, serving
+//! a `KrunkerRevival` client build.
 //!
 //! ```text
 //! vertix-server [--config config/server.toml] [--archive PATH] [--trace FILE] [--port N]
@@ -9,14 +9,13 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
-use std::time::Duration;
 
 use tokio::sync::mpsc;
 use vertix_reconstruction::config::{Config, MapSourceKind};
 use vertix_reconstruction::game::Game;
 use vertix_reconstruction::game::assumptions::Assumptions;
+use vertix_reconstruction::game::data::GameData;
 use vertix_reconstruction::game::maps::{ArchiveGenData, MapSet, MapSource, TextFiles};
-use vertix_reconstruction::originals::{BootManifest, Store};
 use vertix_reconstruction::trace::Trace;
 use vertix_reconstruction::{eio, http};
 
@@ -62,46 +61,54 @@ async fn run() -> Result<(), String> {
     let args = parse_args()?;
     let config = Config::load(&args.config)?;
     let (rules, provenance) = Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
+    let data = GameData::load(
+        &config.game.krp_data,
+        &config.game.balance_dir,
+        &config.game.balance,
+    )
+    .map_err(|e| format!("game data: {e}"))?;
     if args.explain_rules {
         print!("{}", provenance.table());
         println!("{}", provenance.summary());
+        print!("{}", data.explain());
         return Ok(());
     }
-    let archive = config
-        .archive_path(args.archive.as_deref())
-        .ok_or("no archive: pass --archive, set VERTIX_ARCHIVE, or set `archive` in the config")?;
-    let manifest = BootManifest::load(&config.manifest).map_err(|e| e.to_string())?;
-    let store = Store::load(&archive, &manifest).map_err(|e| format!("archive: {e}"))?;
-    eprintln!(
-        "loaded build {} ({} files, page shell from capture {}), all hashes verified",
-        manifest.build,
-        store.len(),
-        manifest.page_shell.capture
-    );
     eprintln!(
         "rules: {} (sha256 {})",
         provenance.summary(),
         provenance.hash
     );
+    eprintln!(
+        "game data: KRP {} with balance preset {} ({} values)",
+        data.krp_commit,
+        data.balance.id,
+        data.balance.values.len()
+    );
+    let archive = config.archive_path(args.archive.as_deref());
     let mut loaded = Vec::new();
     for kind in &config.maps.sources {
         let source: Box<dyn MapSource> = match kind {
             MapSourceKind::Archive => Box::new(ArchiveGenData {
-                root: archive.clone(),
+                root: archive.clone().ok_or(
+                    "the archive map source needs an archive: pass --archive, set \
+                     VERTIX_ARCHIVE, or set `archive` in the config",
+                )?,
                 dir: config.maps.archive_dir.clone(),
             }),
             MapSourceKind::Files => Box::new(TextFiles {
                 files: config.maps.files.clone(),
             }),
         };
-        loaded.extend(
-            source
-                .load(rules.world.tile_scale)
-                .map_err(|e| format!("maps ({kind:?}): {e}"))?,
-        );
+        loaded.extend(source.load().map_err(|e| format!("maps ({kind:?}): {e}"))?);
     }
     let maps = MapSet::new(loaded).map_err(|e| format!("maps: {e}"))?;
     eprintln!("maps: {} loaded: {}", maps.len(), maps.ids().join(" "));
+    if !config.client_dir.join("index.html").is_file() {
+        eprintln!(
+            "warning: no client build in {}; run scripts/build-client.sh",
+            config.client_dir.display()
+        );
+    }
 
     let trace_path = args
         .trace
@@ -113,20 +120,25 @@ async fn run() -> Result<(), String> {
     };
 
     let (tx, rx) = mpsc::unbounded_channel();
-    let eio = eio::Server::new(config.engine_io.timing(), tx, trace.clone());
-    tokio::spawn(Game::new(rules, maps, trace.clone()).run(rx));
-    let reaper = eio.clone();
+    let (ask_tx, ask_rx) = mpsc::unbounded_channel();
+    let timing = config.engine_io.timing();
+    let eio = eio::Server::new(timing, tx, trace.clone());
+    let game = Game::new(rules, data, maps, &config.game.rooms, trace.clone())?;
+    tokio::spawn(game.run(rx, ask_rx));
+    let beat = eio.clone();
     tokio::spawn(async move {
-        let mut every = tokio::time::interval(Duration::from_secs(5));
+        let mut every = tokio::time::interval(timing.ping_interval);
+        every.tick().await;
         loop {
             every.tick().await;
-            reaper.reap();
+            beat.heartbeat();
         }
     });
 
     let app = http::router(http::AppState {
-        store: Arc::new(store),
+        client_dir: Arc::new(config.client_dir.clone()),
         eio,
+        game: ask_tx,
         trace,
     });
     let port = args.port.unwrap_or(config.port);
