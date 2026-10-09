@@ -10,11 +10,12 @@ deviation.
 | Area | Original | Here | Why |
 | --- | --- | --- | --- |
 | Transport | Engine.IO offered a WebSocket upgrade | Long-polling only (`upgrades: []`) | Polling is what the client needs to run; WebSocket is a later milestone. The client accepts an empty upgrade list. |
-| Page | Loaded jQuery and Socket.IO from public CDNs, plus ads, analytics and social widgets | The two CDN URLs are rewritten to `/cdn/<host>/<path>` and served from the hash-checked archive copies; a Content-Security-Policy header blocks every other third-party request | No request may leave the local server. These two URL substitutions are the only change to the page, and each must match exactly once or the server refuses to start. |
+| Page | Loaded jQuery and Socket.IO from public CDNs, plus ads, analytics and social widgets | The two CDN URLs are rewritten to `/cdn/<host>/<path>` and served from the hash-checked archive copies; a Content-Security-Policy header blocks every other third-party request | No request may leave the local server. These two URL substitutions and the version label (below) are the only changes to the page, and each must match exactly once or the server refuses to start. |
+| Version label | Menu footer shows `V3.0 (CHANGELOG)`, linking the original changelog | Shows `RECON <our version> (CHANGELOG)`, linking this repository's changelog | Decided by Anders (2026-10-08): this build is not a faithful V3.0, so it must not claim to be. Done as a third page rewrite; `app.js` is untouched. |
 | `/getIP` | Named a live game server | Answers with the host and port the browser used to reach us | Archived replies point at the original servers and are never served. |
 | Lobbies | `create` with an argument joined or created a private lobby | Every `create` joins the one public room | Private lobbies are not built yet. |
 | Abrupt disconnects | Same | A tab that vanishes without a close packet is dropped after `pingInterval + pingTimeout` (85 s) | Same timing as the original handshake; noted because tests must disconnect cleanly to see `rem` quickly. |
-| Accounts | Login, stats and cosmetics from the original backend | Not implemented; every player is a guest | Waiting on a decision about accounts. Will sit behind an interface. |
+| Accounts | Login, stats and cosmetics from the original backend | Not implemented yet; every player is a guest | Decided by Anders (2026-10-08): no accounts. A local save with every unlockable owned replaces them, behind a swappable interface (next PR). |
 | Anti-cheat | Client emits `kil` when it detects a minimap hack | Ignored (traced as unhandled) | No server-side behaviour is known. |
 
 ## Placeholders (no original data survives)
