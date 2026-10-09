@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "id": "original-web-20160806-two-client-ffa",
+  "status": "NOT_EXECUTED",
+  "original_client": {
+    "build": "20160806061006",
+    "sha256": "cbab5cd590ff0d3a9d01a60eba835cd885b715988d0d87a7d287321399df2f09",
+    "source_archive_commit": "a059176db6671db6f35c1a3e2457495c08c846ac"
+  },
+  "historical_scope": "RECOVERED_CLIENT_EVENT_SHAPES_ONLY",
+  "server_rules": {
+    "status": "NEW_PROVISIONAL",
+    "values": [
+      "movement fixed step",
+      "hit radius and projectile damage",
+      "spawn locations",
+      "score limit",
+      "round duration",
+      "win-condition selection"
+    ]
+  },
+  "required_artifacts": [
+    "two independent original Chromium contexts",
+    "hash verification of client and boot manifest",
+    "network isolation evidence",
+    "per-session packet trace",
+    "client-state snapshots",
+    "browser screenshot before and after round end",
+    "Rust match state-event replay digest",
+    "exact provisional rule config hash"
+  ],
+  "phases": [
+    {
+      "phase": "transport-and-join",
+      "steps": [
+        {
+          "direction": "server->client",
+          "event": "welcome",
+          "arity": 2,
+          "assertion": "Each session receives its own player ID and room"
+        },
+        {
+          "direction": "client->server",
+          "event": "gotit",
+          "arity": 4,
+          "assertion": "Both original clients acknowledge independently"
+        },
+        {
+          "direction": "client->server",
+          "event": "create",
+          "arity": 0,
+          "alternative_arities": [
+            1
+          ],
+          "assertion": "Create or join emission is observed"
+        },
+        {
+          "direction": "client->server",
+          "event": "respawn",
+          "arity": 0,
+          "assertion": "Each original client requests a spawn"
+        }
+      ]
+    },
+    {
+      "phase": "map-and-player-state",
+      "steps": [
+        {
+          "direction": "server->client",
+          "event": "gameSetup",
+          "arity": 3,
+          "assertion": "First positional argument is JSON string; both render and identify one remote player"
+        },
+        {
+          "direction": "client->server",
+          "event": "4",
+          "arity": 1,
+          "assertion": "Input contains hdt,vdt,ts,isn,s and increases isn"
+        },
+        {
+          "direction": "server->client",
+          "event": "rsd",
+          "arity": 1,
+          "assertion": "Latest acknowledged isn and remote positions reconcile"
+        }
+      ]
+    },
+    {
+      "phase": "combat-and-respawn",
+      "steps": [
+        {
+          "direction": "client->server",
+          "event": "1",
+          "arity": 6,
+          "assertion": "Six positional shot values emitted by original client"
+        },
+        {
+          "direction": "server->client",
+          "event": "1",
+          "arity": 1,
+          "assertion": "Damage state visible to both clients under NEW rules"
+        },
+        {
+          "direction": "server->client",
+          "event": "3",
+          "arity": 1,
+          "assertion": "Kill/death state visible on both clients"
+        },
+        {
+          "direction": "server->client",
+          "event": "upd",
+          "arity": 1,
+          "assertion": "Authoritative provisional score update displayed"
+        },
+        {
+          "direction": "client->server",
+          "event": "respawn",
+          "arity": 0,
+          "assertion": "Victim can request another spawn"
+        }
+      ]
+    },
+    {
+      "phase": "round-end-and-next-round",
+      "steps": [
+        {
+          "direction": "server->client",
+          "event": "7",
+          "arity": 4,
+          "assertion": "Correct winner and original UI game-over table"
+        },
+        {
+          "direction": "server->client",
+          "event": "8",
+          "arity": 1,
+          "assertion": "Scalar countdown renders and both clients advance"
+        }
+      ]
+    }
+  ],
+  "negative_controls": [
+    {
+      "name": "duplicate-input",
+      "requirement": "Server does not process identical stale isn twice"
+    },
+    {
+      "name": "fire-rate-cheat",
+      "requirement": "Authoritative shot validator rejects premature repeated fire"
+    },
+    {
+      "name": "player-disconnect",
+      "requirement": "Disconnected session cleaned without affecting other player"
+    },
+    {
+      "name": "session-isolation",
+      "requirement": "Private gameSetup and score updates are not misrouted"
+    },
+    {
+      "name": "malformed-event",
+      "requirement": "Invalid positional arity or malformed payload is rejected, never panics"
+    }
+  ],
+  "acceptance": "All steps must be observed against the UNMODIFIED authenticated original browser client connected to the Rust server; a synthetic injection or offline test alone is insufficient."
+}
