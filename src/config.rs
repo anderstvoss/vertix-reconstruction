@@ -12,13 +12,31 @@ pub struct Config {
     #[serde(default)]
     pub archive: String,
     pub manifest: PathBuf,
-    pub assumptions: PathBuf,
-    pub map: PathBuf,
+    /// Rule layers, merged in order; later layers override earlier ones.
+    pub rules: Vec<PathBuf>,
+    pub maps: Maps,
     #[serde(default)]
     pub trace: String,
     #[serde(default)]
     pub trace_brief: Vec<String>,
     pub engine_io: EngineIo,
+}
+
+/// Where maps come from.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Maps {
+    /// `archive`: the 24 provisional maps in the archive clone.
+    /// `files`: the text maps listed in `files`.
+    pub source: MapSourceKind,
+    #[serde(default)]
+    pub files: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum MapSourceKind {
+    Archive,
+    Files,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -73,5 +91,7 @@ mod tests {
         assert_eq!(c.engine_io.ping_interval_ms, 25_000);
         assert_eq!(c.engine_io.ping_timeout_ms, 60_000);
         assert!(c.trace_brief.iter().any(|e| e == "rsd"));
+        assert_eq!(c.maps.source, MapSourceKind::Archive);
+        assert!(c.rules.len() >= 2);
     }
 }

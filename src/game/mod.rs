@@ -2,7 +2,7 @@
 //!
 //! One task owns all game state and handles transport events and ticks in
 //! order, so there are no locks in game logic. Everything the client is
-//! sent is built here from `data/assumptions.toml` and the map.
+//! sent is built here from the layered rules (`data/rules/`) and the maps.
 //!
 //! Join sequence, as the 2016-08-06 client drives it (INFERRED from its
 //! handlers; the original server is lost):
@@ -20,6 +20,7 @@
 
 pub mod assumptions;
 pub mod map;
+pub mod maps;
 
 use std::collections::HashMap;
 use std::f64::consts::PI;
@@ -31,8 +32,9 @@ use tokio::sync::mpsc;
 use crate::eio::{ClientHandle, ConnId, TransportEvent};
 use crate::sio::Event;
 use crate::trace::Trace;
-use assumptions::Assumptions;
+use assumptions::{Assumptions, Mode};
 use map::{Body, Map};
+use maps::MapSet;
 
 /// Name shown for players who leave the name box empty (ASSUMPTION).
 const DEFAULT_NAME: &str = "Guest";
@@ -108,6 +110,7 @@ struct Conn {
 
 struct Room {
     name: String,
+    mode: Mode,
     map: Map,
     players: HashMap<u32, Player>,
     next_index: u32,
@@ -117,7 +120,7 @@ struct Room {
 /// The whole game state.
 pub struct Game {
     rules: Assumptions,
-    map_template: Map,
+    maps: MapSet,
     conns: HashMap<ConnId, Conn>,
     rooms: HashMap<String, Room>,
     trace: Trace,
@@ -154,10 +157,10 @@ fn clean_name(raw: &str) -> String {
 
 impl Game {
     #[must_use]
-    pub fn new(rules: Assumptions, map: Map, trace: Trace) -> Self {
+    pub fn new(rules: Assumptions, maps: MapSet, trace: Trace) -> Self {
         Self {
             rules,
-            map_template: map,
+            maps,
             conns: HashMap::new(),
             rooms: HashMap::new(),
             trace,
@@ -167,7 +170,7 @@ impl Game {
 
     /// Runs until the transport channel closes.
     pub async fn run(mut self, mut events: mpsc::UnboundedReceiver<TransportEvent>) {
-        let tick = Duration::from_millis(self.rules.net.tick_ms);
+        let tick = Duration::from_secs_f64(1.0 / self.rules.net.update_hz);
         let mut interval = tokio::time::interval(tick);
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         let mut last = tokio::time::Instant::now();
@@ -266,14 +269,34 @@ impl Game {
         if c.room.is_some() {
             return;
         }
-        let map = self.map_template.clone();
-        let room = self.rooms.entry(name.to_owned()).or_insert_with(|| Room {
-            name: name.to_owned(),
-            map,
-            players: HashMap::new(),
-            next_index: 0,
-            members: Vec::new(),
-        });
+        if !self.rooms.contains_key(name) {
+            let mode = self
+                .rules
+                .mode()
+                .cloned()
+                .unwrap_or_else(|| self.rules.modes[0].clone());
+            let r = self.next_random();
+            let (map_id, map) = self.maps.pick(&mode, r);
+            self.trace
+                .note("room", conn, &format!("{name} {} map {map_id}", mode.code));
+            self.rooms.insert(
+                name.to_owned(),
+                Room {
+                    name: name.to_owned(),
+                    mode,
+                    map,
+                    players: HashMap::new(),
+                    next_index: 0,
+                    members: Vec::new(),
+                },
+            );
+        }
+        let Some(c) = self.conns.get(&conn) else {
+            return;
+        };
+        let Some(room) = self.rooms.get_mut(name) else {
+            return;
+        };
         room.members.push(conn);
         let key = format!("{}/{}", c.host, room.name);
         let room_name = room.name.clone();
@@ -338,8 +361,19 @@ impl Game {
         let first_map = !c.has_map;
         c.has_map = true;
         let existing = c.player;
-        let spawn = self.pick_spawn(&room_name);
+        let Some(room) = self.rooms.get(&room_name) else {
+            return;
+        };
+        let team = Self::pick_team(room, existing);
+        let forced = room.mode.forced_class.clone();
+        let spawn = self.pick_spawn(&room_name, team.as_deref());
         let rules = &self.rules;
+        // Sniper War and Rocket War put everyone in one class, whatever
+        // they picked; `you` in gameSetup tells the client.
+        let class_req = forced
+            .as_deref()
+            .and_then(|f| rules.class_named(f))
+            .unwrap_or(class_req);
         let (class_index, class) = rules.class(class_req);
         let Some(room) = self.rooms.get_mut(&room_name) else {
             return;
@@ -355,13 +389,9 @@ impl Game {
             id: conn,
             name,
             class_index,
-            // FFA: every player is their own team; "" would hide them from
-            // the client's score table.
-            team: if rules.mode.teams {
-                "red".into()
-            } else {
-                format!("p{index}")
-            },
+            // Free for all: every player is their own team; "" would hide
+            // them from the client's score table.
+            team: team.unwrap_or_else(|| format!("p{index}")),
             x: spawn.0,
             y: spawn.1,
             angle: 0.0,
@@ -406,12 +436,26 @@ impl Game {
         self.send_scores(&room_name);
     }
 
-    fn pick_spawn(&mut self, room: &str) -> (f64, f64) {
+    /// The team a joining player plays on in a team mode: the one they
+    /// had, else the smaller side, red on a tie (ASSUMED).
+    fn pick_team(room: &Room, existing: Option<u32>) -> Option<String> {
+        if !room.mode.teams {
+            return None;
+        }
+        if let Some(p) = existing.and_then(|i| room.players.get(&i)) {
+            return Some(p.team.clone());
+        }
+        let blue = room.players.values().filter(|p| p.team == "blue").count();
+        let red = room.players.values().filter(|p| p.team == "red").count();
+        Some(if blue < red { "blue" } else { "red" }.to_owned())
+    }
+
+    fn pick_spawn(&mut self, room: &str, team: Option<&str>) -> (f64, f64) {
         let r = self.next_random();
         let Some(room) = self.rooms.get(room) else {
             return (0.0, 0.0);
         };
-        let tiles: Vec<_> = room.map.spawn_tiles().copied().collect();
+        let tiles = room.map.spawn_tiles(team);
         if tiles.is_empty() {
             return (0.0, 0.0);
         }
@@ -496,7 +540,7 @@ impl Game {
                 "genData": room.map.gen_data(),
                 "width": gw,
                 "height": gh,
-                "gameMode": self.rules.mode,
+                "gameMode": room.mode.client_json(),
                 "clutter": [],
                 "pickups": [],
             },
@@ -524,13 +568,29 @@ impl Game {
         order.sort_by(|a, b| b.score.cmp(&a.score).then(a.id.cmp(&b.id)));
         let lb: Vec<u32> = order.iter().map(|p| p.index).collect();
         self.broadcast(room_name, &event("lb", vec![json!(lb)]), None);
-        // Free for all: the first value is the score limit the client
-        // divides by; team modes would send the two team percentages.
-        self.broadcast(
-            room_name,
-            &event("ts", vec![json!(self.rules.mode.score), json!(0)]),
-            None,
-        );
+        // RECOVERED (`updateTeamScores`): in free for all the first value
+        // is the score limit the client divides your score by; in team
+        // modes the two values are the red and blue bar widths in percent,
+        // and the client shows your own team as "A". A team's score as the
+        // sum of its players' scores is INFERRED.
+        let ts = if room.mode.teams {
+            let percent = |team: &str| {
+                let total: u32 = room
+                    .players
+                    .values()
+                    .filter(|p| p.team == team)
+                    .map(|p| p.score)
+                    .sum();
+                (f64::from(total) * 100.0 / f64::from(room.mode.score.max(1))).min(100.0)
+            };
+            vec![
+                json!(percent("red").round()),
+                json!(percent("blue").round()),
+            ]
+        } else {
+            vec![json!(room.mode.score), json!(0)]
+        };
+        self.broadcast(room_name, &event("ts", ts), None);
     }
 
     fn with_player<R>(&mut self, conn: ConnId, f: impl FnOnce(&mut Player) -> R) -> Option<R> {

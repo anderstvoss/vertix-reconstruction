@@ -3,6 +3,7 @@
 //!
 //! ```text
 //! vertix-server [--config config/server.toml] [--archive PATH] [--trace FILE] [--port N]
+//! vertix-server --explain-rules [--config FILE]
 //! ```
 
 use std::path::PathBuf;
@@ -11,10 +12,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::mpsc;
-use vertix_reconstruction::config::Config;
+use vertix_reconstruction::config::{Config, MapSourceKind};
 use vertix_reconstruction::game::Game;
 use vertix_reconstruction::game::assumptions::Assumptions;
-use vertix_reconstruction::game::map::Map;
+use vertix_reconstruction::game::maps::{ArchiveGenData, MapSet, MapSource, TextFiles};
 use vertix_reconstruction::originals::{BootManifest, Store};
 use vertix_reconstruction::trace::Trace;
 use vertix_reconstruction::{eio, http};
@@ -24,6 +25,7 @@ struct Args {
     archive: Option<String>,
     trace: Option<String>,
     port: Option<u16>,
+    explain_rules: bool,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -32,6 +34,7 @@ fn parse_args() -> Result<Args, String> {
         archive: None,
         trace: None,
         port: None,
+        explain_rules: false,
     };
     let mut it = std::env::args().skip(1);
     while let Some(flag) = it.next() {
@@ -43,11 +46,11 @@ fn parse_args() -> Result<Args, String> {
             "--port" => {
                 args.port = Some(value()?.parse().map_err(|_| "--port needs a number")?);
             }
+            "--explain-rules" => args.explain_rules = true,
             "-h" | "--help" => {
-                return Err(
-                    "usage: vertix-server [--config FILE] [--archive PATH] [--trace FILE] [--port N]"
-                        .into(),
-                );
+                return Err("usage: vertix-server [--config FILE] [--archive PATH] \
+                     [--trace FILE] [--port N] [--explain-rules]"
+                    .into());
             }
             other => return Err(format!("unknown argument {other}")),
         }
@@ -58,6 +61,12 @@ fn parse_args() -> Result<Args, String> {
 async fn run() -> Result<(), String> {
     let args = parse_args()?;
     let config = Config::load(&args.config)?;
+    let (rules, provenance) = Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
+    if args.explain_rules {
+        print!("{}", provenance.table());
+        println!("{}", provenance.summary());
+        return Ok(());
+    }
     let archive = config
         .archive_path(args.archive.as_deref())
         .ok_or("no archive: pass --archive, set VERTIX_ARCHIVE, or set `archive` in the config")?;
@@ -69,10 +78,26 @@ async fn run() -> Result<(), String> {
         store.len(),
         manifest.page_shell.capture
     );
-    let rules = Assumptions::load(&config.assumptions).map_err(|e| e.to_string())?;
-    let map_text = std::fs::read_to_string(&config.map)
-        .map_err(|e| format!("{}: {e}", config.map.display()))?;
-    let map = Map::parse(&map_text, rules.world.tile_scale, false).map_err(|e| e.to_string())?;
+    eprintln!(
+        "rules: {} (sha256 {})",
+        provenance.summary(),
+        provenance.hash
+    );
+    let source: Box<dyn MapSource> = match config.maps.source {
+        MapSourceKind::Archive => Box::new(ArchiveGenData {
+            root: archive.clone(),
+        }),
+        MapSourceKind::Files => Box::new(TextFiles {
+            files: config.maps.files.clone(),
+        }),
+    };
+    let maps = MapSet::new(
+        source
+            .load(rules.world.tile_scale)
+            .map_err(|e| format!("maps: {e}"))?,
+    )
+    .map_err(|e| format!("maps: {e}"))?;
+    eprintln!("maps: {} loaded ({:?})", maps.len(), config.maps.source);
 
     let trace_path = args
         .trace
@@ -85,7 +110,7 @@ async fn run() -> Result<(), String> {
 
     let (tx, rx) = mpsc::unbounded_channel();
     let eio = eio::Server::new(config.engine_io.timing(), tx, trace.clone());
-    tokio::spawn(Game::new(rules, map, trace.clone()).run(rx));
+    tokio::spawn(Game::new(rules, maps, trace.clone()).run(rx));
     let reaper = eio.clone();
     tokio::spawn(async move {
         let mut every = tokio::time::interval(Duration::from_secs(5));

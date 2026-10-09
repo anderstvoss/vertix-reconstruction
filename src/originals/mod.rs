@@ -170,14 +170,20 @@ pub fn content_type(path: &str) -> &'static str {
     }
 }
 
-struct Archive {
+/// A vertix-archive clone, with `sha256sums.txt` loaded so every file
+/// read through it can be checked.
+pub struct Archive {
     root: PathBuf,
     sums: HashMap<String, String>,
     containers: HashMap<String, Arc<[u8]>>,
 }
 
 impl Archive {
-    fn open(root: &Path) -> Result<Self, Error> {
+    /// Opens an archive clone and reads its checksum list.
+    ///
+    /// # Errors
+    /// Fails if `sha256sums.txt` cannot be read.
+    pub fn open(root: &Path) -> Result<Self, Error> {
         let sums_path = root.join("vertix-preservation/manifests/sha256sums.txt");
         let text = fs::read_to_string(&sums_path).map_err(|e| Error::io(&sums_path, &e))?;
         let sums = text
@@ -200,6 +206,20 @@ impl Archive {
         if bytes.starts_with(b"version https://git-lfs.github.com/spec/") {
             return Err(Error::LfsPointer(rel.to_owned()));
         }
+        Ok(bytes)
+    }
+
+    /// Reads a file listed in `sha256sums.txt` and checks its hash.
+    ///
+    /// # Errors
+    /// Fails if the file is missing, unlisted, an LFS pointer, or altered.
+    pub fn verified(&self, rel: &str) -> Result<Vec<u8>, Error> {
+        let bytes = self.read(rel)?;
+        let expected = self
+            .sums
+            .get(rel)
+            .ok_or_else(|| Error::Manifest(format!("{rel} is not in sha256sums.txt")))?;
+        check(rel, &bytes, expected)?;
         Ok(bytes)
     }
 

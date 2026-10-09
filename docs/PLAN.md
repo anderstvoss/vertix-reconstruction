@@ -37,7 +37,9 @@ extraction lives in the research repository; the runtime tests live here.
 Measure client-side movement, collision, camera and interpolation with
 controlled inputs. Weapon and class numbers come from the research
 repository's dated evidence for the target build; anything not known for
-that date goes in an explicit assumptions file, never inline in game logic.
+that date goes in an explicit rules layer (`data/rules/`), never inline in
+game logic. Every value records its status and source, and
+`vertix-server --explain-rules` lists them.
 
 ## 4. One complete free-for-all round
 

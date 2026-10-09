@@ -11,13 +11,22 @@ port = 8080
 archive = ""
 
 manifest = "data/boot/20160806061006.json"
-assumptions = "data/assumptions.toml"
-map = "data/maps/arena.txt"
+
+# Game rules, as layers merged in order (later layers win, value by value).
+# Every value carries a status and source; `--explain-rules` lists them.
+rules = ["data/rules/base.toml", "data/rules/2016-08-06.toml"]
 
 # JSON-lines trace of every event; empty for none. --trace overrides it.
 trace = ""
 # Events traced by name only, because they fire every frame or tick.
 trace_brief = ["rsd", "4", "0", "ping1", "pong1"]
+
+[maps]
+# "archive": the 24 KrunkerRevival map candidates in the archive clone
+# (provisional, hash-checked, never copied into this repository).
+# "files": the text maps listed below, e.g. our own placeholder arena.
+source = "archive"
+files = ["data/maps/arena.txt"]
 
 [engine_io]
 # The values in the archived 2016 handshakes.

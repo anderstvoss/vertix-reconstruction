@@ -18,6 +18,8 @@ own machine. It works the same on Windows, macOS and Linux.
   - `vertix-preservation/originals/external/socket.io-1.4.5.js`
   - `vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk`
     (sprites, `res.zip`, workers and fonts come from inside it)
+  - `vertix-preservation/derived/maps/krp-2026-candidates/map-*.genData.json`
+    (the 24 maps) and `vertix-preservation/manifests/sha256sums.txt`
 
   A full `git lfs pull` in the archive covers all of these.
 
@@ -48,6 +50,35 @@ Useful options:
 - `--trace out/trace.jsonl` writes every event in and out, one JSON line
   each, for checking protocol behaviour.
 - Setting the `VERTIX_ARCHIVE` environment variable replaces `--archive`.
+- `--explain-rules` prints every game value with its status (recovered,
+  inferred, decided, provisional or assumed), its source and the layer
+  file it came from, then exits. At start-up the server prints the same
+  counts and a hash of the merged rules.
+
+## Changing rules, mode and maps
+
+Game values live in layers listed under `rules` in `config/server.toml`,
+merged in order, value by value. To try something without touching the
+committed files, add your own layer at the end, for example to play
+Hardpoint:
+
+```toml
+[layer]
+status = "DECIDED"
+source = "local test"
+
+[round]
+mode = "hp"   # ffa, tdm, hp, zmtch, lc, snipe or rckt
+
+[net]
+update_hz = 60   # server tick rate
+```
+
+Each mode plays the maps its `maps` list names. `[maps] source` picks where
+maps come from: `"archive"` loads the 24 provisional maps from the archive,
+and `"files"` loads the text maps listed under `files` (for example our own
+`data/maps/arena.txt`); a mode whose maps are not loaded plays any loaded
+map.
 
 To let another machine on your network join, change `bind` in
 `config/server.toml` to your machine's network address (do not commit
@@ -56,7 +87,9 @@ that change) and open the matching port in your firewall.
 ## What works so far
 
 Joining, spawning, walking with wall collision, jumping, switching weapons
-and leaving, in one free-for-all room. Shooting does nothing yet, and there
+and leaving, in one room playing the configured mode (free for all by
+default) on one of that mode's maps. Team modes split players between red
+and blue, and Sniper War and Rocket War force their class. Shooting does nothing yet, and there
 are no rounds, lobbies or saves. See [DEVIATIONS.md](DEVIATIONS.md) for
 what differs from the original.
 

@@ -20,14 +20,30 @@ deviation.
 
 ## Placeholders (no original data survives)
 
-- **Map.** No original map survives. `data/maps/arena.txt` is our own
-  layout in the client's map format. The map source is a file path in
-  `config/server.toml`, so a better candidate can be dropped in.
-- **Numbers.** Class and weapon values, tick rate, input clamp, spawn
-  protection and the score limit are in `data/assumptions.toml`, each
-  marked as recovered or assumed. Game code reads them from there only.
+- **Maps.** No original map file survives. By default the server plays the
+  24 `KrunkerRevival` map candidates from the archive (PROVISIONAL, decided
+  by Anders on 2026-10-09). They are read and hash-checked at start-up and
+  never copied into this repository, because that project has no license.
+  `[maps] source = "files"` swaps in text maps such as our own
+  `data/maps/arena.txt`; the map source is a trait, so other sources can
+  be added. Their red and blue pixels are read as spawn cells (INFERRED;
+  the client draws them as floor), and clutter and pickups are not placed.
+- **Numbers.** Every class, weapon, mode and timing value is in the rule
+  layers under `data/rules/`: `base.toml` (KRP's values, PROVISIONAL) and
+  `2016-08-06.toml` (values recovered or inferred for that build), each
+  value with a status and source. Game code reads them from there only, and
+  `--explain-rules` lists them.
 
 ## Inferences (our reading of the client, to be confirmed)
+
+- **Team score bar.** `ts(a, b)` sets the bar widths in percent: red is
+  `a`, blue is `b`, and the client shows your own team as "A" (RECOVERED
+  from `updateTeamScores`). A team's score as the sum of its players'
+  scores is our assumption.
+- **Teams.** A joining player goes to the smaller team, red on a tie.
+- **Forced class.** Sniper War and Rocket War put everyone in Hunter and
+  Rocketeer through the `you` object in `gameSetup` (DECIDED by Anders,
+  2026-10-09, from footage).
 
 - **Join sequence.** Play sends `create` (when not in a room) and
   `respawn`. We answer `welcome({id, room}, false)`; the client replies

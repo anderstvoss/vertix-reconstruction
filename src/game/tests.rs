@@ -9,7 +9,17 @@ const ARENA: &str = include_str!("../../data/maps/arena.txt");
 const CONTRACTS: &str = include_str!("../../data/contracts/20160806061006.json");
 
 fn rules() -> Assumptions {
-    Assumptions::parse(include_str!("../../data/assumptions.toml")).unwrap()
+    assumptions::committed().0
+}
+
+fn arena(scale: f64) -> MapSet {
+    let map = Map::parse(ARENA, scale, false).unwrap();
+    MapSet::new(vec![maps::MapEntry {
+        id: "arena".into(),
+        source: "arena.txt".into(),
+        map,
+    }])
+    .unwrap()
 }
 
 struct Harness {
@@ -27,14 +37,18 @@ use std::sync::Arc;
 
 impl Harness {
     fn new() -> Self {
+        let r = rules();
+        let maps = arena(r.world.tile_scale);
+        Self::with(r, maps)
+    }
+
+    fn with(r: Assumptions, maps: MapSet) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let server = Server::new(Timing::default(), tx, Trace::disabled());
-        let r = rules();
-        let map = Map::parse(ARENA, r.world.tile_scale, false).unwrap();
         Self {
             server,
             rx,
-            game: Game::new(r, map, Trace::disabled()),
+            game: Game::new(r, maps, Trace::disabled()),
         }
     }
 
@@ -350,4 +364,55 @@ fn names_are_cleaned_like_the_client() {
     assert_eq!(clean_name("<i>x</i>y"), "xy");
     assert_eq!(clean_name("   "), DEFAULT_NAME);
     assert_eq!(clean_name(&"n".repeat(40)).len(), MAX_NAME);
+}
+
+fn setup_you(evs: &[Event]) -> Value {
+    let setup = find(evs, "gameSetup");
+    let s: Value = serde_json::from_str(setup.args[0].as_str().unwrap()).unwrap();
+    s["you"].clone()
+}
+
+fn in_mode(code: &str) -> Harness {
+    let mut r = rules();
+    r.round.mode = code.into();
+    let maps = arena(r.world.tile_scale);
+    Harness::with(r, maps)
+}
+
+#[tokio::test]
+async fn sniper_war_forces_hunter() {
+    let mut h = in_mode("snipe");
+    let hunter = h.game.rules.class_named("Hunter").unwrap();
+    let a = h.connect().await;
+    let evs = h.join(&a, "a", 0).await;
+    let setup: Value =
+        serde_json::from_str(find(&evs, "gameSetup").args[0].as_str().unwrap()).unwrap();
+    assert_eq!(setup["mapData"]["gameMode"]["code"], json!("snipe"));
+    assert_eq!(setup_you(&evs)["classIndex"], json!(hunter));
+}
+
+#[tokio::test]
+async fn team_modes_balance_red_and_blue() {
+    let mut h = in_mode("tdm");
+    let mut teams = Vec::new();
+    for name in ["a", "b", "c"] {
+        let c = h.connect().await;
+        let evs = h.join(&c, name, 0).await;
+        teams.push(setup_you(&evs)["team"].clone());
+    }
+    assert_eq!(teams, [json!("red"), json!("blue"), json!("red")]);
+    let c = h.connect().await;
+    let evs = h.join(&c, "d", 0).await;
+    let ts = find(&evs, "ts");
+    assert_eq!(ts.args, [json!(0.0), json!(0.0)], "team bars start empty");
+}
+
+#[tokio::test]
+async fn free_for_all_gives_each_player_a_team_of_their_own() {
+    let mut h = Harness::new();
+    let a = h.connect().await;
+    let b = h.connect().await;
+    let ta = setup_you(&h.join(&a, "a", 0).await)["team"].clone();
+    let tb = setup_you(&h.join(&b, "b", 0).await)["team"].clone();
+    assert_ne!(ta, tb);
 }

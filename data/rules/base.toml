@@ -1,55 +1,118 @@
-# Gameplay numbers the server needs and no first-party source gives.
+# Base rule layer: a complete, PROVISIONAL starting set.
 #
-# Every value here is an ASSUMPTION unless its line says RECOVERED. The
-# original server held these numbers and was never published; the client
-# only receives them. Most come from a third-party remake
-# (KrunkerRevivalProject/vertix, 2026), used as a HYPOTHESIS, not as
-# evidence. Replace values as the research repository resolves them
-# (tools/stat_lookup.py --date 2016-08-06 --strict), and keep the source
-# comment next to each changed value.
+# Every number the server needs, so the game runs even with no dated
+# evidence. Most values come from KrunkerRevivalProject/vertix (a 2026
+# remake, commit 2d35f66): a non-authoritative later source, kept only
+# until something better is found. Values are replaced by later layers
+# (data/rules/2016-08-06.toml, then an optional local file), never edited
+# here to "fix" history. See src/game/assumptions.rs for the format.
 #
 # Units follow the client: distances in world pixels, speeds in pixels per
 # millisecond, times in milliseconds, angles in radians.
 
+[layer]
+status = "PROVISIONAL"
+source = "KrunkerRevivalProject/vertix 2d35f66 (loadouts.ts, gamemodes.ts, game.ts)"
+
 [world]
-# Hypothesis (remake). Map pixels are scaled by this to world pixels.
 tile_scale = 256
-# The client's own defaults before the server overrides them (RECOVERED
-# from app.js: maxScreenWidth 1920, maxScreenHeight 1080, viewMult 1).
 max_screen_width = 1920
 max_screen_height = 1080
 view_mult = 1
 
 [net]
-# How often the server simulates and sends "rsd" snapshots. Unknown for the
-# original server; 60 Hz matches the client's default frame cap when its
-# FPS setting is 60. The client predicts its own movement, so this mainly
-# affects how smooth other players look.
-tick_ms = 16
-# Movement is applied per input using the time between the client's input
-# timestamps, clamped to this, so a stalled or hostile client cannot move
-# further than the elapsed time allows.
+status = "ASSUMED"
+source = "our choice; research SERVER-CONTRACT 3: start at the client's default 30 fps"
+# How often the server advances the world and sends "rsd" snapshots. The
+# original rate is unknown. Other players snap to each snapshot with no
+# interpolation, so this is visible in how they move.
+update_hz = 30
+# Movement is applied per input from the gap between the client's input
+# timestamps, clamped to this so a stalled or hostile client cannot move
+# further than the time allows.
 max_input_delta_ms = 100
 
-[mode]
-# Free for All, the mode the menu lists third (RECOVERED: mode names from
-# the page's create-server form). desc1/desc2 and the score limit are
-# assumptions.
-name = "Free for All"
-code = "ffa"
-desc1 = "Free For All"
-desc2 = "Free For All"
-score = 1500
-teams = false
+[round]
+status = "ASSUMED"
+source = "our choice: free for all first"
+mode = "ffa"
 
 [player]
-# Class order and loadouts are RECOVERED from the client; the per-class
-# numbers below are hypotheses (remake).
 spawn_protection_ms = 2000
+
+[[modes]]
+name = "Free For All"
+code = "ffa"
+desc1 = "Free For All"
+desc2 = ""
+score = 1500
+teams = false
+kill_score_mult = 1
+maps = ["5", "3", "8", "9", "16", "18"]
+
+[[modes]]
+name = "Team Deathmatch"
+code = "tdm"
+desc1 = "Eliminate the enemy team"
+desc2 = "Eliminate the enemy team"
+score = 2200
+teams = true
+kill_score_mult = 1
+maps = ["13", "15"]
+
+[[modes]]
+name = "Hardpoint"
+code = "hp"
+desc1 = "Capture and Hold the Hardpoint"
+desc2 = "Capture and Hold the Hardpoint"
+score = 2400
+teams = true
+kill_score_mult = 1
+maps = ["2", "4", "12", "14", "19"]
+
+[[modes]]
+name = "Zone War"
+code = "zmtch"
+desc1 = "Enter the Enemy Zone"
+desc2 = "Enter the Enemy Zone"
+score = 2500
+teams = true
+kill_score_mult = 0.5
+maps = ["20", "22", "23"]
+
+[[modes]]
+name = "Lootcrate"
+code = "lc"
+desc1 = "Collect the Lootcrates"
+desc2 = "Collect the Lootcrates"
+score = 3000
+teams = true
+kill_score_mult = 1
+maps = ["1", "6", "10", "17"]
+
+[[modes]]
+name = "Sniper War"
+code = "snipe"
+desc1 = "Hunt your Enemies"
+desc2 = "Hunt your Enemies"
+score = 1000
+teams = false
+kill_score_mult = 1
+maps = ["5", "3", "8", "9", "16", "18"]
+
+[[modes]]
+name = "Rocket War"
+code = "rckt"
+desc1 = "Blow them Up!"
+desc2 = "Blow them Up!"
+score = 1000
+teams = false
+kill_score_mult = 1
+maps = ["5", "3", "8", "9", "16", "18"]
 
 [[classes]]
 name = "Triggerman"
-weapons = [0, 5]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [0, 5]
 max_health = 100
 width = 50
 height = 94
@@ -59,7 +122,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Detective"
-weapons = [1, 5]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [1, 5]
 max_health = 100
 width = 50
 height = 94
@@ -69,7 +132,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Hunter"
-weapons = [2, 7]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [2, 7]
 max_health = 50
 width = 50
 height = 94
@@ -79,7 +142,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Run 'N Gun"
-weapons = [3]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [3]
 max_health = 100
 width = 50
 height = 94
@@ -89,7 +152,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Vince"
-weapons = [4, 5]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [4, 5]
 max_health = 100
 width = 50
 height = 94
@@ -99,7 +162,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Rocketeer"
-weapons = [6]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [6]
 max_health = 120
 width = 50
 height = 94
@@ -109,7 +172,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Spray N' Pray"
-weapons = [8]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [8]
 max_health = 200
 width = 50
 height = 94
@@ -119,7 +182,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Arsonist"
-weapons = [9]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [9]
 max_health = 100
 width = 50
 height = 94
@@ -129,7 +192,7 @@ gravity_strength = 0.0042
 
 [[classes]]
 name = "Duck"
-weapons = [9]  # RECOVERED: client characterClasses, 2016-08-06
+weapons = [9]
 max_health = 800
 width = 50
 height = 94
@@ -140,7 +203,7 @@ gravity_strength = 0.0042
 [[weapons]]
 name = "smg"
 weaponIndex = 0
-dmg = 20  # RECOVERED: versions.txt v0.98 (2016-04-02), "Increased Damage of Triggerman to 20"
+dmg = 25
 ammo = 24
 maxAmmo = 24
 reloadSpeed = 800
@@ -172,7 +235,7 @@ name = "revolver"
 weaponIndex = 1
 dmg = 50
 ammo = 6
-maxAmmo = 6  # RECOVERED: versions.txt capture 2016-06-08
+maxAmmo = 6
 reloadSpeed = 1500
 fireRate = 312
 spread = [0, 0.01, 0.02, -0.01]

@@ -60,8 +60,8 @@ cargo run --release -- --archive PATH/TO/vertix-archive
 
 and open the address it prints. The server checks every original against
 `data/boot/20160806061006.json` before serving anything and refuses to
-start on a mismatch. The bind address, port, map and assumptions file are
-in `config/server.toml`; `--port`, `--trace out/trace.jsonl` and the
+start on a mismatch. The bind address, port, rule layers and map source
+are in `config/server.toml`; `--port`, `--trace out/trace.jsonl` and the
 `VERTIX_ARCHIVE` variable override it.
 
 Step-by-step instructions, including Windows, are in
