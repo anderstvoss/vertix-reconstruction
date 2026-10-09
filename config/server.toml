@@ -60,6 +60,16 @@ rooms = [
   { name = "DEV8", mode = "pyro" },
 ]
 
+[classic]
+# The archived 2016-08-06 client, kept as a compatibility path. It is
+# served from the archive (never from this repository) on its own port,
+# and its players join `room` (the first room if empty) through an event
+# translation layer (src/classic/adapt.rs). Needs the archive.
+enabled = true
+port = 8081
+room = ""
+manifest = "data/boot/20160806061006.json"
+
 [engine_io]
 # Socket.IO's defaults, which KRP's server uses.
 ping_interval_ms = 25000

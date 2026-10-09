@@ -6,9 +6,10 @@
 //! vertix-server --explain-rules [--config FILE]
 //! ```
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio::sync::mpsc;
 use vertix_reconstruction::config::{Config, MapSourceKind};
@@ -16,8 +17,9 @@ use vertix_reconstruction::game::Game;
 use vertix_reconstruction::game::assumptions::Assumptions;
 use vertix_reconstruction::game::data::GameData;
 use vertix_reconstruction::game::maps::{ArchiveGenData, MapSet, MapSource, TextFiles};
+use vertix_reconstruction::originals::{BootManifest, Store};
 use vertix_reconstruction::trace::Trace;
-use vertix_reconstruction::{eio, http};
+use vertix_reconstruction::{classic, eio, http};
 
 struct Args {
     config: PathBuf,
@@ -57,6 +59,62 @@ fn parse_args() -> Result<Args, String> {
     Ok(args)
 }
 
+/// Loads every configured map source, in order.
+fn load_maps(config: &Config, archive: Option<&Path>) -> Result<MapSet, String> {
+    let mut loaded = Vec::new();
+    for kind in &config.maps.sources {
+        let source: Box<dyn MapSource> = match kind {
+            MapSourceKind::Archive => Box::new(ArchiveGenData {
+                root: archive.map(Path::to_path_buf).ok_or(
+                    "the archive map source needs an archive: pass --archive, set \
+                     VERTIX_ARCHIVE, or set `archive` in the config",
+                )?,
+                dir: config.maps.archive_dir.clone(),
+            }),
+            MapSourceKind::Files => Box::new(TextFiles {
+                files: config.maps.files.clone(),
+            }),
+        };
+        loaded.extend(source.load().map_err(|e| format!("maps ({kind:?}): {e}"))?);
+    }
+    MapSet::new(loaded).map_err(|e| format!("maps: {e}"))
+}
+
+/// The 2016 client's routes, if the archive that holds it is given.
+fn classic_app(
+    config: &Config,
+    archive: Option<&Path>,
+    events: mpsc::UnboundedSender<classic::eio3::TransportEvent>,
+    trace: &Trace,
+) -> Result<Option<axum::Router>, String> {
+    let Some(root) = archive else {
+        eprintln!("2016 client: off, it is served from the archive (pass --archive)");
+        return Ok(None);
+    };
+    let manifest = BootManifest::load(&config.classic.manifest).map_err(|e| e.to_string())?;
+    let store = Store::load(root, &manifest).map_err(|e| format!("archive: {e}"))?;
+    eprintln!(
+        "2016 client: build {} ({} files), all hashes verified",
+        manifest.build,
+        store.len()
+    );
+    let server =
+        classic::eio3::Server::new(classic::eio3::Timing::default(), events, trace.clone());
+    let reaper = server.clone();
+    tokio::spawn(async move {
+        let mut every = tokio::time::interval(Duration::from_secs(5));
+        loop {
+            every.tick().await;
+            reaper.reap();
+        }
+    });
+    Ok(Some(classic::http::router(classic::http::AppState {
+        store: Arc::new(store),
+        eio: server,
+        trace: trace.clone(),
+    })))
+}
+
 async fn run() -> Result<(), String> {
     let args = parse_args()?;
     let config = Config::load(&args.config)?;
@@ -85,23 +143,7 @@ async fn run() -> Result<(), String> {
         data.balance.values.len()
     );
     let archive = config.archive_path(args.archive.as_deref());
-    let mut loaded = Vec::new();
-    for kind in &config.maps.sources {
-        let source: Box<dyn MapSource> = match kind {
-            MapSourceKind::Archive => Box::new(ArchiveGenData {
-                root: archive.clone().ok_or(
-                    "the archive map source needs an archive: pass --archive, set \
-                     VERTIX_ARCHIVE, or set `archive` in the config",
-                )?,
-                dir: config.maps.archive_dir.clone(),
-            }),
-            MapSourceKind::Files => Box::new(TextFiles {
-                files: config.maps.files.clone(),
-            }),
-        };
-        loaded.extend(source.load().map_err(|e| format!("maps ({kind:?}): {e}"))?);
-    }
-    let maps = MapSet::new(loaded).map_err(|e| format!("maps: {e}"))?;
+    let maps = load_maps(&config, archive.as_deref())?;
     eprintln!("maps: {} loaded: {}", maps.len(), maps.ids().join(" "));
     if !config.client_dir.join("index.html").is_file() {
         eprintln!(
@@ -121,10 +163,19 @@ async fn run() -> Result<(), String> {
 
     let (tx, rx) = mpsc::unbounded_channel();
     let (ask_tx, ask_rx) = mpsc::unbounded_channel();
+    let (classic_tx, classic_rx) = mpsc::unbounded_channel();
     let timing = config.engine_io.timing();
     let eio = eio::Server::new(timing, tx, trace.clone());
-    let game = Game::new(rules, data, maps, &config.game.rooms, trace.clone())?;
-    tokio::spawn(game.run(rx, ask_rx));
+    let mut game = Game::new(rules, data, maps, &config.game.rooms, trace.clone())?;
+    let classic_app = if config.classic.enabled {
+        if !config.classic.room.is_empty() {
+            game.set_classic_room(&config.classic.room)?;
+        }
+        classic_app(&config, archive.as_deref(), classic_tx, &trace)?
+    } else {
+        None
+    };
+    tokio::spawn(game.run(rx, ask_rx, classic_rx));
     let beat = eio.clone();
     tokio::spawn(async move {
         let mut every = tokio::time::interval(timing.ping_interval);
@@ -146,6 +197,19 @@ async fn run() -> Result<(), String> {
         .await
         .map_err(|e| format!("bind {}:{port}: {e}", config.bind))?;
     let addr = listener.local_addr().map_err(|e| e.to_string())?;
+    if let Some(app) = classic_app {
+        let port = config.classic.port;
+        let listener = tokio::net::TcpListener::bind((config.bind.as_str(), port))
+            .await
+            .map_err(|e| format!("bind {}:{port}: {e}", config.bind))?;
+        let addr = listener.local_addr().map_err(|e| e.to_string())?;
+        eprintln!("2016 client on http://{addr}/");
+        tokio::spawn(async move {
+            if let Err(e) = axum::serve(listener, app).await {
+                eprintln!("2016 client server: {e}");
+            }
+        });
+    }
     eprintln!("listening on http://{addr}/");
     axum::serve(listener, app)
         .with_graceful_shutdown(async {

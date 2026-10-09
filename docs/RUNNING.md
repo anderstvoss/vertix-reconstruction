@@ -64,6 +64,19 @@ Useful options:
 - `--explain-rules` prints every rule constant and every balance value with
   its status or basis and its source, then exits.
 
+## The 2016 client
+
+With an archive, the server also serves the archived 2016-08-06 client on
+a second port, from the archive's files (hash-checked, never copied here):
+open `http://<bind>:8081/`. No client build is needed for it. Its players
+join the room `[classic] room` names (the first room if empty), together
+with players on KRP's client. Set `[classic] enabled = false` to turn it
+off.
+
+`python3 scripts/e2e_boot.py --url http://<bind>:8081/` checks it in a real
+browser (needs Playwright): two players join, move and see each other, and
+no request leaves the server.
+
 ## Rooms, balance and rules
 
 `config/server.toml` holds:
@@ -119,6 +132,10 @@ and leaving.
 
 - **"hash mismatch" or "is an LFS pointer"** at start-up: that archive file
   was not pulled. Run `git lfs pull` in the archive.
-- **"no client build"** warning: run `scripts/build-client.sh`.
+- **"no client build"** warning: run `scripts/build-client.sh`. The 2016
+  client on the second port works without it.
+- **"The system cannot find the path specified"** for the maps: the
+  archive clone predates the map files. Run `git pull` and `git lfs pull`
+  in it.
 - **The page loads but no room joins:** check the server log; the client
   connects to the same address the page came from.

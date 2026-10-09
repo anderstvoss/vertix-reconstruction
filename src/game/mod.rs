@@ -8,6 +8,11 @@
 //! The rules themselves live in [`room`], a port of KRP's `server/room.ts`
 //! and `server/game.ts`. This module only routes: it maps connections to
 //! rooms and players, drives time, and delivers what rooms queue.
+//!
+//! The archived 2016 client joins through [`crate::classic`] instead: it
+//! has no namespaces, so its `create` (or first `respawn`) seats it in the
+//! configured classic room, and its events pass through
+//! [`crate::classic::adapt`] on the way in and out.
 
 pub mod assumptions;
 pub mod data;
@@ -22,7 +27,9 @@ use std::time::Duration;
 use serde_json::Value;
 use tokio::sync::{mpsc, oneshot};
 
+use crate::classic::{adapt, eio3};
 use crate::eio::{ClientHandle, ConnId, TransportEvent};
+use crate::sio::Event;
 use crate::trace::Trace;
 use assumptions::Assumptions;
 use data::GameData;
@@ -47,9 +54,26 @@ pub enum Ask {
 
 const MAX_ROOM_NAME: usize = 24;
 
+/// How a player's client is reached.
+enum Link {
+    Krp(ClientHandle),
+    Classic {
+        handle: eio3::ClientHandle,
+        host: String,
+        member: adapt::Member,
+    },
+}
+
 struct Slot {
     room: Room,
-    members: HashMap<u32, ClientHandle>,
+    members: HashMap<u32, Link>,
+}
+
+/// A 2016 client connection; `seat` is set once it joined a room.
+struct ClassicConn {
+    handle: eio3::ClientHandle,
+    host: String,
+    seat: Option<(String, u32)>,
 }
 
 pub struct Game {
@@ -59,6 +83,10 @@ pub struct Game {
     rooms: Vec<Slot>,
     /// Connection to (room name, player index).
     conns: HashMap<ConnId, (String, u32)>,
+    /// 2016 clients, keyed by their own Engine.IO 3 connection ids.
+    classic: HashMap<eio3::ConnId, ClassicConn>,
+    /// The room 2016 clients join.
+    classic_room: String,
     trace: Trace,
     seed: u64,
     start: tokio::time::Instant,
@@ -88,6 +116,8 @@ impl Game {
             maps,
             rooms: Vec::new(),
             conns: HashMap::new(),
+            classic: HashMap::new(),
+            classic_room: String::new(),
             trace,
             seed: 0x9E37_79B9_7F4A_7C15,
             start: tokio::time::Instant::now(),
@@ -108,7 +138,22 @@ impl Game {
             }
             game.open_room(&r.name, mode);
         }
+        if let Some(first) = game.rooms.first() {
+            game.classic_room = first.room.name.clone();
+        }
         Ok(game)
+    }
+
+    /// Sets the room 2016 clients join; the first room by default.
+    ///
+    /// # Errors
+    /// Fails if no room has that name.
+    pub fn set_classic_room(&mut self, name: &str) -> Result<(), String> {
+        if !self.rooms.iter().any(|s| s.room.name == name) {
+            return Err(format!("classic room {name} is not one of the rooms"));
+        }
+        name.clone_into(&mut self.classic_room);
+        Ok(())
     }
 
     fn open_room(&mut self, name: &str, mode: usize) {
@@ -170,11 +215,12 @@ impl Game {
     }
 
     /// Runs until the transport channel closes, answering `queries` about
-    /// the rooms from the same task.
+    /// the rooms and taking 2016 clients from `classic` in the same task.
     pub async fn run(
         mut self,
         mut events: mpsc::UnboundedReceiver<TransportEvent>,
         mut queries: mpsc::UnboundedReceiver<Ask>,
+        mut classic: mpsc::UnboundedReceiver<eio3::TransportEvent>,
     ) {
         let tick = Duration::from_secs_f64(1.0 / self.rules.net.update_hz);
         let mut interval = tokio::time::interval(tick);
@@ -187,6 +233,7 @@ impl Game {
                     None => return,
                 },
                 Some(q) = queries.recv() => self.answer(q),
+                Some(ev) = classic.recv() => self.handle_classic(ev),
                 now = interval.tick() => {
                     let dt = (now - last).as_secs_f64() * 1000.0;
                     last = now;
@@ -232,6 +279,100 @@ impl Game {
         }
     }
 
+    /// Applies one transport event from a 2016 client.
+    pub fn handle_classic(&mut self, ev: eio3::TransportEvent) {
+        let now = self.now();
+        self.handle_classic_at(ev, now);
+    }
+
+    fn handle_classic_at(&mut self, ev: eio3::TransportEvent, now: f64) {
+        match ev {
+            eio3::TransportEvent::Connected { conn, handle, host } => {
+                self.classic.insert(
+                    conn,
+                    ClassicConn {
+                        handle,
+                        host,
+                        seat: None,
+                    },
+                );
+            }
+            eio3::TransportEvent::Event { conn, event } => {
+                self.trace.event("in", conn, &event);
+                if matches!(event.name.as_str(), "create" | "respawn") {
+                    self.seat_classic(conn);
+                }
+                let Some((name, index)) = self.classic.get(&conn).and_then(|c| c.seat.clone())
+                else {
+                    return;
+                };
+                let (data, maps, rules) = (&self.data, &self.maps, &self.rules.rules);
+                let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) else {
+                    return;
+                };
+                let Some(Link::Classic { member, .. }) = s.members.get_mut(&index) else {
+                    return;
+                };
+                if let Some(event) = adapt::inbound(event, index, member) {
+                    s.room.on_event(data, maps, rules, index, &event, now);
+                }
+                self.deliver(&name);
+            }
+            eio3::TransportEvent::Disconnected { conn, .. } => {
+                let Some((name, index)) = self.classic.remove(&conn).and_then(|c| c.seat) else {
+                    return;
+                };
+                let (data, rules) = (&self.data, &self.rules.rules);
+                if let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) {
+                    s.members.remove(&index);
+                    s.room.leave(data, rules, index, now);
+                }
+                self.deliver(&name);
+            }
+        }
+    }
+
+    /// Seats a 2016 client in the classic room, unless it already has a
+    /// seat. Lobbies are not built, so `create` with a lobby key joins the
+    /// same room.
+    fn seat_classic(&mut self, conn: eio3::ConnId) {
+        let Some(c) = self.classic.get(&conn) else {
+            return;
+        };
+        if c.seat.is_some() {
+            return;
+        }
+        let name = self.classic_room.clone();
+        let data = &self.data;
+        let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) else {
+            return;
+        };
+        if s.room.players.len() >= s.room.max_players {
+            c.handle
+                .emit(&Event::new("kick", vec![serde_json::json!("Room is full")]));
+            return;
+        }
+        let index = s.room.join(data);
+        // KRP's join opens the menu with `welcome(.., true)`; the 2016
+        // client is already past its menu and asks with `respawn`.
+        s.room
+            .out
+            .retain(|o| !(o.to == To::One(index) && o.event.name == "welcome"));
+        s.members.insert(
+            index,
+            Link::Classic {
+                handle: c.handle.clone(),
+                host: c.host.clone(),
+                member: adapt::Member::default(),
+            },
+        );
+        if let Some(c) = self.classic.get_mut(&conn) {
+            c.seat = Some((name.clone(), index));
+        }
+        self.trace.note("join", conn, &name);
+        self.deliver(&name);
+    }
+
     fn connect(&mut self, conn: ConnId, handle: ClientHandle, ns: &str) {
         let name = ns.trim_start_matches('/');
         if name.is_empty() {
@@ -251,7 +392,7 @@ impl Game {
         }
         handle.accept();
         let index = s.room.join(data);
-        s.members.insert(index, handle);
+        s.members.insert(index, Link::Krp(handle));
         self.conns.insert(conn, (name.to_owned(), index));
         self.trace.note("join", conn, name);
         self.deliver(name);
@@ -259,27 +400,20 @@ impl Game {
 
     /// Sends everything room `name` queued.
     fn deliver(&mut self, name: &str) {
+        let data = &self.data;
         let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) else {
             return;
         };
         let out = std::mem::take(&mut s.room.out);
+        let room = &s.room;
         for o in out {
+            let send = |link: &mut Link| send(link, &o.event, room, data);
             match &o.to {
-                To::All => {
-                    for h in s.members.values() {
-                        h.emit(&o.event);
-                    }
-                }
-                To::One(i) => {
-                    if let Some(h) = s.members.get(i) {
-                        h.emit(&o.event);
-                    }
-                }
+                To::All => s.members.values_mut().for_each(send),
+                To::One(i) => s.members.get_mut(i).into_iter().for_each(send),
                 To::Team(t) => {
-                    for p in s.room.players.iter().filter(|p| &p.team == t) {
-                        if let Some(h) = s.members.get(&p.index) {
-                            h.emit(&o.event);
-                        }
+                    for p in room.players.iter().filter(|p| &p.team == t) {
+                        s.members.get_mut(&p.index).into_iter().for_each(send);
                     }
                 }
             }
@@ -303,6 +437,21 @@ impl Game {
                 s.room.tick(data, maps, rules, now, dt);
             }
             self.deliver(&name);
+        }
+    }
+}
+
+fn send(link: &mut Link, event: &Event, room: &Room, data: &GameData) {
+    match link {
+        Link::Krp(h) => h.emit(event),
+        Link::Classic {
+            handle,
+            host,
+            member,
+        } => {
+            if let Some(e) = adapt::outbound(event, room, data, host, member) {
+                handle.emit(&e);
+            }
         }
     }
 }

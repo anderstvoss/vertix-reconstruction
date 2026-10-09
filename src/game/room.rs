@@ -1126,7 +1126,6 @@ impl Room {
                 p.x = b.x;
                 p.y = b.y;
             }
-            self.special_tiles(data, rules, index, now);
             if let Some(p) = self.player_mut(index) {
                 p.x = p.x.round();
                 p.y = p.y.round();
@@ -1137,11 +1136,19 @@ impl Room {
     }
 
     /// KRP `checkSpecialTiles`: pickups, hardpoints and zones under a player.
+    ///
+    /// KRP runs this from each input message and counts the hardpoint
+    /// interval down by the client's frame delta, so a player whose tab is
+    /// hidden (no frames, no input) stops scoring. Here it runs on the
+    /// server tick and counts down by server time (`dt`).
     #[allow(clippy::too_many_lines)]
-    fn special_tiles(&mut self, data: &GameData, rules: &Rules, index: u32, now: f64) {
+    fn special_tiles(&mut self, data: &GameData, rules: &Rules, index: u32, dt: f64, now: f64) {
         let Some(p) = self.player(index).cloned() else {
             return;
         };
+        if p.dead {
+            return;
+        }
         for i in 0..self.world.pickups.len() {
             let pk = &self.world.pickups[i];
             if !pk.active
@@ -1202,7 +1209,7 @@ impl Room {
                 return;
             };
             if p.score_countdown > 0.0 {
-                p.score_countdown -= p.delta;
+                p.score_countdown -= dt;
             } else {
                 p.in_hardpoint = false;
                 let (px, py, team) = (p.x, p.y, p.team.clone());
@@ -1557,6 +1564,15 @@ impl Room {
     /// Advances bullets and timers to `now`, `dt` ms after the last tick.
     pub fn tick(&mut self, data: &GameData, maps: &MapSet, rules: &Rules, now: f64, dt: f64) {
         self.tick_bullets(data, rules, now, dt);
+        let alive: Vec<u32> = self
+            .players
+            .iter()
+            .filter(|p| !p.dead)
+            .map(|p| p.index)
+            .collect();
+        for index in alive {
+            self.special_tiles(data, rules, index, dt, now);
+        }
         self.tick_timers(data, maps, rules, now);
     }
 

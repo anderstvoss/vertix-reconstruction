@@ -24,6 +24,8 @@ serde_json = { version = "1", features = ["preserve_order"] }
 toml = { version = "0.9", default-features = false, features = ["parse", "serde", "display"] }
 # Every original file is checked against its recorded SHA-256 before use.
 sha2 = "0.10"
+# The APK is a zip; its members are read without unpacking it to disk.
+zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Engine.IO session ids must not be guessable.
 rand = "0.9"
 

@@ -68,6 +68,12 @@ override it, and `--explain-rules` prints every rule and balance value with
 its source. Step-by-step instructions, including Windows, are in
 [docs/RUNNING.md](docs/RUNNING.md).
 
+With an archive, the archived 2016-08-06 client is also served, unmodified
+apart from its version label, on a second port (`[classic]`, 8081 by
+default). Its players join a KRP room (the first by default) alongside
+KRP's client; the events that changed between the two clients are
+translated in `src/classic/adapt.rs`.
+
 `scripts/e2e_smoke.py` starts the server and plays through it over
 long-polling and WebSocket, with no archive or client build needed.
 

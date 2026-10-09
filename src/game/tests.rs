@@ -505,6 +505,35 @@ fn custom_server_settings_are_clamped() {
 }
 
 #[test]
+fn hardpoints_score_on_server_time_without_input() {
+    let mut b = Bench::new("hp");
+    let i = b.join();
+    b.spawn(i, "x", 0);
+    let team = b.p(i).team.clone();
+    let tiles = b.room.world.score_tiles.clone();
+    let Some(&point) = tiles
+        .iter()
+        .find(|&&k| b.room.world.tiles[k].obj_team != team)
+    else {
+        panic!("the arena has a hardpoint");
+    };
+    let tl = &b.room.world.tiles[point];
+    let centre = (tl.x + tl.scale / 2.0, tl.y + tl.scale / 2.0);
+    let p = b.p_mut(i);
+    (p.x, p.y) = centre;
+    // A hidden tab sends no input; standing on the point still scores,
+    // once at once and once per interval (plus the tick that notices it).
+    let interval = b.rules.rules.hardpoint_interval_ms;
+    b.run(interval * 3.0 + 200.0);
+    let points = f64::from(b.rules.rules.hardpoint_points);
+    assert!(
+        (b.p(i).score - points * 4.0).abs() < 1e-9,
+        "score {}",
+        b.p(i).score
+    );
+}
+
+#[test]
 fn healthpacks_heal_and_come_back() {
     let mut b = Bench::new("ffa");
     let i = b.join();
@@ -523,11 +552,8 @@ fn healthpacks_heal_and_come_back() {
     p.x = px;
     p.y = py;
     p.health = 10.0;
-    let out = b.send(
-        i,
-        "4",
-        vec![json!({"hdt": 0, "vdt": 0, "delta": 0, "isn": 0})],
-    );
+    // Picked up on the next server tick, without any input.
+    let out = b.run(20.0);
     assert!((b.p(i).health - 100.0).abs() < 1e-9);
     let gone = named(&out, "4");
     assert_eq!(gone[0].event.args[0]["active"], json!(false));
@@ -645,4 +671,214 @@ fn configured_rooms_are_checked() {
     assert!(bad("DEV0", "nope"));
     assert!(bad("a/b", "ffa"));
     assert!(!bad("DEV0", "ffa"));
+}
+
+// The 2016 client's path: Engine.IO 3 on the root namespace, seated by
+// `create`, with events translated both ways.
+
+mod classic {
+    use super::*;
+    use crate::classic::codec3::{Packet as Packet3, PacketType, decode_payload_string};
+    use crate::classic::eio3;
+
+    const CONTRACT: &str = include_str!("../../data/contracts/20160806061006.json");
+
+    /// Server-to-client argument counts the 2016 client's handlers take.
+    fn contract() -> HashMap<String, Vec<usize>> {
+        let doc: Value = serde_json::from_str(CONTRACT).unwrap();
+        doc["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|e| e["direction"] == "server->client")
+            .map(|e| {
+                let counts = e["counts"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|c| usize::try_from(c.as_u64().unwrap()).unwrap())
+                    .collect();
+                (e["event"].as_str().unwrap().to_owned(), counts)
+            })
+            .collect()
+    }
+
+    fn query(sid: Option<&str>) -> eio3::Query {
+        eio3::Query {
+            eio: Some("3".into()),
+            transport: Some("polling".into()),
+            sid: sid.map(str::to_owned),
+            b64: Some("1".into()),
+            j: None,
+        }
+    }
+
+    struct Client {
+        sid: String,
+    }
+
+    impl Client {
+        async fn open(server: &eio3::Server) -> Self {
+            let r = server.get(&query(None), "h").await;
+            let packets = decode_payload_string(std::str::from_utf8(&r.body).unwrap()).unwrap();
+            let open: Value = serde_json::from_str(&packets[0].data).unwrap();
+            Self {
+                sid: open["sid"].as_str().unwrap().to_owned(),
+            }
+        }
+
+        fn send(&self, server: &eio3::Server, name: &str, args: &[Value]) {
+            let mut arr = vec![json!(name)];
+            arr.extend_from_slice(args);
+            let msg = format!("42{}", Value::Array(arr));
+            let body = format!("{}:{msg}", msg.chars().count());
+            assert_eq!(
+                server.post(&query(Some(&self.sid)), body.as_bytes()).status,
+                200
+            );
+        }
+
+        /// Every event queued for this client, checked against the contract.
+        async fn events(&self, server: &eio3::Server) -> Vec<(String, Vec<Value>)> {
+            let r = server.get(&query(Some(&self.sid)), "h").await;
+            let packets: Vec<Packet3> =
+                decode_payload_string(std::str::from_utf8(&r.body).unwrap()).unwrap();
+            let contract = contract();
+            let mut out = Vec::new();
+            for p in packets {
+                if p.kind != PacketType::Message || !p.data.starts_with('2') {
+                    continue;
+                }
+                let arr: Vec<Value> = serde_json::from_str(&p.data[1..]).unwrap();
+                let name = arr[0].as_str().unwrap().to_owned();
+                let args = arr[1..].to_vec();
+                if let Some(counts) = contract.get(&name) {
+                    assert!(
+                        counts.contains(&args.len()),
+                        "{name} sent with {} arguments, the client takes {counts:?}",
+                        args.len()
+                    );
+                }
+                out.push((name, args));
+            }
+            out
+        }
+    }
+
+    async fn pump(game: &mut Game, rx: &mut mpsc::UnboundedReceiver<eio3::TransportEvent>) {
+        while let Ok(ev) = rx.try_recv() {
+            game.handle_classic(ev);
+        }
+        tokio::task::yield_now().await;
+    }
+
+    fn find<'a>(evs: &'a [(String, Vec<Value>)], name: &str) -> &'a [Value] {
+        &evs.iter()
+            .find(|(n, _)| n == name)
+            .unwrap_or_else(|| {
+                panic!(
+                    "no {name} in {:?}",
+                    evs.iter().map(|e| &e.0).collect::<Vec<_>>()
+                )
+            })
+            .1
+    }
+
+    #[tokio::test]
+    async fn the_2016_client_joins_and_plays() {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let server = eio3::Server::new(eio3::Timing::default(), tx, Trace::disabled());
+        let rooms = [RoomSpec {
+            name: "DEV0".into(),
+            mode: "ffa".into(),
+        }];
+        let mut game = Game::new(
+            assumptions::committed().0,
+            committed("best"),
+            arena(),
+            &rooms,
+            Trace::disabled(),
+        )
+        .unwrap();
+        assert!(game.set_classic_room("nope").is_err());
+
+        let a = Client::open(&server).await;
+        let b = Client::open(&server).await;
+        pump(&mut game, &mut rx).await;
+        assert_eq!(game.room_list()[0]["pl"], json!(0), "no seat before create");
+
+        a.send(&server, "create", &[]);
+        a.send(&server, "respawn", &[]);
+        pump(&mut game, &mut rx).await;
+        let evs = a.events(&server).await;
+        assert_eq!(find(&evs, "yourRoom"), [json!("DEV0"), json!("h/DEV0")]);
+        let welcomes: Vec<_> = evs.iter().filter(|(n, _)| n == "welcome").collect();
+        assert_eq!(welcomes.len(), 1, "only the respawn's welcome");
+        assert_eq!(welcomes[0].1[1], json!(false));
+        let mut obj = welcomes[0].1[0].clone();
+        obj["name"] = json!("Alpha");
+        obj["classIndex"] = json!(0);
+
+        a.send(
+            &server,
+            "gotit",
+            &[obj, json!(false), json!(0), json!(false)],
+        );
+        pump(&mut game, &mut rx).await;
+        let evs = a.events(&server).await;
+        let setup = find(&evs, "gameSetup");
+        assert_eq!(setup[1], json!(true), "the map comes with the first setup");
+        let doc: Value = serde_json::from_str(setup[0].as_str().unwrap()).unwrap();
+        assert_eq!(doc["you"]["name"], json!("Alpha"));
+        assert!(doc["you"]["spawnProtection"].is_number());
+        let me = doc["you"]["index"].clone();
+
+        // A second 2016 client sees the first; the first sees it arrive.
+        b.send(&server, "create", &[json!("somelobby")]);
+        b.send(&server, "respawn", &[]);
+        pump(&mut game, &mut rx).await;
+        let mut obj = find(&b.events(&server).await, "welcome")[0].clone();
+        obj["name"] = json!("Bravo");
+        obj["classIndex"] = json!(2);
+        b.send(
+            &server,
+            "gotit",
+            &[obj, json!(false), json!(0), json!(false)],
+        );
+        pump(&mut game, &mut rx).await;
+        let evs = a.events(&server).await;
+        let add: Value = serde_json::from_str(find(&evs, "add")[0].as_str().unwrap()).unwrap();
+        assert_eq!(add["name"], json!("Bravo"));
+        assert_eq!(game.room_list()[0]["pl"], json!(2));
+
+        // Input carries a timestamp, not a delta; likes name only the target.
+        a.send(
+            &server,
+            "4",
+            &[json!({"hdt": 1, "vdt": 0, "ts": 1000, "isn": 1, "s": 0})],
+        );
+        a.send(
+            &server,
+            "4",
+            &[json!({"hdt": 1, "vdt": 0, "ts": 1016, "isn": 2, "s": 0})],
+        );
+        a.send(&server, "like", &[add["index"].clone()]);
+        a.send(&server, "cht", &[json!("hi"), json!("ALL")]);
+        pump(&mut game, &mut rx).await;
+        game.tick(16.0);
+        assert_eq!(find(&b.events(&server).await, "cht")[0], json!([me, "hi"]));
+        let evs = a.events(&server).await;
+        let x = doc["you"]["x"].as_f64().unwrap();
+        let (_, rsd) = evs.iter().rev().find(|(n, _)| n == "rsd").unwrap();
+        let rsd = rsd[0].as_array().unwrap();
+        let mine = rsd.chunks(6).find(|c| c[1] == me).unwrap();
+        assert!(mine[2].as_f64().unwrap() > x, "{mine:?}");
+        assert_eq!(mine[5], json!(2), "echoes the input number");
+
+        // Leaving frees the seat.
+        assert_eq!(server.post(&query(Some(&b.sid)), b"1:1").status, 200);
+        pump(&mut game, &mut rx).await;
+        assert_eq!(game.room_list()[0]["pl"], json!(1));
+        assert_eq!(find(&a.events(&server).await, "rem")[0], add["index"]);
+    }
 }

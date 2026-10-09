@@ -19,10 +19,32 @@ serves KRP's own client (built locally, never committed). The aim is that
 the game feels the same as KRP. Numbers recovered by the research replace
 KRP's where we have them, through the balance presets.
 
-The 2016 compatibility server (Engine.IO 3, the archived page, the boot
-manifest and its browser check) was removed in the same change; it remains
-in the history before it. Credit for the game logic and data this port
-follows goes to the KRP contributors.
+The 2016 client stays as a compatibility path (asked for by Anders,
+2026-10-09): its Engine.IO 3 transport, the archived page served from the
+archive, and the boot manifest and browser check are kept, on their own
+port. Its players join one of the KRP rooms, and `src/classic/adapt.rs`
+translates the events that changed between the two clients. Credit for
+the game logic and data this port follows goes to the KRP contributors.
+
+## The 2016 client on KRP rooms (compatibility path)
+
+Each difference below was RECOVERED from the 2016-08-06 client's handlers;
+the translation is INFERRED to be what its server did.
+
+| Event | 2016 client | KRP room | Translation |
+| --- | --- | --- | --- |
+| Joining | Root namespace; `create`, then `respawn` | One namespace per room | `create` (or the first `respawn`) seats the client in `[classic] room`; KRP's menu `welcome` at join is not sent. Lobby keys are ignored. |
+| `4` input | Carries a timestamp, no frame delta | Carries the frame delta | The delta is the gap between timestamps, capped at 100 ms. |
+| `like` | Names the target only | Names liker and target | The sender is the liker. |
+| `1` hit | `amount`, `bi`, `h` | `healthDelta`, `bulletIndex`, `health` | Renamed. |
+| `upd` | `sp` a number, `l` a count | `sp` a bool, `l` a list | Converted. |
+| `ts` | Bar widths in percent, or the score limit in free for all | Raw scores | Computed from the room's scores and the mode's limit. |
+| `7` round end | Also carries the player list | No player list | The room's players are added. |
+| `tprt` | `scor`, `oldX`, `oldY` | `score`, no old position | Renamed; the old position repeats the new one. |
+| `yourRoom` | Also a server key | Room only | `host/room` is added. |
+| `gameSetup` | The map only when it changed; pixels under `genData.data.data` | The map every time; pixels under `genData.data` | Tracked per client; pixels nested. |
+| Players | `spawnProtection` number, `likes` count | `isSpawnProtected`, `likedBy` | Both sets of fields are sent. |
+| Shirts, accounts, lobbies | No shirts; accounts and lobbies on the server | Shirts; neither | `updShrt` is not sent; account (`db*`), `kil` and `5` messages are ignored. |
 
 ## Deviations from KRP (we chose to differ)
 
@@ -31,6 +53,7 @@ follows goes to the KRP contributors.
 | Numbers | Its own class and weapon values | A balance preset is laid over them (`[game] balance`, `best` by default; `krp` restores KRP's) | Recovered values win where the research has them (issue #22). |
 | Bullet timing | Each bullet advances on its own timer, by the shooter's last frame delta | Every bullet advances on one fixed server tick (`net.update_hz`, 60) | One clock for the whole room; the client's frame rate no longer changes bullet speed on the server. |
 | Movement input | Moves by the frame delta the client reports, unchecked | The same, with the delta capped at 100 ms | A client cannot move further than one slow frame allows. |
+| Pickups, hardpoints and zones | Checked only when the client sends input, and the hardpoint interval counts down by the client's frame delta, so a player whose tab is hidden stops scoring (reported by Anders while playing KRP, 2026-10-09) | Checked for every living player on the server tick; the interval counts down by server time | Scoring follows time on the point, not the client's frame rate or tab focus. |
 | Weapons | All players share the room's weapon objects, so a camo choice changes everyone's | Each player carries their own copy | Per-player camos. |
 | Round restart | Sends every player's `welcome` to everyone, so each client ends up with the last player's id | Each player gets their own `welcome` | Bug fix. |
 | Custom server modes | Vote entries for a custom mode list are numbered by list position, so the next round can start the wrong mode | Entries keep the mode's real index | Bug fix. |

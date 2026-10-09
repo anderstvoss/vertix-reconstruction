@@ -15,7 +15,9 @@ records what was tested and what was not. The direction is in
   votes, chat, likes, sprays and the custom server form.
 - **Data.** KRP's classes, weapons, modes and cosmetics in `data/krp/`,
   with the balance presets from the research laid over them.
-- **Client.** KRP's client, built locally from a pinned commit.
+- **Client.** KRP's client, built locally from a pinned commit. The
+  archived 2016 client stays as a compatibility path on its own port,
+  joining the same rooms through an event translation layer.
 - **Tested:** unit tests for every rule above, and `scripts/e2e_smoke.py`
   over polling and WebSocket. **Not yet:** a full session in a real browser
   with the built client.

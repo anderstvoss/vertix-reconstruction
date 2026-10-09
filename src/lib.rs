@@ -10,11 +10,15 @@
 //! Layers, bottom up: [`eio`] (Engine.IO polling and WebSocket) and [`sio`]
 //! (Socket.IO events) form the transport; [`game`] owns all game state and
 //! talks to clients only through [`eio::ClientHandle`]; [`originals`] reads
-//! verified files (maps) from an archive clone; [`http`] wires them together.
+//! verified files (maps, the 2016 client) from an archive clone; [`http`]
+//! wires them together. [`classic`] is the compatibility path for the
+//! archived 2016 client: its own transport, and event translation into the
+//! same rooms.
 
 // The player object `json!` builds is deep.
 #![recursion_limit = "256"]
 
+pub mod classic;
 pub mod config;
 pub mod eio;
 pub mod game;

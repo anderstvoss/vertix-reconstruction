@@ -22,6 +22,24 @@ pub struct Config {
     #[serde(default)]
     pub trace_brief: Vec<String>,
     pub engine_io: EngineIo,
+    #[serde(default)]
+    pub classic: Classic,
+}
+
+/// The archived 2016-08-06 client, served from the archive on its own
+/// port and seated in one of the rooms.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Classic {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub port: u16,
+    /// The room its players join; the first room if empty.
+    #[serde(default)]
+    pub room: String,
+    /// Which archived files make up the client (`data/boot`).
+    #[serde(default)]
+    pub manifest: PathBuf,
 }
 
 /// Game data and rooms.
@@ -117,5 +135,7 @@ mod tests {
         assert!(c.rules.len() >= 2);
         assert_eq!(c.game.balance, "best");
         assert_eq!(c.game.rooms.len(), 9);
+        assert_eq!(c.classic.port, 8081);
+        assert!(c.classic.manifest.is_file());
     }
 }
