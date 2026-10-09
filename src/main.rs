@@ -83,21 +83,25 @@ async fn run() -> Result<(), String> {
         provenance.summary(),
         provenance.hash
     );
-    let source: Box<dyn MapSource> = match config.maps.source {
-        MapSourceKind::Archive => Box::new(ArchiveGenData {
-            root: archive.clone(),
-        }),
-        MapSourceKind::Files => Box::new(TextFiles {
-            files: config.maps.files.clone(),
-        }),
-    };
-    let maps = MapSet::new(
-        source
-            .load(rules.world.tile_scale)
-            .map_err(|e| format!("maps: {e}"))?,
-    )
-    .map_err(|e| format!("maps: {e}"))?;
-    eprintln!("maps: {} loaded ({:?})", maps.len(), config.maps.source);
+    let mut loaded = Vec::new();
+    for kind in &config.maps.sources {
+        let source: Box<dyn MapSource> = match kind {
+            MapSourceKind::Archive => Box::new(ArchiveGenData {
+                root: archive.clone(),
+                dir: config.maps.archive_dir.clone(),
+            }),
+            MapSourceKind::Files => Box::new(TextFiles {
+                files: config.maps.files.clone(),
+            }),
+        };
+        loaded.extend(
+            source
+                .load(rules.world.tile_scale)
+                .map_err(|e| format!("maps ({kind:?}): {e}"))?,
+        );
+    }
+    let maps = MapSet::new(loaded).map_err(|e| format!("maps: {e}"))?;
+    eprintln!("maps: {} loaded: {}", maps.len(), maps.ids().join(" "));
 
     let trace_path = args
         .trace

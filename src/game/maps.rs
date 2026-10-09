@@ -1,9 +1,16 @@
 //! Where maps come from, behind one trait so a source can be swapped when
 //! better map evidence turns up.
 //!
-//! - [`ArchiveGenData`]: the 24 `KrunkerRevival` map candidates, read at run
-//!   time from a vertix-archive clone and hash-checked. Their numbering is
-//!   the one the mode table's `maps` lists use. They are PROVISIONAL
+//! The map list is data, not code: a source offers whatever maps it finds,
+//! several sources can be combined, and each mode's `maps` list (in the rule
+//! layers) names the ids it plays. Adding or replacing a map as new
+//! evidence turns up means adding a file and, if a mode should play it, an
+//! id in a rule layer.
+//!
+//! - [`ArchiveGenData`]: every `map-<id>.genData.json` in a directory of a
+//!   vertix-archive clone, each hash-checked against the archive's
+//!   `sha256sums.txt`. By default that is the 24 `KrunkerRevival`
+//!   candidates, whose numbering the mode lists use. They are PROVISIONAL
 //!   (Anders, 2026-10-09) and are never committed here: the source has no
 //!   license.
 //! - [`TextFiles`]: maps in this repository's text format, keyed by file
@@ -36,22 +43,48 @@ pub trait MapSource {
     fn load(&self, tile_scale: f64) -> Result<Vec<MapEntry>, Error>;
 }
 
-/// Directory of the `KrunkerRevival` candidates inside the archive.
+/// Default directory of the map candidates inside the archive.
 pub const ARCHIVE_MAP_DIR: &str = "vertix-preservation/derived/maps/krp-2026-candidates";
-/// How many candidates the archive holds (`map-0` to `map-23`).
-pub const ARCHIVE_MAP_COUNT: usize = 24;
 
-/// The archive's `map-N.genData.json` files.
+/// The `map-<id>.genData.json` files in one archive directory.
 pub struct ArchiveGenData {
     pub root: PathBuf,
+    /// Relative to `root`, with `/` separators as in `sha256sums.txt`.
+    pub dir: String,
+}
+
+impl ArchiveGenData {
+    /// The map ids present in the directory, numbers first in numeric order.
+    fn ids(&self) -> Result<Vec<String>, Error> {
+        let path = self.root.join(&self.dir);
+        let read =
+            std::fs::read_dir(&path).map_err(|e| Error(format!("{}: {e}", path.display())))?;
+        let mut ids: Vec<String> = read
+            .filter_map(Result::ok)
+            .filter_map(|e| {
+                let name = e.file_name().to_string_lossy().into_owned();
+                let id = name.strip_prefix("map-")?.strip_suffix(".genData.json")?;
+                (!id.is_empty()).then(|| id.to_owned())
+            })
+            .collect();
+        ids.sort_by(|a, b| match (a.parse::<u64>(), b.parse::<u64>()) {
+            (Ok(x), Ok(y)) => x.cmp(&y),
+            (Ok(_), Err(_)) => std::cmp::Ordering::Less,
+            (Err(_), Ok(_)) => std::cmp::Ordering::Greater,
+            (Err(_), Err(_)) => a.cmp(b),
+        });
+        Ok(ids)
+    }
 }
 
 impl MapSource for ArchiveGenData {
     fn load(&self, tile_scale: f64) -> Result<Vec<MapEntry>, Error> {
         let archive = Archive::open(&self.root).map_err(|e| Error(e.to_string()))?;
-        (0..ARCHIVE_MAP_COUNT)
-            .map(|n| {
-                let rel = format!("{ARCHIVE_MAP_DIR}/map-{n}.genData.json");
+        let dir = self.dir.trim_end_matches('/');
+        self.ids()?
+            .into_iter()
+            .map(|id| {
+                let rel = format!("{dir}/map-{id}.genData.json");
                 let bytes = archive.verified(&rel).map_err(|e| Error(e.to_string()))?;
                 let doc: Value =
                     serde_json::from_slice(&bytes).map_err(|e| Error(format!("{rel}: {e}")))?;
@@ -61,7 +94,7 @@ impl MapSource for ArchiveGenData {
                 let map = Map::from_gen_data(gen_data, tile_scale, false)
                     .map_err(|e| Error(format!("{rel}: {}", e.0)))?;
                 Ok(MapEntry {
-                    id: n.to_string(),
+                    id,
                     source: rel,
                     map,
                 })
@@ -106,15 +139,29 @@ pub struct MapSet {
 }
 
 impl MapSet {
-    /// Wraps loaded maps.
+    /// Wraps loaded maps. When several sources offer the same id, the
+    /// later one replaces the earlier, keeping its place in the list.
     ///
     /// # Errors
     /// Fails if there are none.
-    pub fn new(entries: Vec<MapEntry>) -> Result<Self, Error> {
+    pub fn new(loaded: Vec<MapEntry>) -> Result<Self, Error> {
+        let mut entries: Vec<MapEntry> = Vec::with_capacity(loaded.len());
+        for e in loaded {
+            match entries.iter_mut().find(|x| x.id == e.id) {
+                Some(slot) => *slot = e,
+                None => entries.push(e),
+            }
+        }
         if entries.is_empty() {
             return Err(Error("no maps loaded".into()));
         }
         Ok(Self { entries })
+    }
+
+    /// The loaded ids, in order.
+    #[must_use]
+    pub fn ids(&self) -> Vec<&str> {
+        self.entries.iter().map(|e| e.id.as_str()).collect()
     }
 
     #[must_use]
@@ -184,10 +231,34 @@ mod tests {
     }
 
     #[test]
-    fn missing_archive_is_an_error() {
+    fn later_sources_replace_maps_with_the_same_id() {
+        let mut newer = entry("3");
+        newer.source = "newer".into();
+        let set = MapSet::new(vec![entry("3"), entry("5"), newer]).unwrap();
+        assert_eq!(set.ids(), ["3", "5"]);
+        assert_eq!(set.entries[0].source, "newer");
+    }
+
+    #[test]
+    fn archive_source_finds_whatever_maps_the_directory_holds() {
+        let root = std::env::temp_dir().join(format!("vertix-maps-{}", std::process::id()));
+        let dir = root.join("maps");
+        std::fs::create_dir_all(&dir).unwrap();
+        for name in [
+            "map-10.genData.json",
+            "map-2.genData.json",
+            "map-new.genData.json",
+            "notes.md",
+        ] {
+            std::fs::write(dir.join(name), "{}").unwrap();
+        }
         let src = ArchiveGenData {
-            root: PathBuf::from("does-not-exist"),
+            root: root.clone(),
+            dir: "maps".into(),
         };
+        assert_eq!(src.ids().unwrap(), ["2", "10", "new"]);
+        // No sha256sums.txt: nothing unverified is loaded.
         assert!(src.load(100.0).is_err());
+        std::fs::remove_dir_all(&root).unwrap();
     }
 }

@@ -25,11 +25,18 @@ pub struct Config {
 /// Where maps come from.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Maps {
-    /// `archive`: the 24 provisional maps in the archive clone.
+    /// Sources loaded in order; a later source replaces maps with the same
+    /// id. `archive`: every `map-<id>.genData.json` in `archive_dir`.
     /// `files`: the text maps listed in `files`.
-    pub source: MapSourceKind,
+    pub sources: Vec<MapSourceKind>,
+    #[serde(default = "default_archive_dir")]
+    pub archive_dir: String,
     #[serde(default)]
     pub files: Vec<PathBuf>,
+}
+
+fn default_archive_dir() -> String {
+    crate::game::maps::ARCHIVE_MAP_DIR.to_owned()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -91,7 +98,7 @@ mod tests {
         assert_eq!(c.engine_io.ping_interval_ms, 25_000);
         assert_eq!(c.engine_io.ping_timeout_ms, 60_000);
         assert!(c.trace_brief.iter().any(|e| e == "rsd"));
-        assert_eq!(c.maps.source, MapSourceKind::Archive);
+        assert_eq!(c.maps.sources, [MapSourceKind::Archive]);
         assert!(c.rules.len() >= 2);
     }
 }

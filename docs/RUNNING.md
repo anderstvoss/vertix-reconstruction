@@ -74,11 +74,14 @@ mode = "hp"   # ffa, tdm, hp, zmtch, lc, snipe or rckt
 update_hz = 60   # server tick rate
 ```
 
-Each mode plays the maps its `maps` list names. `[maps] source` picks where
-maps come from: `"archive"` loads the 24 provisional maps from the archive,
-and `"files"` loads the text maps listed under `files` (for example our own
-`data/maps/arena.txt`); a mode whose maps are not loaded plays any loaded
-map.
+Each mode plays the map ids its `maps` list names. `[maps] sources` lists
+where maps come from, in order, and a later source replaces a map with the
+same id: `"archive"` loads every `map-<id>.genData.json` in `archive_dir`
+(by default the 24 provisional maps), and `"files"` loads the text maps
+listed under `files`, keyed by file name (for example our own
+`data/maps/arena.txt`). A mode whose maps are not loaded plays any loaded
+map. Adding a map needs no code change: add the file, and add its id to a
+mode's `maps` list in a rule layer.
 
 To let another machine on your network join, change `bind` in
 `config/server.toml` to your machine's network address (do not commit

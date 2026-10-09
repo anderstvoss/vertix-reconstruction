@@ -17,7 +17,7 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 - Event trace (`--trace`) and a browser check (`scripts/e2e_boot.py`).
 - Game rules as ordered layers (`data/rules/`), each value with a status and source; `--explain-rules` lists them and start-up logs a hash of the merged rules.
 - The seven 2016 modes with their score limits, team flag and map lists; team modes balance red and blue and fill the team score bars, and Sniper War and Rocket War force Hunter and Rocketeer.
-- Maps from a swappable source: the 24 provisional maps read and hash-checked from the archive, or our own text maps. Spawns use the maps' red and blue cells.
+- Maps as data from swappable, combinable sources: every map file in an archive directory (by default the 24 provisional maps, hash-checked), or our own text maps; modes name their map ids in the rule layers. Spawns use the maps' red and blue cells.
 - Server tick rate is a setting (`net.update_hz`, 30 by default).
 - POST bodies with more than 256 Engine.IO packets are rejected, and the codec has tests for malformed length prefixes and multibyte text.
 

@@ -24,9 +24,11 @@ deviation.
   24 `KrunkerRevival` map candidates from the archive (PROVISIONAL, decided
   by Anders on 2026-10-09). They are read and hash-checked at start-up and
   never copied into this repository, because that project has no license.
-  `[maps] source = "files"` swaps in text maps such as our own
-  `data/maps/arena.txt`; the map source is a trait, so other sources can
-  be added. Their red and blue pixels are read as spawn cells (INFERRED;
+  The map list is data: the archive source loads whatever
+  `map-<id>.genData.json` files its directory holds, `[maps] sources` can
+  combine it with text maps such as our own `data/maps/arena.txt` (later
+  sources replace maps with the same id), and each mode's map ids live in
+  the rule layers. New map evidence means new files and ids, not code. Their red and blue pixels are read as spawn cells (INFERRED;
   the client draws them as floor), and clutter and pickups are not placed.
 - **Numbers.** Every class, weapon, mode and timing value is in the rule
   layers under `data/rules/`: `base.toml` (KRP's values, PROVISIONAL) and

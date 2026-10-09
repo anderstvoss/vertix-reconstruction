@@ -22,10 +22,16 @@ trace = ""
 trace_brief = ["rsd", "4", "0", "ping1", "pong1"]
 
 [maps]
-# "archive": the 24 KrunkerRevival map candidates in the archive clone
-# (provisional, hash-checked, never copied into this repository).
-# "files": the text maps listed below, e.g. our own placeholder arena.
-source = "archive"
+# Map sources, loaded in order; a later source replaces a map with the
+# same id. Each mode plays the ids its `maps` list names (in the rule
+# layers), so new maps need no code change: add the file, then the id.
+# "archive": every map-<id>.genData.json in archive_dir of the archive
+#   clone, each hash-checked against its sha256sums.txt (by default the 24
+#   provisional KrunkerRevival candidates, never copied into this repository).
+# "files": the text maps listed under files, keyed by file name, e.g. our
+#   own placeholder arena.
+sources = ["archive"]
+archive_dir = "vertix-preservation/derived/maps/krp-2026-candidates"
 files = ["data/maps/arena.txt"]
 
 [engine_io]
