@@ -377,9 +377,14 @@ fn overlay(
     }
 }
 
-#[cfg(test)]
-pub(crate) fn committed(balance: &str) -> GameData {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("data");
+/// The committed tables with the preset `balance`, for tests.
+///
+/// # Panics
+/// If the committed data does not load.
+#[doc(hidden)]
+#[must_use]
+pub fn committed(balance: &str) -> GameData {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data");
     GameData::load(&root.join("krp"), &root.join("balance"), balance).expect("committed data loads")
 }
 
@@ -390,7 +395,7 @@ mod tests {
     #[test]
     fn krp_tables_load_with_every_preset() {
         let index =
-            read_json(&Path::new(env!("CARGO_MANIFEST_DIR")).join("data/balance/index.json"))
+            read_json(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data/balance/index.json"))
                 .unwrap();
         let ids: Vec<&str> = index["presets"]
             .as_array()

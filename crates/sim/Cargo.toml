@@ -1,0 +1,16 @@
+[package]
+name = "vertix_sim"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "AGPL-3.0-only"
+description = "Game rules shared by the reconstruction's server and client: data tables, map collision and projectiles."
+repository = "https://github.com/anderstvoss/vertix-reconstruction"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[lints]
+workspace = true

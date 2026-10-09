@@ -28,14 +28,22 @@ sha2 = "0.10"
 zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Engine.IO session ids must not be guessable.
 rand = "0.9"
+# Rules shared with the client: game data, map collision, projectiles.
+vertix_sim = { path = "crates/sim" }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["test-util"] }
 
-[lints.rust]
+[workspace]
+members = ["crates/sim"]
+
+[lints]
+workspace = true
+
+[workspace.lints.rust]
 unsafe_code = "forbid"
 
-[lints.clippy]
+[workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 # Keeps unsafe auditable if a crate later needs FFI and relaxes the

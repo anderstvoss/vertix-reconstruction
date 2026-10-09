@@ -16,7 +16,7 @@ A Rust reconstruction of Vertix.io's game mechanics, played in the browser.
   commit `1e302cb`) is the reference this server is ported from, so that the
   game feels the same. Its classes, weapons, modes and cosmetic catalogues
   are converted to `data/krp/` by `scripts/import_krp.py`, and the server
-  logic in `src/game/room.rs` and `src/game/projectile.rs` follows its
+  logic in `src/game/room.rs` and `crates/sim/src/projectile.rs` follows its
   `server/room.ts`, `server/game.ts` and `core/src/logic/projectile.ts`.
   Credit for that work goes to the KRP contributors.
 - **Numbers: the research.** Balance presets in `data/balance/` lay the
