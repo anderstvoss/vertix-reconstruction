@@ -46,6 +46,11 @@ krp_data = "data/krp"
 balance_dir = "data/balance"
 balance = "best"
 
+# Players per room. A room in the list below can set its own, e.g.
+# { name = "DEV0", mode = "ffa", max_players = 12 }. The client's custom
+# server form can lower a room's limit, never raise it.
+max_players = 8
+
 # The rooms opened at start, one per mode as in KRP's dev server. A client
 # picks one in the server browser; mode codes are those in data/krp.
 rooms = [

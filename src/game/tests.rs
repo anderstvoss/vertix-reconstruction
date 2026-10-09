@@ -610,10 +610,12 @@ async fn clients_join_rooms_by_namespace() {
         RoomSpec {
             name: "DEV0".into(),
             mode: "ffa".into(),
+            max_players: None,
         },
         RoomSpec {
             name: "DEV1".into(),
             mode: "tdm".into(),
+            max_players: None,
         },
     ];
     let mut game = Game::new(rules, committed("best"), arena(), &rooms, Trace::disabled()).unwrap();
@@ -658,6 +660,7 @@ fn configured_rooms_are_checked() {
         let spec = [RoomSpec {
             name: name.into(),
             mode: mode.into(),
+            max_players: None,
         }];
         Game::new(
             assumptions::committed().0,
@@ -791,6 +794,7 @@ mod classic {
         let rooms = [RoomSpec {
             name: "DEV0".into(),
             mode: "ffa".into(),
+            max_players: None,
         }];
         let mut game = Game::new(
             assumptions::committed().0,
@@ -881,4 +885,40 @@ mod classic {
         assert_eq!(game.room_list()[0]["pl"], json!(1));
         assert_eq!(find(&a.events(&server).await, "rem")[0], add["index"]);
     }
+}
+
+#[test]
+fn player_limit_is_a_server_setting() {
+    let spec = |max: Option<usize>| {
+        [RoomSpec {
+            name: "DEV0".into(),
+            mode: "ffa".into(),
+            max_players: max,
+        }]
+    };
+    let game = |max| {
+        Game::new(
+            assumptions::committed().0,
+            committed("best"),
+            arena(),
+            &spec(max),
+            Trace::disabled(),
+        )
+    };
+    assert!(game(Some(0)).is_err());
+    assert!(game(Some(MAX_PLAYER_LIMIT + 1)).is_err());
+    assert_eq!(game(None).unwrap().room_list()[0]["mxpl"], json!(8));
+    assert_eq!(game(Some(12)).unwrap().room_list()[0]["mxpl"], json!(12));
+
+    // The custom server form may lower the limit, never raise it.
+    let mut b = Bench::new("ffa");
+    b.room.set_player_limit(12);
+    let i = b.join();
+    let csrv = |n: &str| vec![json!({"srvPlayers": n})];
+    b.send(i, "cSrv", csrv("10"));
+    assert_eq!(b.room.max_players, 10);
+    b.send(i, "cSrv", csrv("99"));
+    assert_eq!(b.room.max_players, 12);
+    b.send(i, "cSrv", csrv("1"));
+    assert_eq!(b.room.max_players, 2);
 }

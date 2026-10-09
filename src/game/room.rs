@@ -124,7 +124,10 @@ pub struct Room {
     pub score_blue: f64,
     /// The leader's progress to the score limit, in percent (room list).
     pub score_lb: f64,
+    /// Players the room takes now; the custom server form can lower it.
     pub max_players: usize,
+    /// The server's limit for this room; the form cannot go above it.
+    pub player_limit: usize,
     screen: [f64; 3],
     mults_health: f64,
     mults_speed: f64,
@@ -194,6 +197,7 @@ impl Room {
             score_blue: 0.0,
             score_lb: 0.0,
             max_players: rules.max_players,
+            player_limit: rules.max_players,
             screen: [
                 screen.max_screen_width,
                 screen.max_screen_height,
@@ -332,6 +336,12 @@ impl Room {
         self.timers
             .retain(|(_, t)| matches!(t, Timer::LootCheck | Timer::Reload { .. }));
         self.round_end = false;
+    }
+
+    /// Sets the server's player limit for this room (at least 1).
+    pub fn set_player_limit(&mut self, limit: usize) {
+        self.player_limit = limit.max(1);
+        self.max_players = self.player_limit;
     }
 
     /// A client joined the room's namespace (KRP `connection`).
@@ -1502,7 +1512,9 @@ impl Room {
                 .and_then(Value::as_str)
                 .and_then(|s| s.trim().parse().ok())
         }) {
-            self.max_players = n.clamp(2.0, 8.0) as usize;
+            // At least 2, at most the server's limit for this room.
+            let asked = n.clamp(0.0, 1e6) as usize;
+            self.max_players = asked.clamp(2.min(self.player_limit), self.player_limit);
         }
         let mult = |k: &str| {
             num(d.get(k))

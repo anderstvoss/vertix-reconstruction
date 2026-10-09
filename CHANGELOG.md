@@ -26,7 +26,7 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 - KRP's classes, weapons, modes and cosmetics as data (`data/krp/`, converted by `scripts/import_krp.py`).
 - Balance presets from the research (`data/balance/`): `[game] balance` picks `best` (default), `krp`, or one game version; `--explain-rules` lists the values and their sources.
 - Serves a locally built KRP client (`scripts/build-client.sh`, `.ps1`) with KRP's `/api/getIP`, `/api/getRooms` and `/api/getLbs` routes.
-- Rooms from `config/server.toml`, one per mode by default.
+- Rooms from `config/server.toml`, one per mode by default, with a player limit (`[game] max_players`, 8 by default, or per room) that the custom server form cannot exceed.
 - WebSocket transport with the Engine.IO upgrade.
 - `scripts/e2e_smoke.py`: plays through a running server over polling and WebSocket.
 

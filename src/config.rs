@@ -51,8 +51,31 @@ pub struct Game {
     pub balance_dir: PathBuf,
     /// The preset applied over KRP's numbers; `best` by default.
     pub balance: String,
+    /// Players per room, unless a room sets its own `max_players`. The
+    /// custom server form can lower a room's limit but not raise it.
+    #[serde(default = "default_max_players")]
+    pub max_players: usize,
     /// The rooms opened at start, in the room list's order.
     pub rooms: Vec<crate::game::RoomSpec>,
+}
+
+const fn default_max_players() -> usize {
+    8
+}
+
+impl Game {
+    /// The rooms with `max_players` filled in from the server default.
+    #[must_use]
+    pub fn room_specs(&self) -> Vec<crate::game::RoomSpec> {
+        self.rooms
+            .iter()
+            .cloned()
+            .map(|mut r| {
+                r.max_players = r.max_players.or(Some(self.max_players));
+                r
+            })
+            .collect()
+    }
 }
 
 /// Where maps come from.
@@ -135,6 +158,8 @@ mod tests {
         assert!(c.rules.len() >= 2);
         assert_eq!(c.game.balance, "best");
         assert_eq!(c.game.rooms.len(), 9);
+        assert_eq!(c.game.max_players, 8);
+        assert!(c.game.room_specs().iter().all(|r| r.max_players == Some(8)));
         assert_eq!(c.classic.port, 8081);
         assert!(c.classic.manifest.is_file());
     }

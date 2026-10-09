@@ -57,10 +57,11 @@ the translation is INFERRED to be what its server did.
 | Weapons | All players share the room's weapon objects, so a camo choice changes everyone's | Each player carries their own copy | Per-player camos. |
 | Round restart | Sends every player's `welcome` to everyone, so each client ends up with the last player's id | Each player gets their own `welcome` | Bug fix. |
 | Custom server modes | Vote entries for a custom mode list are numbered by list position, so the next round can start the wrong mode | Entries keep the mode's real index | Bug fix. |
-| Custom server form | Player count, multipliers and modes used as sent | Players clamped to 2 to 8, multipliers to 0.01 to 100, unknown modes dropped, numbers accepted as text | Research #69: the form sends unchecked strings. |
+| Custom server form | Player count, multipliers and modes used as sent | Players clamped to 2 to the room's configured limit, multipliers to 0.01 to 100, unknown modes dropped, numbers accepted as text | Research #69: the form sends unchecked strings. |
 | Likes | The liker's index is taken from the message | The liker is always the sender | One player cannot like on another's behalf. |
 | Chat and names | Used as sent | Markup and control characters stripped; chat capped at 50 characters, names at 25 | Rendered by every client. |
 | Rooms | Unknown names in `/api/getIP` fall back to the first room | The same, and connecting straight to an unknown room namespace is refused | Rooms come from `config/server.toml` only. |
+| Player limit | 8 per room, fixed in code | `[game] max_players` in `config/server.toml`, 8 by default, and a room may set its own | Requested by Anders, 2026-10-09: a server setting. |
 | Leaderboards | `/api/getLbs` returns generated sample players | Every board is empty | There are no accounts (decided by Anders, 2026-10-08). |
 | `/api/getIP` | Names a fixed host and port | Answers with the host and port the request used | The client connects to its own origin either way. |
 | Boss class | Selectable like any class | Reserved for the boss in Boss mode even when a balance version hides it | The boss must spawn as the boss. |

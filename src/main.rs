@@ -166,7 +166,7 @@ async fn run() -> Result<(), String> {
     let (classic_tx, classic_rx) = mpsc::unbounded_channel();
     let timing = config.engine_io.timing();
     let eio = eio::Server::new(timing, tx, trace.clone());
-    let mut game = Game::new(rules, data, maps, &config.game.rooms, trace.clone())?;
+    let mut game = Game::new(rules, data, maps, &config.game.room_specs(), trace.clone())?;
     let classic_app = if config.classic.enabled {
         if !config.classic.room.is_empty() {
             game.set_classic_room(&config.classic.room)?;

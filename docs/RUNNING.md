@@ -85,6 +85,9 @@ no request leaves the server.
   (`DEV0` free for all to `DEV8` Arsonist War, as in KRP's dev server). The
   room list and `/api/getIP` follow it. A room's mode changes at round end
   by vote, or through the client's custom server form.
+- **`[game] max_players`**: players per room, 8 by default. A room can set
+  its own (`{ name = "DEV0", mode = "ffa", max_players = 12 }`). The
+  custom server form can lower a room's limit but not raise it.
 - **`[game] balance`**: the balance preset laid over KRP's classes and
   weapons. `best` (default) uses the best-supported recovered value for
   each stat, `krp` keeps KRP's numbers, and a version such as `v3.8` plays

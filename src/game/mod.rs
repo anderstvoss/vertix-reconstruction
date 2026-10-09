@@ -41,6 +41,9 @@ use room::{Room, To};
 pub struct RoomSpec {
     pub name: String,
     pub mode: String,
+    /// Player limit; `[game] max_players` when not given.
+    #[serde(default)]
+    pub max_players: Option<usize>,
 }
 
 /// A question the HTTP routes ask about the rooms.
@@ -53,6 +56,8 @@ pub enum Ask {
 }
 
 const MAX_ROOM_NAME: usize = 24;
+/// Highest player limit a room may be configured with.
+pub const MAX_PLAYER_LIMIT: usize = 64;
 
 /// How a player's client is reached.
 enum Link {
@@ -137,6 +142,17 @@ impl Game {
                 return Err(format!("room {} is listed twice", r.name));
             }
             game.open_room(&r.name, mode);
+            if let Some(n) = r.max_players {
+                if !(1..=MAX_PLAYER_LIMIT).contains(&n) {
+                    return Err(format!(
+                        "room {}: max_players {n} is not between 1 and {MAX_PLAYER_LIMIT}",
+                        r.name
+                    ));
+                }
+                if let Some(s) = game.rooms.last_mut() {
+                    s.room.set_player_limit(n);
+                }
+            }
         }
         if let Some(first) = game.rooms.first() {
             game.classic_room = first.room.name.clone();
