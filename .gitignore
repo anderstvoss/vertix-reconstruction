@@ -36,7 +36,7 @@ id_ed25519*
 .sanitize-denylist
 # Local archive checkouts and originals must never be committed
 vertix-archive/
-originals/
+/originals/
 notes/
 scratch/
 todo-private.md
