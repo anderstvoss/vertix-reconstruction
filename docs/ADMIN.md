@@ -15,7 +15,9 @@ Start the server as usual. It prints the panel's address with a token:
 admin panel on http://<bind>:8082/#token=3f9c...
 ```
 
-Open that address in a browser on the same machine. The token is part of
+The port is a preference: if 8082 is taken (say, by a second server),
+the next free port is used, and the line shows which. Open that address
+in a browser on the same machine. The token is part of
 the address after `#`, which the browser never sends to a server; the page
 keeps it for the tab and removes it from the address bar. Without the
 token the page only asks for it.
@@ -73,7 +75,7 @@ or `blue`; in free-for-all modes a player's team is their index.
 | `state` | Full server state as JSON (what the panel shows) |
 | `catalog` | Modes, maps, classes, weapons, presets as JSON |
 | `players` | Players in the room |
-| `list modes\|maps\|classes\|weapons\|hats\|shirts\|camos\|sprays\|presets` | List game data |
+| `list modes\|maps\|classes\|weapons\|hats\|shirts\|camos\|sprays\|presets\|versions` | List game data |
 | `use <room>` | Work in this room from now on (this session) |
 | `mode <mode> [map]` | Start a new round in a mode (code, name or index) |
 | `map <map id>` | Start a new round on a map, same mode |
@@ -107,6 +109,14 @@ or `blue`; in free-for-all modes a player's team is their index.
 | `rule [name] [value]` | List, show or change a rule constant (all rooms) |
 | `reload rules` | Reload the rule layers from disk |
 | `balance [preset]` | Show or switch the balance preset (from next spawn) |
+| `version` | Show the version string clients are given |
+| `version use <version> [label]` | Use a researched game version's string (`v3.8` shows as `V3.8`) and its balance; `label` changes only the string |
+| `version set <text>` | Any version string (up to 40 letters, digits, spaces and `.-_+:/#!,()`) |
+| `version reset` | Back to the server's own (`RECON <version>`) |
+| `tune` | List the values tuned over the preset |
+| `tune <class\|weapon> <name> <field> <value>` | Set one class or weapon value, from next spawn |
+| `tune show <class\|weapon> <name>` | A class's or weapon's current values |
+| `tune reset` | Drop all tuning |
 | `emit <player\|all> <event> [json args]` | Send any event to clients |
 | `inject <player> <event> [json args]` | Handle an event as if a player sent it |
 
@@ -140,6 +150,47 @@ something that happens in a normal game:
 - `healthmult`, `speedmult`, `balance` and `rename` apply when each player
   next spawns. `rule max_players` and `rule bullet_pool` apply to new rooms
   and new rounds; per-room limits are `maxplayers`.
+
+## Version string
+
+Both clients show a version in their menu footer, as `<version>
+(CHANGELOG)`. The server writes its version string into that label as it
+serves each client's page and scripts, and answers `/api/version` on the
+game port. It starts as `[game] version` from the config, or the server's
+own `RECON <version>`. In the panel's Server tab, the version list holds
+every game version the research has a balance sheet for, with its date:
+picking one gives clients that version's string and, unless you untick
+"also load its balance", switches to its balance preset. A text box sets
+any other string. Players are told in chat when it changes; menus show it
+after a page reload.
+
+KRP's client is matched by its built label `V3.8 (CHANGELOG)`; if a KRP
+build words it differently the label is left alone.
+
+## Balance tuning
+
+`tune` sets any class value (`maxHealth`, `speed`, `jumpStrength`,
+`gravityStrength`, `height`, `width`) or any number or flag of a weapon
+(damage, reload, spread, bullet speed and the rest; `tune show weapon
+<name>` lists them). Tuned values sit on top of the balance preset, so
+switching preset or version keeps them; `tune reset` drops them. Like a
+preset, they apply to each player from their next spawn. The panel's
+Server tab has a picker for the class or weapon and the field, showing the
+current value.
+
+## Ports
+
+The ports in `config/server.toml` (8080 game, 8081 2016 client, 8082
+panel) are preferences. A taken port moves to the next free one up, then
+to one the system picks; the listeners never share a port. Each line at
+start-up shows the address actually used, and `ports_file`
+(`out/server.json` by default) has them all for scripts:
+
+```json
+{"admin": "http://<bind>:8082/", "classic": "http://<bind>:8081/", "krp": "http://<bind>:8083/", "pid": 1234}
+```
+
+`strict_ports = true` or `--strict-port` fails instead of moving.
 
 ## From a script
 

@@ -225,7 +225,9 @@ def admin(base: tuple[str, int], token: str, line: str, auth: bool = True) -> tu
         conn.close()
 
 
-def run_admin(host: str, port: int, token: str, ws: WebSocket, me: int, stdin) -> None:
+def run_admin(
+    host: str, port: int, token: str, ws: WebSocket, me: int, stdin, game: tuple[str, int]
+) -> None:
     """The admin port and the terminal console, seen from a player."""
     base = (host, port)
     status, body = request(base, "/")
@@ -271,11 +273,51 @@ def run_admin(host: str, port: int, token: str, ws: WebSocket, me: int, stdin) -
             break
     check("panel log shows chat", seen is not None and "hello from the terminal" in seen["text"], str(seen))
 
+    # The version string reaches the client's menu label and /api/version.
+    status, body = request(game, "/")
+    check("menu label carries the server's version", b"RECON " in body and b"V3.8" not in body, body[:200])
+    _, r = admin(base, token, "version use v3.5")
+    check("a researched version sets string and balance", r.get("ok") and "v3.5" in r["text"], str(r))
+    ver = json.loads(request(game, "/api/version")[1])
+    check("/api/version follows", ver["version"] == "V3.5", str(ver))
+    check("served label follows", b">V3.5 (CHANGELOG)<" in request(game, "/")[1])
+    ws.until("/DEV0", "cht")
+    _, r = admin(base, token, "version set <script>")
+    check("unsafe version strings are refused", r.get("ok") is False)
+    _, r = admin(base, token, "tune class Hunter maxHealth 61")
+    check("tune sets a class value", r.get("ok"), str(r))
+    _, r = admin(base, token, "catalog")
+    hunter = [c for c in r["data"]["classes"] if c["name"] == "Hunter"][0]
+    check("catalog shows tuned values", hunter["fields"]["maxHealth"] == 61, str(hunter))
+
     admin(base, token, "kick Alpha Bye now")
     kick = ws.until("/DEV0", "kick")
     check("kick tells the client why", kick[1] == "Bye now", str(kick))
-    rooms = json.loads(request((host, port - 2), "/api/getRooms")[1])
+    rooms = json.loads(request(game, "/api/getRooms")[1])
     check("kick frees the seat", rooms[0]["pl"] == 0, str(rooms))
+
+
+def start(cmd: list[str]) -> tuple[subprocess.Popen, dict[str, str]]:
+    """Starts a server and reads the addresses it prints."""
+    proc = subprocess.Popen(
+        cmd, cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
+    )
+    assert proc.stderr is not None
+    seen: dict[str, str] = {}
+    for line in proc.stderr:
+        if m := re.search(r"admin panel on http://([^/]+)/#token=(\S+)", line):
+            seen["admin"], seen["token"] = m.group(1), m.group(2)
+        if m := re.search(r"listening on http://([^/]+)/", line):
+            seen["krp"] = m.group(1)
+            break
+        seen.setdefault("log", "")
+        seen["log"] += line
+    return proc, seen
+
+
+def hostport(s: str) -> tuple[str, int]:
+    h, p = s.rsplit(":", 1)
+    return h, int(p)
 
 
 def main() -> int:
@@ -288,49 +330,58 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         client = Path(tmp) / "client"
         client.mkdir()
-        (client / "index.html").write_text("<!doctype html><title>stand-in</title>stand-in client\n")
+        (client / "index.html").write_text(
+            '<!doctype html><title>stand-in</title>stand-in client <a href="./versions.txt">V3.8 (CHANGELOG)</a>\n'
+        )
         config = (ROOT / "config/server.toml").read_text()
         # The committed config is the one place that names the bind address.
         host = re.search(r'^bind = "([^"]+)"', config, re.M).group(1)
+        ports_file = Path(tmp) / "out" / "server.json"
         config = config.replace('sources = ["archive"]', 'sources = ["files"]')
         config = config.replace("port = 8082", f"port = {args.port + 2}")
+        config = config.replace('ports_file = "out/server.json"', f"ports_file = {json.dumps(str(ports_file))}")
         config = config.replace('client_dir = "client/dist"', f"client_dir = {json.dumps(str(client))}")
-        start = config.index("rooms = [")
+        start_at = config.index("rooms = [")
         end = config.index("]\n", config.index("pyro")) + 2
         config = (
-            config[:start]
+            config[:start_at]
             + 'rooms = [{ name = "DEV0", mode = "ffa" }, { name = "DEV1", mode = "tdm" }]\n'
             + config[end:]
         )
         cfg = Path(tmp) / "server.toml"
         cfg.write_text(config)
-        proc = subprocess.Popen(
-            [args.server, "--config", str(cfg), "--port", str(args.port)],
-            cwd=ROOT,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        cmd = [args.server, "--config", str(cfg), "--port", str(args.port)]
+        procs = []
         try:
-            assert proc.stderr is not None
-            token = ""
-            for line in proc.stderr:
-                if "#token=" in line:
-                    token = line.strip().split("#token=")[1]
-                if "listening on" in line:
-                    break
-                if proc.poll() is not None:
-                    break
-            if proc.poll() is not None:
-                print("server did not start", file=sys.stderr)
+            proc, seen = start(cmd)
+            procs.append(proc)
+            if "krp" not in seen:
+                print("server did not start\n" + seen.get("log", ""), file=sys.stderr)
                 return 1
             time.sleep(0.1)
-            ws, me = run(host, args.port)
-            run_admin(host, args.port + 2, token, ws, me, proc.stdin)
+            game = hostport(seen["krp"])
+            written = json.loads(ports_file.read_text())
+            check("ports file names the listeners", written["krp"] == f"http://{seen['krp']}/", str(written))
+            ws, me = run(*game)
+            run_admin(host, hostport(seen["admin"])[1], seen["token"], ws, me, proc.stdin, game)
+
+            # A second server on the same ports moves up instead of failing.
+            second, seen2 = start(cmd)
+            procs.append(second)
+            moved = {seen2.get("krp"), seen2.get("admin")}
+            check(
+                "a second server picks free ports",
+                "krp" in seen2 and not moved & {seen["krp"], seen["admin"]} and len(moved) == 2,
+                str(seen2),
+            )
+            check("and serves on them", request(hostport(seen2["krp"]), "/api/getRooms")[0] == 200)
+            strict, seen3 = start([*cmd, "--strict-port"])
+            procs.append(strict)
+            check("--strict-port fails on a taken port", strict.wait(timeout=20) != 0 and "strict" in seen3["log"])
         finally:
-            proc.terminate()
-            proc.wait(timeout=10)
+            for p in procs:
+                p.terminate()
+                p.wait(timeout=10)
     failed = [n for n, ok in CHECKS if not ok]
     print(f"{len(CHECKS) - len(failed)}/{len(CHECKS)} checks passed")
     return 1 if failed else 0

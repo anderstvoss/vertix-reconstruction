@@ -21,6 +21,7 @@ pub mod map;
 pub mod maps;
 pub mod projectile;
 pub mod room;
+mod tuning;
 
 use std::collections::HashMap;
 use std::time::Duration;

@@ -137,7 +137,7 @@ pub const COMMANDS: &[CommandInfo] = &[
     cmd(
         "info",
         "list",
-        "modes|maps|classes|weapons|hats|shirts|camos|sprays|presets",
+        "modes|maps|classes|weapons|hats|shirts|camos|sprays|presets|versions",
         "List game data",
     ),
     cmd(
@@ -318,6 +318,18 @@ pub const COMMANDS: &[CommandInfo] = &[
         "balance",
         "[preset]",
         "Show or switch the balance preset (from next spawn)",
+    ),
+    cmd(
+        "server",
+        "version",
+        "[set <text> | use <version> [label] | reset]",
+        "Version string clients show; `use` also loads that version's balance",
+    ),
+    cmd(
+        "server",
+        "tune",
+        "[list | reset | show <class|weapon> <name> | <class|weapon> <name> <field> <value>]",
+        "Set any class or weapon value over the balance preset",
     ),
     cmd(
         "dev",

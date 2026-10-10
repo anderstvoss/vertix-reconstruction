@@ -5,6 +5,12 @@
 # loopback blocker in .pre-commit-config.yaml excludes this file alone.
 bind = "127.0.0.1"
 port = 8080
+# Ports here are preferences: if one is taken (another server on this
+# machine), the next free port up is used, else one the system picks.
+# strict_ports (or --strict-port) fails instead.
+strict_ports = false
+# The addresses actually bound, as JSON, for scripts; empty for none.
+ports_file = "out/server.json"
 
 # Path to a vertix-archive clone with its LFS files pulled. The
 # VERTIX_ARCHIVE environment variable or --archive override it.
@@ -45,6 +51,12 @@ krp_data = "data/krp"
 # "v3.8".
 balance_dir = "data/balance"
 balance = "best"
+
+# The version string both clients show in their menu footer, as
+# "<version> (CHANGELOG)". Empty: the server's own, "RECON <version>". The
+# admin console's `version` command changes it at run time, to a game
+# version from the research (e.g. "V3.8") or any short string.
+version = ""
 
 # Players per room. A room in the list below can set its own, e.g.
 # { name = "DEV0", mode = "ffa", max_players = 12 }. The client's custom

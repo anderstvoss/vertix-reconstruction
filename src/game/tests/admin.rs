@@ -29,6 +29,7 @@ fn game(rooms: &[(&str, &str)]) -> Game {
                 concat!(env!("CARGO_MANIFEST_DIR"), "/data/rules/recovered.toml").into(),
             ],
         },
+        crate::version::Version::default(),
     );
     g
 }
@@ -241,4 +242,78 @@ async fn kick_tells_the_client_and_frees_the_seat() {
             .any(|p| p.data == "2/DEV0,[\"kick\",\"Go away\"]")
     );
     assert!(got.iter().any(|p| p.data == "1/DEV0,"));
+}
+
+#[test]
+fn version_strings_follow_the_console() {
+    let mut g = game(&[("A", "ffa")]);
+    seat(&mut g, "A", "Ann");
+    let r = ok(&mut g, "list versions");
+    assert!(r.text.lines().any(|l| l.starts_with("v3.8 ")));
+    ok(&mut g, "version set Test build 7");
+    assert_eq!(g.admin.version.get(), "Test build 7");
+    assert!(err(&mut g, "version set <b>").contains("not allowed"));
+    // A researched version sets its string and its balance.
+    ok(&mut g, "version use v3.5");
+    assert_eq!(g.admin.version.get(), "V3.5");
+    assert_eq!(g.data.balance.id, "v3.5");
+    // `label` changes only the string.
+    ok(&mut g, "version use v2.0 label");
+    assert_eq!(g.admin.version.get(), "V2.0");
+    assert_eq!(g.data.balance.id, "v3.5");
+    assert!(err(&mut g, "version use v9.9").contains("no researched version"));
+    ok(&mut g, "version reset");
+    assert!(g.admin.version.get().starts_with("RECON "));
+    // Players hear about it.
+    let s = g.rooms.iter().find(|s| s.room.name == "A").unwrap();
+    assert!(s.room.out.is_empty(), "delivered after the command");
+    assert!(
+        g.state_json()["version"]
+            .as_str()
+            .unwrap()
+            .starts_with("RECON")
+    );
+}
+
+#[test]
+fn tune_sets_any_class_or_weapon_value_over_the_preset() {
+    let mut g = game(&[("A", "ffa")]);
+    ok(&mut g, "tune class Hunter maxHealth 77");
+    let hunter = g
+        .data
+        .classes
+        .iter()
+        .find(|c| c.name.as_deref() == Some("Hunter"))
+        .unwrap();
+    assert!((hunter.max_health - 77.0).abs() < f64::EPSILON);
+    let w = g.data.weapons[0].spec.name.clone();
+    ok(&mut g, "tune weapon 0 dmg 3");
+    assert!((g.data.weapons[0].spec.dmg - 3.0).abs() < f64::EPSILON);
+    assert!(
+        ok(&mut g, &format!("tune show weapon \"{w}\""))
+            .text
+            .contains("dmg = 3")
+    );
+    assert_eq!(ok(&mut g, "tune").data.as_array().unwrap().len(), 2);
+    // Tuning survives a preset switch.
+    ok(&mut g, "balance krp");
+    let hunter = g
+        .data
+        .classes
+        .iter()
+        .find(|c| c.name.as_deref() == Some("Hunter"))
+        .unwrap();
+    assert!((hunter.max_health - 77.0).abs() < f64::EPSILON);
+    assert!(err(&mut g, "tune class Hunter nope 1").contains("tune"));
+    assert!(err(&mut g, "tune class Hunter maxHealth true").contains("same kind"));
+    assert!(err(&mut g, "tune class Nobody speed 1").contains("no class"));
+    ok(&mut g, "tune reset");
+    assert!(ok(&mut g, "tune").text.contains("nothing tuned"));
+    let hunter = g
+        .data
+        .classes
+        .iter()
+        .find(|c| c.name.as_deref() == Some("Hunter"))
+        .unwrap();
+    assert!((hunter.max_health - 77.0).abs() > f64::EPSILON);
 }

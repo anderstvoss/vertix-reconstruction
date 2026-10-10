@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use serde_json::{Value, json};
 
 use super::assumptions::{Assumptions, Rules};
-use super::data::GameData;
 use super::{Game, Link, MAX_PLAYER_LIMIT, valid_room_name};
 use crate::admin::{self, COMMANDS, Log, LogLine, Reply, Request, split_words};
 use crate::sio::Event;
@@ -27,6 +26,10 @@ pub struct Admin {
     pub paths: Paths,
     /// Rooms whose server tick is stopped.
     pub paused: HashSet<String>,
+    /// The version string clients are given.
+    pub version: crate::version::Version,
+    /// Balance values set with `tune`, in a preset's shape.
+    pub tweaks: Value,
 }
 
 type Res = Result<Reply, String>;
@@ -62,10 +65,12 @@ const READ_ONLY: &[&str] = &[
 ];
 
 impl Game {
-    /// Connects the admin log and the files `reload` and `balance` read.
-    pub fn set_admin(&mut self, log: Option<Log>, paths: Paths) {
+    /// Connects the admin log, the files `reload` and `balance` read, and
+    /// the version string clients are given.
+    pub fn set_admin(&mut self, log: Option<Log>, paths: Paths, version: crate::version::Version) {
         self.admin.log = log;
         self.admin.paths = paths;
+        self.admin.version = version;
     }
 
     /// Writes a line to the admin log, if anyone listens.
@@ -529,30 +534,15 @@ impl Game {
                 self.rules = rules;
                 Ok(Reply::ok(format!("rules reloaded: {}", prov.summary())))
             }
-            "balance" => {
-                let Some(id) = arg(0) else {
-                    return Ok(Reply::ok(format!(
-                        "balance preset {} ({})",
-                        self.data.balance.id, self.data.balance.title
-                    )));
-                };
-                let p = &self.admin.paths;
-                let data =
-                    GameData::load(&p.krp_data, &p.balance_dir, id).map_err(|e| e.to_string())?;
-                if data.modes.len() != self.data.modes.len()
-                    || data.classes.len() != self.data.classes.len()
-                    || data.weapons.len() != self.data.weapons.len()
-                {
-                    return Err(
-                        "that preset changes the tables' shape; restart the server with it".into(),
-                    );
-                }
-                self.data = data;
-                Ok(Reply::ok(format!(
-                    "balance preset {} from each player's next spawn",
-                    self.data.balance.id
-                )))
-            }
+            "balance" => match arg(0) {
+                None => Ok(Reply::ok(format!(
+                    "balance preset {} ({})",
+                    self.data.balance.id, self.data.balance.title
+                ))),
+                Some(id) => self.switch_balance(id),
+            },
+            "version" => self.version_command(a),
+            "tune" => self.tune(a),
 
             "emit" => {
                 let who = arg(0).ok_or("to which player, or all?")?;
@@ -735,8 +725,19 @@ impl Game {
                     let p = self.presets();
                     (p.clone(), json!(p))
                 }
+                "versions" => {
+                    let v = self.versions();
+                    let lines = v
+                        .iter()
+                        .map(|x| {
+                            let s = |k: &str| x[k].as_str().unwrap_or("").to_owned();
+                            format!("{} {}", s("id"), s("date"))
+                        })
+                        .collect();
+                    (lines, json!(v))
+                }
                 _ => return Err(
-                    "list modes, maps, classes, weapons, hats, shirts, camos, sprays or presets"
+                    "list modes, maps, classes, weapons, hats, shirts, camos, sprays, presets or versions"
                         .into(),
                 ),
             };
@@ -744,7 +745,7 @@ impl Game {
     }
 
     /// Balance presets in the balance directory.
-    fn presets(&self) -> Vec<String> {
+    pub(super) fn presets(&self) -> Vec<String> {
         let mut ids: Vec<String> = std::fs::read_dir(&self.admin.paths.balance_dir)
             .map(|rd| {
                 rd.filter_map(Result::ok)
@@ -829,6 +830,9 @@ impl Game {
         json!({
             "uptimeMs": uptime,
             "balance": self.data.balance.id,
+            "version": self.admin.version.get(),
+            "defaultVersion": crate::version::default_string(),
+            "tweaks": self.tweak_list(),
             "classicRoom": self.classic_room,
             "rules": serde_json::to_value(&self.rules.rules).unwrap_or(Value::Null),
             "rooms": rooms,
@@ -848,13 +852,14 @@ impl Game {
             "maps": self.maps.ids(),
             "classes": d.classes.iter().enumerate().map(|(i, c)| json!({
                 "index": i, "name": c.name, "available": c.available,
-                "maxHealth": c.max_health, "speed": c.speed,
+                "fields": super::tuning::class_fields(c),
             })).collect::<Vec<_>>(),
             "weapons": d.weapons.iter().enumerate().map(|(i, w)| json!({
-                "index": i, "name": w.spec.name, "dmg": w.spec.dmg,
-                "reload": w.spec.reload_speed,
+                "index": i, "name": w.spec.name,
+                "fields": super::tuning::weapon_fields(w),
             })).collect::<Vec<_>>(),
             "presets": self.presets(),
+            "versions": self.versions(),
         })
     }
 }

@@ -56,6 +56,10 @@ second player.
 
 Useful options:
 
+- Ports are preferences: a second server on the same machine moves to the
+  next free ports and prints them (also in `out/server.json`).
+  `--strict-port` fails instead.
+
 - `--port 9000` to use another port. The bind address and port are in
   `config/server.toml`.
 - `--trace out/trace.jsonl` writes every event in and out, one JSON line

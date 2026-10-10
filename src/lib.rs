@@ -26,5 +26,7 @@ pub mod eio;
 pub mod game;
 pub mod http;
 pub mod originals;
+pub mod ports;
 pub mod sio;
 pub mod trace;
+pub mod version;

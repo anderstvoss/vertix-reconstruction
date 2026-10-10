@@ -140,6 +140,30 @@ td.acts button { padding: 1px 6px; font-size: 12px; }
         </div>
       </section>
       <section>
+        <h2>Version string</h2>
+        <div class="row">
+          <label>Researched version</label><select id="versionSel"></select>
+          <label><input type="checkbox" id="versionBalance" checked> also load its balance</label>
+          <button id="versionUse">Use</button>
+        </div>
+        <div class="row">
+          <label>Any string</label><input id="versionText" maxlength="40" placeholder="e.g. RECON test 3" style="width:220px">
+          <button id="versionSet">Set</button><button data-cmd="version reset">Server's own</button>
+        </div>
+        <div class="row" style="color:var(--muted);font-size:12px">Clients show it in the menu footer after a page reload.</div>
+      </section>
+      <section>
+        <h2>Balance tuning (over the preset, from next spawn)</h2>
+        <div class="row">
+          <select id="tuneWhat"></select>
+          <select id="tuneField"></select>
+          <input id="tuneValue" class="num" style="width:100px">
+          <button id="tuneSet">Set</button>
+          <button class="danger" data-cmd="tune reset">Reset all tuning</button>
+        </div>
+        <div id="tuneList" style="font:12px ui-monospace,monospace;color:var(--muted)"></div>
+      </section>
+      <section>
         <h2>Rules (all rooms) <button data-cmd="reload rules" style="float:right">Reload from disk</button></h2>
         <table id="rules"><tbody></tbody></table>
       </section>
@@ -257,7 +281,42 @@ function fillCatalog() {
   $("modeSel").replaceChildren(...modes);
   $("newRoomMode").replaceChildren(...catalog.modes.map((m) => el("option", { value: m.code }, m.name)));
   $("balanceSel").replaceChildren(...catalog.presets.map((p) => el("option", { value: p }, p)));
+  const keepVersion = $("versionSel").value;
+  $("versionSel").replaceChildren(...catalog.versions.map((v) =>
+    el("option", { value: v.id }, v.date ? `${v.string}  (${v.date})` : v.string)));
+  const pick = catalog.versions.find((v) => v.id === keepVersion) || catalog.versions.find((v) => v.string === state?.version);
+  if (pick) $("versionSel").value = pick.id;
+  else if (catalog.versions.length) $("versionSel").value = catalog.versions[catalog.versions.length - 1].id;
+  const keep = $("tuneWhat").value;
+  $("tuneWhat").replaceChildren(
+    el("optgroup", { label: "Classes" }, ...catalog.classes.map((c) =>
+      el("option", { value: `class ${c.index}` }, c.name || `class ${c.index}`))),
+    el("optgroup", { label: "Weapons" }, ...catalog.weapons.map((w) =>
+      el("option", { value: `weapon ${w.index}` }, w.name))),
+  );
+  if (keep) $("tuneWhat").value = keep;
+  fillTuneFields();
   fillMaps();
+}
+
+function tuneTarget() {
+  const [kind, i] = $("tuneWhat").value.split(" ");
+  return (kind === "class" ? catalog.classes : catalog.weapons)[Number(i)];
+}
+
+function fillTuneFields() {
+  const t = tuneTarget();
+  if (!t) return;
+  const keep = $("tuneField").value;
+  const names = Object.keys(t.fields).sort();
+  $("tuneField").replaceChildren(...names.map((f) => el("option", { value: f }, f)));
+  if (names.includes(keep)) $("tuneField").value = keep;
+  $("tuneValue").value = String(t.fields[$("tuneField").value]);
+}
+
+async function reloadCatalog() {
+  const c = await send("catalog", { quiet: true });
+  if (c.ok) { catalog = c.data; fillCatalog(); }
 }
 
 function fillMaps() {
@@ -352,6 +411,7 @@ function renderServer() {
   $("serverStats").replaceChildren(
     el("span", { class: "stat" }, "Uptime ", el("b", {}, `${Math.floor(up / 60)}m ${up % 60}s`)),
     el("span", { class: "stat" }, "Balance ", el("b", {}, state.balance)),
+    el("span", { class: "stat" }, "Version ", el("b", {}, state.version)),
     el("span", { class: "stat" }, "2016 client room ", el("b", {}, state.classicRoom)),
     el("span", { class: "stat" }, "Rooms ", el("b", {}, String(state.rooms.length))),
   );
@@ -361,6 +421,7 @@ function renderServer() {
     cs.replaceChildren(...state.rooms.map((r) => el("option", { value: r.name }, r.name)));
     cs.value = state.classicRoom;
   }
+  $("tuneList").replaceChildren(...(state.tweaks.length ? state.tweaks : ["nothing tuned"]).map((t) => el("div", {}, t)));
   const body = $("rules").tBodies[0];
   if (body.contains(document.activeElement)) return;
   body.replaceChildren(...Object.entries(state.rules).map(([k, v]) => {
@@ -377,7 +438,10 @@ function renderServer() {
 document.addEventListener("click", (e) => {
   const t = e.target.closest("button");
   if (!t) return;
-  if (t.dataset.cmd) act(t.dataset.cmd);
+  if (t.dataset.cmd) {
+    const cmd = t.dataset.cmd;
+    act(cmd).then(() => { if (/^(tune|version|balance|reload)/.test(cmd)) reloadCatalog(); });
+  }
   if (t.dataset.score) act(`score ${t.dataset.score} ${$(t.dataset.score + "Score").value}`);
   if (t.dataset.set) act(`${t.dataset.set} ${$(t.dataset.from).value}`);
 });
@@ -397,7 +461,18 @@ $("announceBtn").onclick = () => {
   $("sayText").value = "";
 };
 $("serverTab").onclick = () => { view = "server"; render(); };
-$("balanceBtn").onclick = () => act(`balance ${$("balanceSel").value}`);
+$("balanceBtn").onclick = async () => { await act(`balance ${$("balanceSel").value}`); reloadCatalog(); };
+$("versionUse").onclick = async () => {
+  await act(`version use ${$("versionSel").value}${$("versionBalance").checked ? "" : " label"}`);
+  reloadCatalog();
+};
+$("versionSet").onclick = () => { const t = $("versionText").value.trim(); if (t) act(`version set ${t}`); };
+$("tuneWhat").onchange = fillTuneFields;
+$("tuneField").onchange = fillTuneFields;
+$("tuneSet").onclick = async () => {
+  await act(`tune ${$("tuneWhat").value} ${$("tuneField").value} ${$("tuneValue").value.trim()}`);
+  await reloadCatalog();
+};
 $("classicBtn").onclick = () => act(`classic ${$("classicSel").value}`);
 $("openRoom").onclick = async () => {
   const n = $("newRoom").value.trim();

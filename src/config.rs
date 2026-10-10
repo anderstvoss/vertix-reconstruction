@@ -8,7 +8,13 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub bind: String,
+    /// Preferred ports: a taken one moves up unless `strict_ports`.
     pub port: u16,
+    #[serde(default)]
+    pub strict_ports: bool,
+    /// Where the bound addresses are written; empty for nowhere.
+    #[serde(default)]
+    pub ports_file: String,
     #[serde(default)]
     pub archive: String,
     /// The built `KrunkerRevival` client (`scripts/build-client.sh`).
@@ -75,6 +81,10 @@ pub struct Game {
     pub max_players: usize,
     /// The rooms opened at start, in the room list's order.
     pub rooms: Vec<crate::game::RoomSpec>,
+    /// The version string clients show in their menu; empty for the
+    /// server's own (`RECON <version>`).
+    #[serde(default)]
+    pub version: String,
 }
 
 const fn default_max_players() -> usize {
