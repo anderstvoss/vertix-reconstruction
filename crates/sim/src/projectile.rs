@@ -1,5 +1,6 @@
-//! Server-side bullets: KRP's `Projectile` (`core/src/logic/projectile.ts`)
-//! without the drawing.
+//! Bullets: KRP's `Projectile` (`core/src/logic/projectile.ts`) without the
+//! drawing. The server simulates with it; the client also reads [`Hit`]s
+//! for its effects.
 //!
 //! The server keeps a pool of bullets per room. A shot activates the next
 //! one; each tick moves it in `update_accuracy` sub-steps, checks barrels,
@@ -76,6 +77,19 @@ pub struct Projectile {
     pub player_immunity: Vec<(u32, f64)>,
     /// The direction the shot was fired in (explosions push this way).
     pub fire_dir: f64,
+    /// What it hit in the last update.
+    pub hits: Vec<Hit>,
+}
+
+/// Something a bullet hit during the last update, for the client's
+/// effects (KRP's client spawns sparks and blood where these happen).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Hit {
+    /// A wall or barrel, at the bullet's collision end. `flip_y` is
+    /// KRP's `hitSomething` argument.
+    Surface { x: f64, y: f64, flip_y: bool },
+    /// A player took the bullet.
+    Player { index: u32 },
 }
 
 /// A shot as the room announces it (`"2"`): origin, direction, bullet slot.
@@ -163,6 +177,7 @@ impl Projectile {
         }
         self.hit_clutter.clear();
         self.hit_players.clear();
+        self.hits.clear();
         let steps = f64::from(self.update_accuracy);
         for _ in 0..self.update_accuracy {
             let vel = self.speed * delta;
@@ -219,16 +234,22 @@ impl Projectile {
                     };
                     if hit {
                         self.active = false;
+                        // KRP's `!(a <= b)`, which is also true for NaN.
+                        let flip_y = !matches!(
+                            self.c_end_x.partial_cmp(&t.x),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                        ) && !matches!(
+                            self.c_end_x.partial_cmp(&(t.x + t.scale)),
+                            Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
+                        );
                         if self.bounce {
-                            // KRP's `!(a <= b)`, which is also true for NaN.
-                            let flip_y = !matches!(
-                                self.c_end_x.partial_cmp(&t.x),
-                                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-                            ) && !matches!(
-                                self.c_end_x.partial_cmp(&(t.x + t.scale)),
-                                Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
-                            );
                             self.bounce_dir(flip_y);
+                        } else {
+                            self.hits.push(Hit::Surface {
+                                x: self.c_end_x,
+                                y: self.c_end_y,
+                                flip_y,
+                            });
                         }
                     }
                 }
@@ -255,6 +276,7 @@ impl Projectile {
                         if self.explode_on_death || self.collides_with_explosive_clutter {
                             self.active = false;
                         } else if self.dmg > 0.0 {
+                            self.hits.push(Hit::Player { index: p.index });
                             self.hit_players.push(p.index);
                             self.player_immunity.push((p.index, BULLET_IMMUNITY_MS));
                             if self.pierce_count > 0 {
@@ -390,6 +412,11 @@ impl Projectile {
             self.collides_with_explosive_clutter = true;
             self.hit_clutter.push(i);
         }
+        self.hits.push(Hit::Surface {
+            x: self.c_end_x,
+            y: self.c_end_y,
+            flip_y: self.c_end_x > c.x && self.c_end_x < c.x + c.w && self.c_end_y > c.y - c.h,
+        });
     }
 }
 

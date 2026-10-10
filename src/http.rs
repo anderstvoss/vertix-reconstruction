@@ -259,6 +259,8 @@ fn content_type(path: &Path) -> &'static str {
         "woff" => "font/woff",
         "woff2" => "font/woff2",
         "zip" => "application/zip",
+        // The Rust client's browser build (crates/client).
+        "wasm" => "application/wasm",
         "txt" => "text/plain; charset=utf-8",
         "mp3" => "audio/mpeg",
         "wav" => "audio/wav",

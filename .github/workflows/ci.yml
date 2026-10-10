@@ -73,6 +73,14 @@ jobs:
       - name: Clippy
         run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 
+      - name: Clippy (Rust client, browser build)
+        # The browser build of crates/client has its own platform module
+        # (src/platform/web.rs) that the desktop lint above never compiles.
+        # The target is added to the toolchain rust-toolchain.toml pins.
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo clippy --locked -p vertix_client --target wasm32-unknown-unknown -- -D warnings
+
   msrv:
     name: MSRV (cargo check on rust-version)
     # Verifies the crate still builds on the rust-version declared in

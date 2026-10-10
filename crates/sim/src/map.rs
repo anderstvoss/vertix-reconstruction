@@ -11,7 +11,7 @@
 //!
 //! Where maps come from is [`super::maps`]'s concern.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use super::data::Mode;
@@ -158,7 +158,7 @@ pub struct Tile {
 }
 
 /// A barrel. `i` is 1 for a plain barrel, 2 for an explosive one.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Clutter {
     pub x: f64,
     pub y: f64,
