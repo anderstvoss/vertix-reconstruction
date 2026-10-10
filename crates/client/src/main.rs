@@ -3,7 +3,7 @@
 //!
 //! Launch options (desktop: `--key value`; browser: `?key=value`):
 //! `server`, `room`, `name`, `class`, `input` (`frame` or a rate in Hz),
-//! `display` (`sharp` or `krp`), `autoplay`, `script`, `duration`
+//! `display` (`sharp` or `krp`), `floor` (`2016` or `krp`), `autoplay`, `script`, `duration`
 //! (seconds, then report and quit), `metrics` (desktop: where to write
 //! them), `screenshot` and `shot-at` (desktop).
 
@@ -140,9 +140,26 @@ async fn main() {
         }
     };
     let (classes, weapon_names) = assets::krp_loadouts();
-    let sprites = assets::Sprites::pick(&pack, &classes, &weapon_names);
+    let mut sprites = assets::Sprites::pick(&pack, &classes, &weapon_names);
+    // The 2016 floor art (KRP's res.zip has the plainer 2017 tiles), when
+    // the server has it; `floor=krp` keeps KRP's.
+    let mut floor_note = "floor: KRP (res.zip)".to_owned();
+    if get("floor").as_deref() != Some("krp") {
+        let url = format!("{base}/mods/{}/vertixmod.zip", assets::FLOOR_2016_PACK);
+        match download(&url)
+            .await
+            .and_then(|b| assets::Pack::from_zip(&b))
+        {
+            Ok(p) if sprites.use_floors_from(&p) => {
+                floor_note = format!("floor: 2016 (pack {})", assets::FLOOR_2016_PACK);
+            }
+            Ok(_) => floor_note = format!("{floor_note}; the 2016 pack has no ground tiles"),
+            Err(e) => floor_note = format!("{floor_note}; no 2016 pack: {e}"),
+        }
+    }
     let mut gfx = Gfx::new(font, &base);
     let mut game = Game::new(opts.clone(), base.clone(), classes, sprites);
+    game.log.push(floor_note);
     let mut join = game.join_room(&opts.room);
     let mut world_rt: Option<Canvas> = None;
     let mut ui_hot = false;

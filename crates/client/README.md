@@ -40,6 +40,7 @@ address.
 | `class` | Class index from the loadout |
 | `input` | `frame` (KRP: one input per drawn frame, the default) or a fixed rate such as `60` (Hz) |
 | `display` | `sharp` (default, full device resolution) or `krp` (KRP's CSS-pixel canvas, upscaled) |
+| `floor` | `2016` (default: the 2016 ground tiles from the server's `original-2016` mod pack, when it has one) or `krp` (KRP's `res.zip` tiles) |
 | `autoplay` | Skip the start menu and join straight away |
 | `script` | Scripted input for tests, e.g. `d:1500,s:800,a+w:1000,:500` (keys and milliseconds) |
 | `duration` | Seconds to run, then report metrics and quit |
