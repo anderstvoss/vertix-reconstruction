@@ -98,6 +98,8 @@ pub struct Rules {
     pub round_end_countdown_s: u32,
     pub bullet_pool: usize,
     pub chat_max_len: usize,
+    /// Sprays a player can have on the map at once (KRP: 1).
+    pub sprays_per_player: u32,
     pub name_max_len: usize,
 }
 
@@ -368,6 +370,9 @@ impl Assumptions {
             return Err(Error(
                 "rules.max_players and rules.bullet_pool must be positive".into(),
             ));
+        }
+        if self.rules.sprays_per_player == 0 {
+            return Err(Error("rules.sprays_per_player must be positive".into()));
         }
         Ok(())
     }

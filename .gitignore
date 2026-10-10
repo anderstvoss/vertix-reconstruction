@@ -67,3 +67,6 @@ __pycache__/
 
 # The KrunkerRevival client checkout and build (scripts/build-client.sh)
 /client/
+
+# Mod packs unpacked from the archive (scripts/extract_mods.py)
+/content/

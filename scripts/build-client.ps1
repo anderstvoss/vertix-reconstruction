@@ -34,6 +34,10 @@ git -C $Checkout fetch --quiet $Source $KrpCommit 2>$null
 git -C $Checkout checkout --quiet --detach $KrpCommit
 if ($LASTEXITCODE) { throw "commit $KrpCommit not found in $Source" }
 
+# Our patches to the pinned source (scripts\client-patches\apply.mjs).
+node (Join-Path $PSScriptRoot "client-patches\apply.mjs") $Checkout
+if ($LASTEXITCODE) { throw "client patches failed" }
+
 Push-Location $Checkout
 try {
   pnpm install --frozen-lockfile

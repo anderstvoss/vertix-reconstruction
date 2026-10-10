@@ -923,5 +923,82 @@ fn player_limit_is_a_server_setting() {
     assert_eq!(b.room.max_players, 2);
 }
 
+#[test]
+fn weapon_camos_survive_spawning_and_class_changes() {
+    let mut b = Bench::new("ffa");
+    let i = b.join();
+    let camo_of = |b: &Bench, weapon: usize| {
+        let p = b.p(i);
+        let slot = p.weapon_ids.iter().position(|&w| w == weapon).unwrap();
+        p.weapons[slot]["camo"].clone()
+    };
+    // A weapon two classes share (KRP: classes 1 and 4 both carry 5).
+    let shared = b.data.classes[1].weapon_indexes[1];
+    let other = (0..b.data.classes.len())
+        .find(|&c| c != 1 && b.data.classes[c].weapon_indexes.contains(&shared))
+        .unwrap();
+    // KRP's client sends its saved camos as soon as it connects, before it
+    // spawns, and again only when the loadout changes.
+    b.send(i, "cCamo", vec![json!({"weaponID": shared, "camoID": 5})]);
+    b.spawn(i, "a", 1);
+    assert_eq!(camo_of(&b, shared), json!(4.0));
+    // Respawning (a new `gotit`) keeps it.
+    b.spawn(i, "a", 1);
+    assert_eq!(camo_of(&b, shared), json!(4.0));
+    // Another class with the same weapon wears the same camo.
+    b.spawn(i, "a", other);
+    assert_eq!(camo_of(&b, shared), json!(4.0));
+    // Camo 0 takes it off.
+    b.send(i, "cCamo", vec![json!({"weaponID": shared, "camoID": 0})]);
+    assert_eq!(camo_of(&b, shared), json!(-1.0));
+    b.spawn(i, "a", 1);
+    assert_eq!(camo_of(&b, shared), json!(-1.0));
+}
+
+#[test]
+fn other_players_see_a_spray_change() {
+    let mut b = Bench::new("ffa");
+    // A spray added from the sprays folder.
+    b.data.cosmetics.sprays.push(
+        json!({"id": 84, "name": "Added", "info": {"scale": 64, "alpha": 1, "resolution": 30}}),
+    );
+    let (a, c) = (b.join(), b.join());
+    b.spawn(c, "c", 1);
+    let spray_in = |out: &[Out]| -> Value {
+        let add = one(out, "add");
+        let s: Value = serde_json::from_str(add.event.args[0].as_str().unwrap()).unwrap();
+        s["spray"].clone()
+    };
+    // Chosen before spawning: the spawn announces it.
+    b.send(a, "cSpray", vec![json!(84)]);
+    let out = b.spawn(a, "a", 1);
+    assert_eq!(spray_in(&out)["src"], json!("/assets/sprays/84.png"));
+    // Changed while alive: everyone hears it at once, not at the next spawn.
+    let out = b.send(a, "cSpray", vec![json!(2)]);
+    assert!(matches!(one(&out, "add").to, To::All));
+    assert_eq!(spray_in(&out)["id"], json!(2));
+    // While dead nothing is sent; the next spawn carries it.
+    b.p_mut(a).dead = true;
+    assert!(named(&b.send(a, "cSpray", vec![json!(3)]), "add").is_empty());
+}
+
+#[test]
+fn sprays_cycle_through_the_players_slots() {
+    let mut b = Bench::new("ffa");
+    b.rules.rules.sprays_per_player = 3;
+    let a = b.join();
+    b.spawn(a, "a", 1);
+    let slots: Vec<Value> = (0..5)
+        .map(|_| one(&b.send(a, "crtSpr", vec![]), "crtSpr").event.args[3].clone())
+        .collect();
+    assert_eq!(slots, [json!(0), json!(1), json!(2), json!(0), json!(1)]);
+    // KRP's one spray per player: always slot 0.
+    b.rules.rules.sprays_per_player = 1;
+    assert_eq!(
+        one(&b.send(a, "crtSpr", vec![]), "crtSpr").event.args[3],
+        json!(0)
+    );
+}
+
 // The admin console.
 mod admin;

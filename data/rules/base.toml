@@ -46,4 +46,7 @@ bullet_pool = 100
 # Our own input limits; KRP's server does not check them (its README lists
 # input validation as a to-do). The client caps chat at 50 and names at 25.
 chat_max_len = 50
+# Sprays a player can have on the map at once; a new one replaces their
+# oldest. KRP: one (each player has a single spray).
+sprays_per_player = 1
 name_max_len = 25

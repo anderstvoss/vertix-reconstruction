@@ -77,6 +77,31 @@ rooms = [
   { name = "DEV8", mode = "pyro" },
 ]
 
+[content]
+# Cosmetics and mod packs restored from the archive (src/content.rs), read
+# and hash-checked at start-up, never copied into this repository. They
+# are served ahead of the client build, whose copies remain for anything
+# the archive lacks. data/content/ says where each file lives
+# (scripts/import_content.py).
+# Hats 1-116, camos 1-130 and sprays 1-43 from the Aug-2016 Android APK,
+# and Wayback captures; KRP's copies fill in the rest.
+cosmetics = true
+cosmetics_manifest = "data/content/cosmetics.json"
+# When a file has several first-party versions, serve the one live on this
+# day. 2017-07-01 is when v3.8 (the version KRP's client follows) was live.
+date = "2017-07-01"
+# Community mod packs at /mods/ (list) and /mods/<key>/vertixmod.zip.
+# Packs held in the archive's git bundles must first be unpacked with
+# scripts/extract_mods.py into mods_dir.
+mods = true
+mods_manifest = "data/content/mods.json"
+mods_dir = "content/mods"
+# Drop PNG files in this folder to add sprays (read at start-up): a file
+# named after a spray's number (44.png) replaces that spray's image, any
+# other name (My Spray.png) adds a new spray with that name. Each spray is
+# drawn from its own image, so no size or other settings are needed.
+sprays_dir = "content/sprays"
+
 [classic]
 # The archived 2016-08-06 client, kept as a compatibility path. It is
 # served from the archive (never from this repository) on its own port,

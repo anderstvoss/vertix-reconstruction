@@ -31,7 +31,44 @@ pub struct Config {
     #[serde(default)]
     pub classic: Classic,
     #[serde(default)]
+    pub content: Content,
+    #[serde(default)]
     pub admin: Admin,
+}
+
+/// Cosmetic art and mod packs restored from the archive (`src/content.rs`).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+pub struct Content {
+    /// Serve the archive's hats, shirts, camos and sprays over the client
+    /// build's copies.
+    pub cosmetics: bool,
+    pub cosmetics_manifest: PathBuf,
+    /// For a file with several first-party versions, the one live on this
+    /// day (`YYYY-MM-DD`) is served.
+    pub date: String,
+    /// Serve the community mod packs at `/mods/`.
+    pub mods: bool,
+    pub mods_manifest: PathBuf,
+    /// Where `scripts/extract_mods.py` unpacks packs held in git bundles.
+    pub mods_dir: PathBuf,
+    /// Every PNG in this folder is a spray: `<id>.png` replaces that spray's
+    /// image, any other name adds a new spray named after the file.
+    pub sprays_dir: PathBuf,
+}
+
+impl Default for Content {
+    fn default() -> Self {
+        Self {
+            cosmetics: true,
+            cosmetics_manifest: "data/content/cosmetics.json".into(),
+            date: "2017-07-01".into(),
+            mods: true,
+            mods_manifest: "data/content/mods.json".into(),
+            mods_dir: "content/mods".into(),
+            sprays_dir: "content/sprays".into(),
+        }
+    }
 }
 
 /// The admin panel and dev console (`src/admin`).
