@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -38,6 +39,15 @@ class Compare(unittest.TestCase):
 
     def test_script_length(self):
         self.assertEqual(ab.script_ms("d:1500,s:800,a+w:1000,:500"), 3800)
+
+    def test_server_comes_from_the_ports_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "server.json"
+            f.write_text('{"krp": "http://example:8083/", "classic": "http://example:8084/"}')
+            self.assertEqual(ab.server_from_ports_file(f), "http://example:8083/")
+            self.assertIsNone(ab.server_from_ports_file(Path(tmp) / "missing.json"))
+            f.write_text("[]")
+            self.assertIsNone(ab.server_from_ports_file(f))
 
 
 if __name__ == "__main__":

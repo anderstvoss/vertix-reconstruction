@@ -4,6 +4,9 @@ in the browser (B vs D) and on the desktop (C vs E).
 
     python3 scripts/ab_compare.py --server http://HOST:8080 --room DEV0
 
+Without --server it uses the game address the running server wrote to
+out/server.json.
+
 Each client plays the same scripted input in the same room for the same
 time, one after another, and reports its own metrics (frame times, inputs
 and server updates per second, ping). The results, screenshots and a
@@ -151,9 +154,21 @@ def run(cmd: list[str], timeout: float) -> dict:
     return json.loads(lines[-1])
 
 
+def server_from_ports_file(path: Path) -> str | None:
+    """The game (KRP protocol) address from the server's ports file."""
+    try:
+        addr = json.loads(path.read_text(encoding="utf-8")).get("krp")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return addr if isinstance(addr, str) and addr else None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--server", required=True, help="reconstruction server, e.g. http://HOST:8080")
+    ap.add_argument(
+        "--server",
+        help="reconstruction server, e.g. http://HOST:8080 (default: the krp address in out/server.json)",
+    )
     ap.add_argument("--room", default="DEV0")
     ap.add_argument("--clients", default="B,C,D,E", help="which clients to run, e.g. B,D")
     ap.add_argument("--duration", type=float, default=30, help="seconds per client")
@@ -170,7 +185,10 @@ def main() -> int:
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out = Path(args.out) / stamp
     out.mkdir(parents=True, exist_ok=True)
-    server = args.server.rstrip("/")
+    server = args.server or server_from_ports_file(ROOT / "out" / "server.json")
+    if not server:
+        ap.error("pass --server, or start the server so it writes out/server.json")
+    server = server.rstrip("/")
     reps = max(1, int(args.duration * 1000 // max(1, script_ms(args.script))) + 1)
     script = ",".join([args.script] * reps)
     limit = args.duration + 120
