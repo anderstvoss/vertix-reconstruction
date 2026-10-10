@@ -65,9 +65,9 @@ pub struct Options {
     /// once it leaves the screen.
     pub persistent_effects: bool,
     /// After the frame loop stalls (a hidden browser tab), other players'
-    /// shots are moved on by the time since they arrived, and the first
-    /// frame back is capped at `MAX_FRAME_MS`. `hidden=krp` keeps KRP's:
-    /// every shot fired meanwhile starts at its muzzle in one frame.
+    /// shots that arrived meanwhile are dropped, and the first frame back
+    /// is capped at `MAX_FRAME_MS`. `hidden=krp` keeps KRP's: every shot
+    /// fired meanwhile starts at its muzzle in one frame.
     pub catch_up: bool,
 }
 
@@ -431,8 +431,9 @@ pub(super) const OVERLAY_MAX_ALPHA: f64 = 0.5;
 /// server caps a movement step the same way).
 pub const MAX_FRAME_MS: f64 = 100.0;
 /// A shot that arrived this long before the frame that handles it is
-/// moved on by that time instead of starting at the muzzle.
-pub const LATE_SHOT_MS: f64 = 100.0;
+/// dropped instead of fired late (the same limit as the patched KRP
+/// client).
+pub const LATE_SHOT_MS: f64 = 200.0;
 
 const OVERLAY_FADE_UP: f64 = 0.01;
 const OVERLAY_FADE_DOWN: f64 = 0.04;
