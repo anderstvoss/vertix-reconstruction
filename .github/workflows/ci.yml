@@ -202,6 +202,46 @@ jobs:
         if: runner.os == 'Linux'
         run: cargo build --locked && python3 scripts/e2e_smoke.py
 
+  krp-desktop:
+    # desktop/krp is outside the workspace: on Linux it needs WebKitGTK's
+    # development files, which the hardened Linux runners cannot fetch.
+    # macOS and Windows ship their webviews with the OS.
+    name: KRP desktop wrapper (${{ matrix.os }})
+    if: ${{ !github.event.repository.private }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        # See rust-lint job's Install Rust step for rationale.
+        uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: desktop/krp
+
+      - name: Check formatting
+        run: cargo fmt --manifest-path desktop/krp/Cargo.toml -- --check
+
+      - name: Clippy
+        run: cargo clippy --locked --manifest-path desktop/krp/Cargo.toml --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --locked --manifest-path desktop/krp/Cargo.toml
+
   policy:
     name: Policy checks (${{ matrix.os }})
     if: ${{ !github.event.repository.private }}
@@ -356,6 +396,11 @@ jobs:
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: on-failure
+          # glib 0.18 (RUSTSEC-2024-0429: VariantStrIter is unsound) reaches
+          # desktop/krp only through tao and wry's Linux GTK backend, which
+          # pin gtk-rs 0.18; nothing there iterates GVariant strings. Remove
+          # once tao moves to a fixed glib.
+          allow-ghsas: GHSA-wrw7-89jp-8q8g
 
   python-scripts:
     name: Python script tests

@@ -65,6 +65,21 @@ the translation is INFERRED to be what its server did.
 | Leaderboards | `/api/getLbs` returns generated sample players | Every board is empty | There are no accounts (decided by Anders, 2026-10-08). |
 | `/api/getIP` | Names a fixed host and port | Answers with the host and port the request used | The client connects to its own origin either way. |
 | Boss class | Selectable like any class | Reserved for the boss in Boss mode even when a balance version hides it | The boss must spawn as the boss. |
+| Ground tiles (Rust client) | Its `res.zip` (2020 Wayback copy) has plainer, redrawn ground tiles | The 2016 ground tiles, with their specks and cracks, from the server's `original-2016` mod pack when it has one; `floor=krp` keeps KRP's | The 2016 game's look (asked for by Anders, 2026-10-10). |
+| Canvas resolution (Rust client and KRP wrapper) | Drawn in CSS pixels, so a high-DPI screen upscales it and it looks blurry | Drawn at the device pixel ratio; `display=krp` keeps KRP's | Research #72. |
+
+## Player-expectation changes (not faithful)
+
+Changes made on purpose because players of a modern multiplayer game
+expect them, even though neither the original nor KRP behaved this way
+(direction from Anders, 2026-10-10). Each is marked here so a faithful
+mode can restore the original behaviour if wanted.
+
+| Area | Original and KRP | Here | Why |
+| --- | --- | --- | --- |
+| Effects off screen (Rust client, and KRP's client through `scripts/client-patches/apply.mjs`) | Blood, dust and bullet holes are dropped the moment they leave the screen, and a hit on a player who is off screen makes no blood at all, so another player's fight leaves nothing behind when you walk up to it (2016-08-06 client and KRP alike) | Effects keep ageing off screen and are drawn when they come into view; a hit on a player this client cannot see bleeds where the bullet is, since the hit message carries no position. `effects=krp` (Rust client), `--effects krp` (KRP wrapper) or localStorage `vertix.effects` = `krp` (KRP in a browser) restores the original | The world should look the same wherever you were looking when it happened (reported by Anders, 2026-10-10). Effects still fade and still share KRP's 700-particle pool. |
+| Hidden tab | The browser stops drawing a hidden tab, but other players' shots keep arriving: KRP armed each with the frozen frame clock and fired them all at once when the tab came back (reported by Anders, 2026-10-10) | The patched KRP client drops a shot whose first frame comes more than 200 ms after it arrived, plays no sound for shots that arrive while frames are stalled, and never runs one frame longer than 100 ms (the server's input cap). `localStorage` `vertix.hiddenTab` = `krp` restores KRP's behaviour | Coming back to a tab should not replay a burst of old shots; the server already decided what they hit. |
+| Hidden tab (Rust client) | The same as KRP's client, and the browser build also answered the server's keep-alive ping only from its frame loop, so a tab hidden for about 45 s was disconnected | The ping is answered as it arrives, so a hidden tab stays connected. Like the patched KRP client, a shot handled more than 200 ms after it arrived is dropped unseen, and one frame never runs longer than 100 ms. `hidden=krp` restores KRP's shot and frame behaviour | As for KRP's client; tested with a simulated 75 s hidden tab, which disconnected before the change and stayed connected after it. |
 
 ## Not done yet
 
