@@ -1,8 +1,7 @@
 // Patches the pinned KrunkerRevival client checkout before it is built.
 // Each patch replaces one exact passage and fails loudly if the passage is
 // not found, so a change of pin cannot silently drop a patch. The files are
-// first restored from the pinned commit, so running this twice is safe; a
-// file with several patches is restored once, before the first of them.
+// first restored from the pinned commit, so running this twice is safe.
 //
 //   node scripts/client-patches/apply.mjs CHECKOUT_DIR
 import { execFileSync } from "node:child_process";
@@ -134,17 +133,24 @@ const patches = [
 	},
 ];
 
+// Restore each file once, so several patches can apply to the same file.
 for (const file of new Set(patches.map((p) => p.file))) {
 	execFileSync("git", ["-C", checkout, "checkout", "--", file]);
 }
+
 for (const p of patches) {
 	const path = join(checkout, p.file);
-	const text = readFileSync(path, "utf8");
+	// Git on Windows usually checks files out with CRLF line endings; match
+	// on LF and write the file back with the endings it had.
+	const raw = readFileSync(path, "utf8");
+	const crlf = raw.includes("\r\n");
+	const text = crlf ? raw.replaceAll("\r\n", "\n") : raw;
 	const at = text.indexOf(p.find);
 	if (at < 0 || text.indexOf(p.find, at + 1) >= 0) {
 		console.error(`patch for ${p.file} does not apply: passage not found exactly once`);
 		process.exit(1);
 	}
-	writeFileSync(path, text.slice(0, at) + p.replace + text.slice(at + p.find.length));
+	const out = text.slice(0, at) + p.replace + text.slice(at + p.find.length);
+	writeFileSync(path, crlf ? out.replaceAll("\n", "\r\n") : out);
 	console.log(`patched ${p.file}`);
 }
