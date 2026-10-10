@@ -56,6 +56,10 @@ second player.
 
 Useful options:
 
+- Ports are preferences: a second server on the same machine moves to the
+  next free ports and prints them (also in `out/server.json`).
+  `--strict-port` fails instead.
+
 - `--port 9000` to use another port. The bind address and port are in
   `config/server.toml`.
 - `--trace out/trace.jsonl` writes every event in and out, one JSON line
@@ -135,6 +139,16 @@ To let another machine on your network join, change `bind` to your
 machine's network address (do not commit that change) and open the port
 in your firewall.
 
+## Admin panel and console
+
+The server prints `admin panel on http://<bind>:8082/#token=...` when it
+starts. Open that address for a live view of every room with buttons to
+kick, kill, end rounds, change mode and map, and edit rules, plus a
+console for any command. You can also type the same commands straight
+into the server's terminal, for example `status`, `@DEV1 mode hp` or
+`kick Bob`. [ADMIN.md](ADMIN.md) lists them all; `[admin]` in
+`config/server.toml` has the port, token and switches.
+
 ## Checking it
 
 ```bash
@@ -144,7 +158,9 @@ cargo build && python3 scripts/e2e_smoke.py
 starts the server with a stand-in client and the placeholder arena, and
 plays through it over long-polling and WebSocket: room list, joining a
 room, spawning, moving, chat after the WebSocket upgrade, a second player
-and leaving.
+and leaving. It then drives the admin panel's API, its WebSocket and the
+terminal console against that player: kill, round end, restart, mode
+change, chat and kick.
 
 ## Troubleshooting
 

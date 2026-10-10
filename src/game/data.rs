@@ -180,6 +180,21 @@ impl GameData {
     /// Fails if a file is missing or malformed, or the preset names a class
     /// or weapon KRP does not have.
     pub fn load(krp_dir: &Path, balance_dir: &Path, balance: &str) -> Result<Self, Error> {
+        Self::load_tuned(krp_dir, balance_dir, balance, &Value::Null)
+    }
+
+    /// As [`GameData::load`], with `tweaks` laid over the preset: the
+    /// preset's own shape (`{"classes": {name: {stat: {"value": ..}}},
+    /// "weapons": {..}}`), as the admin console's `tune` builds it.
+    ///
+    /// # Errors
+    /// As [`GameData::load`].
+    pub fn load_tuned(
+        krp_dir: &Path,
+        balance_dir: &Path,
+        balance: &str,
+        tweaks: &Value,
+    ) -> Result<Self, Error> {
         if balance.is_empty()
             || !balance
                 .chars()
@@ -187,7 +202,8 @@ impl GameData {
         {
             return Err(Error(format!("bad balance preset name {balance:?}")));
         }
-        let preset = read_json(&balance_dir.join(format!("{balance}.json")))?;
+        let mut preset = read_json(&balance_dir.join(format!("{balance}.json")))?;
+        merge(&mut preset, tweaks);
         Self::from_docs(
             &read_json(&krp_dir.join("loadouts.json"))?,
             &read_json(&krp_dir.join("gamemodes.json"))?,
@@ -347,6 +363,24 @@ impl GameData {
 }
 
 /// Applies a preset entry's `{stat: {value, basis, source}}` to an object.
+/// Lays `over` onto `base`, object by object; other values replace.
+fn merge(base: &mut Value, over: &Value) {
+    match (base, over) {
+        (Value::Object(b), Value::Object(o)) => {
+            for (k, v) in o {
+                match b.get_mut(k) {
+                    Some(slot) if slot.is_object() && v.is_object() => merge(slot, v),
+                    _ => {
+                        b.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+        }
+        (_, Value::Null) => {}
+        (b, o) => *b = o.clone(),
+    }
+}
+
 fn overlay(
     target: &mut Map<String, Value>,
     stats: &Value,

@@ -5,6 +5,12 @@
 # loopback blocker in .pre-commit-config.yaml excludes this file alone.
 bind = "127.0.0.1"
 port = 8080
+# Ports here are preferences: if one is taken (another server on this
+# machine), the next free port up is used, else one the system picks.
+# strict_ports (or --strict-port) fails instead.
+strict_ports = false
+# The addresses actually bound, as JSON, for scripts; empty for none.
+ports_file = "out/server.json"
 
 # Path to a vertix-archive clone with its LFS files pulled. The
 # VERTIX_ARCHIVE environment variable or --archive override it.
@@ -45,6 +51,12 @@ krp_data = "data/krp"
 # "v3.8".
 balance_dir = "data/balance"
 balance = "best"
+
+# The version string both clients show in their menu footer, as
+# "<version> (CHANGELOG)". Empty: the server's own, "RECON <version>". The
+# admin console's `version` command changes it at run time, to a game
+# version from the research (e.g. "V3.8") or any short string.
+version = ""
 
 # Players per room. A room in the list below can set its own, e.g.
 # { name = "DEV0", mode = "ffa", max_players = 12 }. The client's custom
@@ -94,6 +106,20 @@ enabled = true
 port = 8081
 room = ""
 manifest = "data/boot/20160806061006.json"
+
+[admin]
+# Admin panel and dev console (docs/ADMIN.md). The panel is a page on its
+# own port; keep it on loopback unless you know who can reach it.
+enabled = true
+bind = "127.0.0.1"
+port = 8082
+# The panel and its API need this token. Empty: a new random one at every
+# start, printed with the panel's address.
+token = ""
+# Also take commands typed into the server's terminal.
+stdin = true
+# Print joins, chat and the kill feed in the terminal.
+stdin_log = false
 
 [engine_io]
 # Socket.IO's defaults, which KRP's server uses.

@@ -954,3 +954,6 @@ fn weapon_camos_survive_spawning_and_class_changes() {
     b.spawn(i, "a", 1);
     assert_eq!(camo_of(&b, shared), json!(-1.0));
 }
+
+// The admin console.
+mod admin;
