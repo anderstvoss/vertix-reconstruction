@@ -425,6 +425,22 @@ impl Game {
         if let Some(bi) = h.get("bulletIndex").and_then(Value::as_f64) {
             let bi = bi as usize;
             if let Some(b) = self.bullets.iter_mut().find(|b| b.p.server_index == bi) {
+                // A hit on a player this client cannot see has no position
+                // to draw at; with persistent effects it is drawn where the
+                // bullet is, so the blood is there when the spot comes into
+                // view (KRP draws nothing).
+                let off_screen_at = (self.opts.persistent_effects
+                    && target.as_ref().is_none_or(|t| !t.on_screen))
+                .then_some((b.p.x, b.p.y));
+                if let Some((x, y)) = off_screen_at {
+                    if delta < 0.0 && b.p.sprite_index != 2 {
+                        let spread = PI / random_int(5, 7) as f64;
+                        let dir = b.p.dir;
+                        self.fx
+                            .particle_cone(12, x, y, dir + PI, spread, 0.5, 16.0, 0, true);
+                        self.fx.liquid(x, y, 4);
+                    }
+                }
                 if Some(b.p.owner.index) != me {
                     if let Some(t) = &target {
                         if t.on_screen && delta < 0.0 && b.p.sprite_index != 2 {

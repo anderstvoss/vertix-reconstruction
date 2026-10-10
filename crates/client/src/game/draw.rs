@@ -128,6 +128,7 @@ impl Game {
             + self.target.d_offset * (self.target.f + PI).sin();
         gfx.shadows.enabled = self.settings.show_shadows;
         self.fx.show_particles = self.settings.show_particles;
+        self.fx.persistent = self.opts.persistent_effects;
 
         // drawBackground
         let filler = self.sprites.dark_filler.clone();

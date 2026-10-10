@@ -59,6 +59,11 @@ pub struct Options {
     pub autoplay: bool,
     /// Scripted input for tests and comparisons, e.g. `w:500,d:300`.
     pub script: Option<String>,
+    /// Effects (blood, dust, bullet holes) stay in the world while off
+    /// screen, and hits seen off screen still make them. `effects=krp`
+    /// keeps KRP's: only what was on screen when it happened, dropped
+    /// once it leaves the screen.
+    pub persistent_effects: bool,
 }
 
 impl Options {
@@ -86,6 +91,7 @@ impl Options {
             input,
             autoplay: get("autoplay").is_some(),
             script: get("script"),
+            persistent_effects: get("effects").as_deref() != Some("krp"),
         }
     }
 }
@@ -1503,6 +1509,14 @@ fn parse_script(s: &str) -> Vec<(Vec<KeyCode>, f64)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn effects_persist_unless_krp() {
+        let pairs = |v: &str| vec![("effects".to_owned(), v.to_owned())];
+        assert!(Options::from_pairs(&[]).persistent_effects);
+        assert!(Options::from_pairs(&pairs("persist")).persistent_effects);
+        assert!(!Options::from_pairs(&pairs("krp")).persistent_effects);
+    }
 
     #[test]
     fn angles_snap_like_krp() {
