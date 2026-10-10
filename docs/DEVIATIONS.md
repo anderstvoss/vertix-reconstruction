@@ -54,7 +54,6 @@ the translation is INFERRED to be what its server did.
 | Bullet timing | Each bullet advances on its own timer, by the shooter's last frame delta | Every bullet advances on one fixed server tick (`net.update_hz`, 60) | One clock for the whole room; the client's frame rate no longer changes bullet speed on the server. |
 | Movement input | Moves by the frame delta the client reports, unchecked | The same, with the delta capped at 100 ms | A client cannot move further than one slow frame allows. |
 | Pickups, hardpoints and zones | Checked only when the client sends input, and the hardpoint interval counts down by the client's frame delta, so a player whose tab is hidden stops scoring (reported by Anders while playing KRP, 2026-10-09) | Checked for every living player on the server tick; the interval counts down by server time | Scoring follows time on the point, not the client's frame rate or tab focus. |
-| Weapons | All players share the room's weapon objects, so a camo choice changes everyone's | Each player carries their own copy, and the server remembers each player's camo per weapon across respawns and class changes (the client sends it once, before it spawns) | Per-player camos that stay on. |
 | Round restart | Sends every player's `welcome` to everyone, so each client ends up with the last player's id | Each player gets their own `welcome` | Bug fix. |
 | Custom server modes | Vote entries for a custom mode list are numbered by list position, so the next round can start the wrong mode | Entries keep the mode's real index | Bug fix. |
 | Custom server form | Player count, multipliers and modes used as sent | Players clamped to 2 to the room's configured limit, multipliers to 0.01 to 100, unknown modes dropped, numbers accepted as text | Research #69: the form sends unchecked strings. |
@@ -67,6 +66,17 @@ the translation is INFERRED to be what its server did.
 | Boss class | Selectable like any class | Reserved for the boss in Boss mode even when a balance version hides it | The boss must spawn as the boss. |
 | Cosmetic art | Its fan-repository copies of every hat, shirt, camo and spray | First-party copies from the archive where they exist (`data/content/cosmetics.json`), KRP's for the rest | Recovered assets override KRP's (Anders, 2026-10-09). Sprays 1 to 43 keep their 2016 sizes instead of KRP's 30 px re-sizes. |
 | Mod packs | A mod key goes to Dropbox (dead links); a path such as `/mods/x/vertixmod.zip` becomes `http:///mods/...` and fails; no packs shipped | Keys and paths load from this server, which serves 21 community packs from the archive (`/mods/`); a client patch applied at build time (`scripts/client-patches/apply.mjs`) | Mods work offline; the stock game is silent, so packs are the only sound. |
+
+## Player-expectation changes (not faithful)
+
+Changes made on purpose because players of a modern multiplayer game
+expect them, even though neither the original nor KRP behaved this way
+(direction from Anders, 2026-10-10). Each is marked here so a faithful
+mode can restore the original behaviour if wanted.
+
+| Area | Original and KRP | Here | Why |
+| --- | --- | --- | --- |
+| Weapon camos | KRP keeps one weapon object per room, so the last player to pick a camo for a weapon changes it on every player's copy of that gun | Camos are per player, like hats and shirts: each player carries their own weapons, and the server remembers each player's camo per weapon across respawns and class changes (the client sends it once, before it spawns) | A cosmetic should only change the player who chose it. |
 
 ## Not done yet
 
