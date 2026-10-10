@@ -174,6 +174,9 @@ pub struct Effects {
     pub shake: Shake,
     /// `settings.showParticles`
     pub show_particles: bool,
+    /// Keep (and age) particles while they are off screen, instead of
+    /// dropping them as KRP does.
+    pub persistent: bool,
 }
 
 const MAX_SHAKE_DIST: f64 = 2000.0;
@@ -191,6 +194,7 @@ impl Effects {
             glow_index: 0,
             shake: Shake::default(),
             show_particles: true,
+            persistent: true,
         }
     }
 
@@ -214,19 +218,21 @@ impl Effects {
         sprites: &[Option<Image>],
     ) {
         let show = self.show_particles;
+        let persist = self.persistent;
         for part in &mut self.particles {
-            if (show || part.force_show)
-                && part.active
-                && view.can_see(
-                    part.x - view.start_x,
-                    part.y - view.start_y,
-                    part.scale,
-                    part.scale,
-                )
-            {
+            let shown = (show || part.force_show) && part.active;
+            let visible = view.can_see(
+                part.x - view.start_x,
+                part.y - view.start_y,
+                part.scale,
+                part.scale,
+            );
+            if shown && (visible || persist) {
                 if layer == part.layer {
                     part.update(delta, walls, player_height);
-                    part.draw(p, sprites, (view.start_x, view.start_y));
+                    if visible {
+                        part.draw(p, sprites, (view.start_x, view.start_y));
+                    }
                 }
             } else {
                 part.active = false;
