@@ -47,6 +47,76 @@ const patches = [
 		].join("\n"),
 	},
 	{
+		// "No mods" (see the mod tab): remember the client's own menu title
+		// and classes before any pack replaces them.
+		file: "core/src/app.tsx",
+		find: 'var linkedMod = location.hash.replace("#", "");',
+		replace: [
+			"const baseTitle = mainTitleText.innerHTML;",
+			"const baseCharacterClasses = st.characterClasses;",
+			'var linkedMod = location.hash.replace("#", "");',
+		].join("\n"),
+	},
+	{
+		// window.unloadModPack: back to the client's own art, title and
+		// classes, without pack sounds (the stock game is silent).
+		file: "core/src/app.tsx",
+		find: [
+			"\t\tloadModPack: typeof loadModPack;",
+			"\t}",
+			"}",
+			"window.loadModPack = loadModPack;",
+		].join("\n"),
+		replace: [
+			"\t\tloadModPack: typeof loadModPack;",
+			"\t\tunloadModPack: typeof unloadModPack;",
+			"\t}",
+			"}",
+			"window.loadModPack = loadModPack;",
+			"window.unloadModPack = unloadModPack;",
+			"async function unloadModPack() {",
+			"\tif (loadingTexturePack) return;",
+			"\tmainTitleText.innerHTML = baseTitle;",
+			"\tst.characterClasses = baseCharacterClasses;",
+			"\tst.loadout.class = st.characterClasses.find(",
+			"\t\t(c) => c.folderName === st.loadout.class.folderName,",
+			"\t)!;",
+			'\tawait loadModPack("", true);',
+			'\tsetModInfoText("No mod pack loaded");',
+			"}",
+		].join("\n"),
+	},
+	{
+		// The mod tab lists every pack this server restored
+		// (/mods/index.json) plus "No mods", instead of KRP's one Sonic
+		// button. Without a pack list (mods turned off) the Sonic button
+		// stays.
+		file: "core/src/components/tabs/ModTab.svelte",
+		find: "\tlet textureModInput: HTMLInputElement;",
+		replace: [
+			"\tlet textureModInput: HTMLInputElement;",
+			"\tconst modPacks: Promise<{ key: string; name: string; bytes: number }[]> = fetch(\"/mods/index.json\")",
+			"\t\t.then((r) => (r.ok ? r.json() : Promise.reject(r.status)))",
+			"\t\t.then((d) => d.packs);",
+			"\tconst packSize = (bytes: number) =>",
+			"\t\tbytes < 1048576 ? `${Math.ceil(bytes / 1024)} kb` : `${Math.round(bytes / 1048576)} mb`;",
+		].join("\n"),
+	},
+	{
+		file: "core/src/components/tabs/ModTab.svelte",
+		find: "\t<div class=\"modBtn\" onclick={() => window.loadModPack('13xlc5n3ipudqsn', false)}>Sonic Mod Pack</div>",
+		replace: [
+			"\t<div class=\"modBtn\" onclick={() => window.unloadModPack()}>No mods (default art)</div>",
+			"\t{#await modPacks then packs}",
+			"\t\t{#each packs as pack (pack.key)}",
+			"\t\t\t<div class=\"modBtn\" onclick={() => window.loadModPack(pack.key, false)}>{pack.name} ({packSize(pack.bytes)})</div>",
+			"\t\t{/each}",
+			"\t{:catch}",
+			"\t\t<div class=\"modBtn\" onclick={() => window.loadModPack('13xlc5n3ipudqsn', false)}>Sonic Mod Pack</div>",
+			"\t{/await}",
+		].join("\n"),
+	},
+	{
 		// The mod tab's link to a Reddit thread of (mostly dead) Dropbox
 		// links now opens this server's list of restored packs.
 		file: "core/src/components/tabs/ModTab.svelte",

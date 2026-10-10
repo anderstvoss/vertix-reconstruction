@@ -44,15 +44,17 @@ to hear sounds.
 
 - `/mods/` lists the packs with their keys, sprite and sound counts and
   where each copy came from; `/mods/index.json` is the same list as JSON.
-- In the game's MODS tab, type a pack's key (for example `vertigo-mod`) and
-  press LOAD. The old Dropbox keys of the two Wayback packs work too, so
-  the tab's Sonic button loads the restored Sonic pack. A path such as
-  `/mods/vertigo-mod/vertixmod.zip` also works, and full URLs load as
-  before.
+- The game's MODS tab lists every pack the server offers, plus "No mods",
+  which puts back the client's own art, menu title and classes and turns
+  pack sounds off. A pack's key (for example `vertigo-mod`) can also be
+  typed in and loaded with LOAD; the old Dropbox keys of the two Wayback
+  packs work too. A path such as `/mods/vertigo-mod/vertixmod.zip` also
+  works, and full URLs load as before.
 - KRP's client sent keys to Dropbox (the links are dead) and could not load
   a path from its own server. `scripts/client-patches/apply.mjs` patches
   that in the pinned client source when `scripts/build-client.sh` builds
-  it, and points the tab's "Get more mods here" link at `/mods/`.
+  it, replaces KRP's single Sonic button with the server's pack list and
+  "No mods", and points the tab's "Get more mods here" link at `/mods/`.
 
 **`original-2016`** is the game's own art as a pack: the 2016-08-04
 `res.zip` from the Android APK (the one the 2016 client path serves), read
