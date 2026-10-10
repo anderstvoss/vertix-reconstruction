@@ -12,8 +12,8 @@
 //!   (or `VERTIX_SERVER`)
 //! - `--room NAME`    room to join, as KRP's `/?ROOM` address does
 //! - `--name NAME`    player name
-//! - `--input frame|HZ`, `--display sharp|krp`, `--autoplay`,
-//!   `--script KEYS` as in `inject.js`
+//! - `--input frame|HZ`, `--display sharp|krp`, `--effects persist|krp`,
+//!   `--autoplay`, `--script KEYS` as in `inject.js`
 //! - `--duration S`   quit after S seconds and report metrics
 //! - `--metrics PATH` where to write the metrics JSON (stdout otherwise)
 

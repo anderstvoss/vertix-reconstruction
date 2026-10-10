@@ -17,6 +17,10 @@ changes behaviour only by wrapping browser APIs the client calls:
   high-DPI screen upscales. With `--display sharp` (the default) the canvas
   is drawn at the device pixel ratio while still reporting CSS pixels to
   KRP. `--display krp` leaves it as KRP has it.
+- **Effects.** `--effects krp` turns off the patch that keeps blood, dust
+  and bullet holes off screen (see `docs/DEVIATIONS.md`). That patch is
+  applied to KRP's source when the server's copy of the client is built
+  (`scripts/client-patches/apply.mjs`); the wrapper only chooses it.
 - **Metrics.** Frame times, inputs and server updates per second and ping,
   in the same JSON as the Rust client (`crates/client`), for
   `scripts/ab_compare.py`.
@@ -48,6 +52,7 @@ desktop/krp/target/release/vertix-krp-desktop --room DEV0
 | `--name NAME` | Player name for the start menu |
 | `--input frame\|HZ` | One input per frame (KRP) or a cap in Hz |
 | `--display sharp\|krp` | Device-pixel canvas (default) or KRP's CSS-pixel canvas |
+| `--effects persist\|krp` | Effects stay where they happened, even off screen (default), or KRP's on-screen-only effects. Needs the server's client built with `scripts/client-patches` |
 | `--autoplay` | Press ENTER GAME once the room is joined |
 | `--script KEYS` | Scripted keys, e.g. `d:1500,s:800,a+w:1000,:500` |
 | `--duration S` | Quit after S seconds and report metrics |

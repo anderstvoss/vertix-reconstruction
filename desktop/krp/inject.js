@@ -10,6 +10,11 @@
 //             times a second.
 //   display   "sharp" (draw the game canvas at the device pixel ratio) or
 //             "krp" (KRP's CSS-pixel canvas, unchanged).
+//   effects   "persist" (blood, dust and bullet holes stay where they
+//             happened, even off screen) or "krp" (KRP's: only effects that
+//             were on screen, dropped when they leave it). Needs the client
+//             built with our patches (scripts/client-patches/apply.mjs),
+//             which read it from localStorage "vertix.effects".
 //   name      player name to type into the start menu.
 //   autoplay  press ENTER GAME once the room is joined.
 //   script    scripted keys, the Rust client's format: "d:1500,s:800,a+w:1000,:500".
@@ -27,6 +32,12 @@
 	);
 	const now = () => performance.now();
 	const started = now();
+
+	try {
+		localStorage.setItem("vertix.effects", opts.effects === "krp" ? "krp" : "persist");
+	} catch {
+		// No storage (private window): the patched client persists effects.
+	}
 
 	// --- Loop rate (KRP's input rate) and frame times -----------------------
 	const nativeRaf = window.requestAnimationFrame.bind(window);
