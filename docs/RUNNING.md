@@ -64,6 +64,21 @@ Useful options:
 - `--explain-rules` prints every rule constant and every balance value with
   its status or basis and its source, then exits.
 
+## Cosmetics and mod packs
+
+With an archive, the server serves the recovered hats, camos, sprays and
+shirt image over the client build's copies, and the community mod packs at
+`/mods/` (see [CONTENT.md](CONTENT.md)). Most packs live in a git bundle in
+the archive; unpack them once:
+
+```bash
+python3 scripts/extract_mods.py --archive PATH/TO/vertix-archive
+```
+
+The start-up log says how many files and packs it restored. Load a pack by
+typing its key (listed at `/mods/`) in the MODS tab; a client built before
+this change needs `scripts/build-client.sh` again for keys to load locally.
+
 ## The 2016 client
 
 With an archive, the server also serves the archived 2016-08-06 client on
@@ -135,6 +150,9 @@ and leaving.
 
 - **"hash mismatch" or "is an LFS pointer"** at start-up: that archive file
   was not pulled. Run `git lfs pull` in the archive.
+- **Fewer cosmetic files or mod packs than expected** at start-up: the
+  APK, Wayback files or JeanPaulDot bundle were not pulled (`git lfs pull`
+  in the archive), or `scripts/extract_mods.py` has not been run.
 - **"no client build"** warning: run `scripts/build-client.sh`. The 2016
   client on the second port works without it.
 - **"The system cannot find the path specified"** for the maps: the

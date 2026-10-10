@@ -240,6 +240,38 @@ impl Archive {
     }
 }
 
+impl Archive {
+    /// Reads `rel`, or the zip member `member` of it, and checks the result
+    /// against `sha256`. A container is itself checked against
+    /// `sha256sums.txt` once; a plain file only against `sha256`.
+    ///
+    /// # Errors
+    /// Fails if the file or member is missing, an LFS pointer, or altered.
+    pub fn file(
+        &mut self,
+        rel: &str,
+        member: Option<&str>,
+        sha256: &str,
+    ) -> Result<Vec<u8>, Error> {
+        let bytes = match member {
+            Some(m) => {
+                let container = self.container(rel)?;
+                zip_member(&container, m)?
+                    .ok_or_else(|| Error::Manifest(format!("{m} missing from {rel}")))?
+            }
+            None => self.read(rel)?,
+        };
+        check(member.unwrap_or(rel), &bytes, sha256)?;
+        Ok(bytes)
+    }
+}
+
+/// SHA-256 of `bytes` as lowercase hex.
+#[must_use]
+pub fn sha256_of(bytes: &[u8]) -> String {
+    sha256_hex(bytes)
+}
+
 fn zip_member(container: &[u8], member: &str) -> Result<Option<Vec<u8>>, Error> {
     let mut zip = zip::ZipArchive::new(Cursor::new(container))
         .map_err(|e| Error::Io(format!("reading zip: {e}")))?;

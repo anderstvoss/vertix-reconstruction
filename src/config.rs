@@ -24,6 +24,39 @@ pub struct Config {
     pub engine_io: EngineIo,
     #[serde(default)]
     pub classic: Classic,
+    #[serde(default)]
+    pub content: Content,
+}
+
+/// Cosmetic art and mod packs restored from the archive (`src/content.rs`).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+pub struct Content {
+    /// Serve the archive's hats, shirts, camos and sprays over the client
+    /// build's copies.
+    pub cosmetics: bool,
+    pub cosmetics_manifest: PathBuf,
+    /// For a file with several first-party versions, the one live on this
+    /// day (`YYYY-MM-DD`) is served.
+    pub date: String,
+    /// Serve the community mod packs at `/mods/`.
+    pub mods: bool,
+    pub mods_manifest: PathBuf,
+    /// Where `scripts/extract_mods.py` unpacks packs held in git bundles.
+    pub mods_dir: PathBuf,
+}
+
+impl Default for Content {
+    fn default() -> Self {
+        Self {
+            cosmetics: true,
+            cosmetics_manifest: "data/content/cosmetics.json".into(),
+            date: "2017-07-01".into(),
+            mods: true,
+            mods_manifest: "data/content/mods.json".into(),
+            mods_dir: "content/mods".into(),
+        }
+    }
 }
 
 /// The archived 2016-08-06 client, served from the archive on its own

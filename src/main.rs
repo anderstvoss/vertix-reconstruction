@@ -13,6 +13,7 @@ use std::time::Duration;
 
 use tokio::sync::mpsc;
 use vertix_reconstruction::config::{Config, MapSourceKind};
+use vertix_reconstruction::content::{self, Content};
 use vertix_reconstruction::game::Game;
 use vertix_reconstruction::game::assumptions::Assumptions;
 use vertix_reconstruction::game::data::GameData;
@@ -78,6 +79,14 @@ fn load_maps(config: &Config, archive: Option<&Path>) -> Result<MapSet, String> 
         loaded.extend(source.load().map_err(|e| format!("maps ({kind:?}): {e}"))?);
     }
     MapSet::new(loaded).map_err(|e| format!("maps: {e}"))
+}
+
+/// Cosmetics and mod packs restored from the archive. Their routes answer
+/// before the client build's fallback, so recovered files win.
+fn restored(config: &Config, archive: Option<&Path>) -> Result<axum::Router, String> {
+    let restored = Content::load(&config.content, archive)?;
+    eprintln!("{}", restored.summary());
+    Ok(content::router(Arc::new(restored)))
 }
 
 /// The 2016 client's routes, if the archive that holds it is given.
@@ -186,12 +195,12 @@ async fn run() -> Result<(), String> {
         }
     });
 
-    let app = http::router(http::AppState {
+    let app = restored(&config, archive.as_deref())?.merge(http::router(http::AppState {
         client_dir: Arc::new(config.client_dir.clone()),
         eio,
         game: ask_tx,
         trace,
-    });
+    }));
     let port = args.port.unwrap_or(config.port);
     let listener = tokio::net::TcpListener::bind((config.bind.as_str(), port))
         .await

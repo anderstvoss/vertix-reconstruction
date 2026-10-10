@@ -28,6 +28,8 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 - Serves a locally built KRP client (`scripts/build-client.sh`, `.ps1`) with KRP's `/api/getIP`, `/api/getRooms` and `/api/getLbs` routes.
 - Rooms from `config/server.toml`, one per mode by default, with a player limit (`[game] max_players`, 8 by default, or per room) that the custom server form cannot exceed.
 - WebSocket transport with the Engine.IO upgrade.
+- Cosmetics restored from the archive (`[content]`, `docs/CONTENT.md`): hats 1 to 116, camos 1 to 130 and sprays 1 to 43 from the Aug-2016 Android APK and Wayback, hash-checked at start-up and served over KRP's copies; `[content] date` picks between first-party versions.
+- Community mod packs at `/mods/` (21 packs, listed with keys), unpacked from the archive by `scripts/extract_mods.py`; the client build patches KRP's mod loader so keys and paths load from this server (`scripts/client-patches/apply.mjs`).
 - `scripts/e2e_smoke.py`: plays through a running server over polling and WebSocket.
 
 ### Changed

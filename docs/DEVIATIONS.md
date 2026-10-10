@@ -65,11 +65,14 @@ the translation is INFERRED to be what its server did.
 | Leaderboards | `/api/getLbs` returns generated sample players | Every board is empty | There are no accounts (decided by Anders, 2026-10-08). |
 | `/api/getIP` | Names a fixed host and port | Answers with the host and port the request used | The client connects to its own origin either way. |
 | Boss class | Selectable like any class | Reserved for the boss in Boss mode even when a balance version hides it | The boss must spawn as the boss. |
+| Cosmetic art | Its fan-repository copies of every hat, shirt, camo and spray | First-party copies from the archive where they exist (`data/content/cosmetics.json`), KRP's for the rest | Recovered assets override KRP's (Anders, 2026-10-09). Sprays 1 to 43 keep their 2016 sizes instead of KRP's 30 px re-sizes. |
+| Mod packs | A mod key goes to Dropbox (dead links); a path such as `/mods/x/vertixmod.zip` becomes `http:///mods/...` and fails; no packs shipped | Keys and paths load from this server, which serves 21 community packs from the archive (`/mods/`); a client patch applied at build time (`scripts/client-patches/apply.mjs`) | Mods work offline; the stock game is silent, so packs are the only sound. |
 
 ## Not done yet
 
 - **Version label.** KRP's client shows its own version; showing `RECON`
-  (decided by Anders, 2026-10-08) needs a client patch in the build script.
+  (decided by Anders, 2026-10-08) needs a client patch
+  (`scripts/client-patches/apply.mjs` now applies patches at build time).
 - **Client frame and input rate.** KRP's client has no 30 fps limiter and
   sends input every frame (research #72). A fixed input tick and the
   `devicePixelRatio` fix are client patches still to come.
