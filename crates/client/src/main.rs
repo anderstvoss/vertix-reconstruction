@@ -261,6 +261,9 @@ async fn main() {
         };
         let minimap = gfx.minimap.as_ref().map(Canvas::image);
         game.draw_hud(minimap.as_ref(), &mut ui, css);
+        if game.start_menu && !game.kicked && !game.disconnected {
+            game.draw_version_box(&mut ui, css);
+        }
         let mut hot = ui.hot;
         if game.start_menu && !game.kicked && !game.disconnected {
             let (scale, origin) = game.menu_transform(css);
