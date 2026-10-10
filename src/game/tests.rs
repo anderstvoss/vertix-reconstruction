@@ -922,3 +922,6 @@ fn player_limit_is_a_server_setting() {
     b.send(i, "cSrv", csrv("1"));
     assert_eq!(b.room.max_players, 2);
 }
+
+// The admin console.
+mod admin;

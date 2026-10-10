@@ -77,7 +77,7 @@ pub struct Net {
 }
 
 /// Game constants KRP's server hard-codes (`server/room.ts`, `game.ts`).
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct Rules {
     pub max_players: usize,
     pub spawn_protection_ms: f64,

@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server Admin</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --bg: #12151a; --panel: #1b2027; --line: #2c333d; --text: #e6e9ee; --muted: #8b95a3;
+  --accent: #4fa3ff; --red: #ff5a5a; --blue: #4f8dff; --ok: #4fd18b; --warn: #ffb547;
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); }
+header { display: flex; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+header h1 { font-size: 16px; margin: 0 8px 0 0; }
+#conn { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--line); }
+#conn.on { background: #1d4d33; color: var(--ok); }
+#conn.off { background: #4d1d1d; color: var(--red); }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs button.active { background: var(--accent); color: #000; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 40%); gap: 12px; padding: 12px; height: calc(100vh - 50px); }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+#left { overflow: auto; }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+.row label { color: var(--muted); font-size: 12px; }
+button, select, input { font: inherit; color: var(--text); background: #252c35; border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.danger { border-color: #6b2b2b; }
+button.danger:hover { background: #4d1d1d; }
+button.red { color: var(--red); } button.blue { color: var(--blue); }
+input.num { width: 72px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 500; }
+td.acts button { padding: 1px 6px; font-size: 12px; }
+.team-red { color: var(--red); } .team-blue { color: var(--blue); }
+.dead { opacity: .5; }
+.stat { display: inline-block; margin-right: 14px; } .stat b { font-weight: 600; }
+.pill { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--line); margin-left: 4px; }
+.pill.warn { background: #4d3a12; color: var(--warn); }
+#console { display: flex; flex-direction: column; height: 100%; min-height: 360px; }
+#out { flex: 1; overflow: auto; font: 12px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: pre-wrap; background: #0d1014; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+#out .cmd { color: var(--accent); } #out .err { color: var(--red); } #out .log { color: var(--muted); }
+#out .chat { color: #d6c8ff; } #out .round { color: var(--warn); } #out .join, #out .leave { color: var(--ok); }
+#hint { color: var(--muted); font: 12px ui-monospace, monospace; min-height: 18px; margin: 4px 0; }
+#line { width: 100%; font-family: ui-monospace, monospace; }
+#rules td input { width: 90px; }
+.hidden { display: none !important; }
+#auth { max-width: 460px; margin: 60px auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Server Admin</h1>
+  <span id="conn">connecting</span>
+  <div class="tabs" id="roomTabs"></div>
+  <div class="tabs"><button id="serverTab">Server</button></div>
+</header>
+
+<section id="auth" class="hidden">
+  <h2>Admin token</h2>
+  <p>The server printed the panel's address with its token when it started. Open that address, or paste the token here.</p>
+  <div class="row"><input id="tokenIn" placeholder="token" style="flex:1"><button id="tokenGo">Connect</button></div>
+</section>
+
+<main id="app" class="hidden">
+  <div id="left">
+    <div id="roomView">
+      <section>
+        <h2 id="roomTitle">Room</h2>
+        <div id="roomStats"></div>
+      </section>
+      <section>
+        <h2>Round</h2>
+        <div class="row">
+          <label>Mode</label><select id="modeSel"></select>
+          <label>Map</label><select id="mapSel"></select>
+          <button id="startRound">Start round</button>
+          <button id="restart">Restart (random map)</button>
+        </div>
+        <div class="row">
+          <label>End round:</label>
+          <button class="red teamOnly" data-cmd="win red">Red wins</button>
+          <button class="blue teamOnly" data-cmd="win blue">Blue wins</button>
+          <button data-cmd="win none">No winner</button>
+          <button id="pauseBtn">Pause tick</button>
+        </div>
+        <div class="row teamOnly">
+          <label>Red</label><input id="redScore" class="num"><button data-score="red">Set</button>
+          <label>Blue</label><input id="blueScore" class="num"><button data-score="blue">Set</button>
+        </div>
+        <div class="row">
+          <label>Score limit</label><input id="scoreLimit" class="num"><button id="setLimit">Set</button>
+          <button data-cmd="scorelimit default">Mode default</button>
+        </div>
+      </section>
+      <section>
+        <h2>Players</h2>
+        <div class="row">
+          <button class="danger" data-cmd="killall">Kill all</button>
+          <button class="danger" id="kickAll">Kick all</button>
+          <button data-cmd="pickups">Refill pickups</button>
+          <button data-cmd="sync">Resync positions</button>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>#</th><th>Name</th><th>Team</th><th>Class</th><th>HP</th><th>K/D</th><th>Score</th><th>Client</th><th>Actions</th></tr></thead>
+          <tbody id="players"></tbody>
+        </table></div>
+      </section>
+      <section>
+        <h2>Room settings</h2>
+        <div class="row">
+          <label>Max players</label><input id="maxPlayers" class="num"><button data-set="maxplayers" data-from="maxPlayers">Set</button>
+          <label>Health ×</label><input id="healthMult" class="num"><button data-set="healthmult" data-from="healthMult">Set</button>
+          <label>Speed ×</label><input id="speedMult" class="num"><button data-set="speedmult" data-from="speedMult">Set</button>
+        </div>
+        <div class="row">
+          <input id="sayText" placeholder="message" style="flex:1">
+          <button id="sayBtn">Chat</button><button id="announceBtn">Announce</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="serverView" class="hidden">
+      <section>
+        <h2>Server</h2>
+        <div id="serverStats"></div>
+        <div class="row">
+          <label>Balance preset</label><select id="balanceSel"></select><button id="balanceBtn">Switch</button>
+          <label>2016 client room</label><select id="classicSel"></select><button id="classicBtn">Set</button>
+        </div>
+        <div class="row">
+          <label>Open room</label><input id="newRoom" placeholder="name" class="num" style="width:110px">
+          <select id="newRoomMode"></select><button id="openRoom">Open</button>
+        </div>
+      </section>
+      <section>
+        <h2>Version string</h2>
+        <div class="row">
+          <label>Researched version</label><select id="versionSel"></select>
+          <label><input type="checkbox" id="versionBalance" checked> also load its balance</label>
+          <button id="versionUse">Use</button>
+        </div>
+        <div class="row">
+          <label>Any string</label><input id="versionText" maxlength="40" placeholder="e.g. RECON test 3" style="width:220px">
+          <button id="versionSet">Set</button><button data-cmd="version reset">Server's own</button>
+        </div>
+        <div class="row" style="color:var(--muted);font-size:12px">Clients show it in the menu footer after a page reload.</div>
+      </section>
+      <section>
+        <h2>Balance tuning (over the preset, from next spawn)</h2>
+        <div class="row">
+          <select id="tuneWhat"></select>
+          <select id="tuneField"></select>
+          <input id="tuneValue" class="num" style="width:100px">
+          <button id="tuneSet">Set</button>
+          <button class="danger" data-cmd="tune reset">Reset all tuning</button>
+        </div>
+        <div id="tuneList" style="font:12px ui-monospace,monospace;color:var(--muted)"></div>
+      </section>
+      <section>
+        <h2>Rules (all rooms) <button data-cmd="reload rules" style="float:right">Reload from disk</button></h2>
+        <table id="rules"><tbody></tbody></table>
+      </section>
+    </div>
+  </div>
+
+  <section id="console">
+    <h2>Console</h2>
+    <div id="out"></div>
+    <div id="hint"></div>
+    <input id="line" placeholder="type a command, e.g. help, kick Bob, mode tdm" autocomplete="off" spellcheck="false">
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const k of kids) e.append(k);
+  return e;
+};
+
+let token = "";
+try { token = new URLSearchParams(location.hash.slice(1)).get("token") || sessionStorage.getItem("adminToken") || ""; } catch (_) {}
+let ws = null, nextId = 1, pending = new Map();
+// Commands this page sent, so their echo in the admin log is not shown twice.
+const mine = [];
+let state = null, catalog = null, room = null, view = "room";
+const cmdHistory = []; let histAt = 0;
+
+function print(text, cls) {
+  const out = $("out");
+  const near = out.scrollHeight - out.scrollTop - out.clientHeight < 40;
+  out.append(el("div", { class: cls || "" }, text));
+  while (out.childElementCount > 2000) out.firstChild.remove();
+  if (near) out.scrollTop = out.scrollHeight;
+}
+
+function connect() {
+  if (!token) { $("auth").classList.remove("hidden"); return; }
+  try { sessionStorage.setItem("adminToken", token); } catch (_) {}
+  // Keep the token out of the address bar once read.
+  if (location.hash) window.history.replaceState(null, "", location.pathname);
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}`);
+  ws.onopen = async () => {
+    $("conn").textContent = "connected"; $("conn").className = "on";
+    $("auth").classList.add("hidden"); $("app").classList.remove("hidden");
+    const c = await send("catalog", { quiet: true });
+    catalog = c.data;
+    fillCatalog();
+    await refresh();
+  };
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.type === "reply") {
+      const p = pending.get(m.id); pending.delete(m.id);
+      if (p) p(m.reply);
+    } else if (m.type === "log") {
+      const l = m.line;
+      if (l.kind === "admin") {
+        const at = mine.findIndex((x) => l.text.startsWith(x + " -> "));
+        if (at >= 0) { mine.splice(at, 1); return; }
+      }
+      print(`[${l.room}] ${l.text}`, l.kind === "admin" ? "log" : l.kind);
+    }
+  };
+  ws.onclose = (ev) => {
+    $("conn").textContent = "disconnected"; $("conn").className = "off";
+    for (const p of pending.values()) p({ ok: false, text: "disconnected" });
+    pending.clear();
+    if (ev.code === 1006 && !state) { $("auth").classList.remove("hidden"); return; }
+    setTimeout(connect, 2000);
+  };
+}
+
+function send(line, opts = {}) {
+  return new Promise((resolve) => {
+    if (!ws || ws.readyState !== 1) return resolve({ ok: false, text: "not connected" });
+    const id = nextId++;
+    if (!opts.quiet) { mine.push(line); if (mine.length > 50) mine.shift(); }
+    pending.set(id, (reply) => {
+      if (reply.room) room = reply.room;
+      if (!opts.quiet) {
+        if (opts.echo !== false) print("> " + line, "cmd");
+        print(reply.text, reply.ok ? "" : "err");
+      }
+      resolve(reply);
+    });
+    ws.send(JSON.stringify({ id, line, room: room || undefined }));
+  });
+}
+
+async function act(line) {
+  await send(line);
+  await refresh();
+}
+
+async function refresh() {
+  const r = await send("state", { quiet: true });
+  if (!r.ok) return;
+  state = r.data;
+  if (!room || !state.rooms.some((x) => x.name === room)) room = state.rooms[0]?.name;
+  render();
+}
+
+function fillCatalog() {
+  const modes = catalog.modes.map((m) => el("option", { value: m.code }, `${m.name} (${m.code})`));
+  $("modeSel").replaceChildren(...modes);
+  $("newRoomMode").replaceChildren(...catalog.modes.map((m) => el("option", { value: m.code }, m.name)));
+  $("balanceSel").replaceChildren(...catalog.presets.map((p) => el("option", { value: p }, p)));
+  const keepVersion = $("versionSel").value;
+  $("versionSel").replaceChildren(...catalog.versions.map((v) =>
+    el("option", { value: v.id }, v.date ? `${v.string}  (${v.date})` : v.string)));
+  const pick = catalog.versions.find((v) => v.id === keepVersion) || catalog.versions.find((v) => v.string === state?.version);
+  if (pick) $("versionSel").value = pick.id;
+  else if (catalog.versions.length) $("versionSel").value = catalog.versions[catalog.versions.length - 1].id;
+  const keep = $("tuneWhat").value;
+  $("tuneWhat").replaceChildren(
+    el("optgroup", { label: "Classes" }, ...catalog.classes.map((c) =>
+      el("option", { value: `class ${c.index}` }, c.name || `class ${c.index}`))),
+    el("optgroup", { label: "Weapons" }, ...catalog.weapons.map((w) =>
+      el("option", { value: `weapon ${w.index}` }, w.name))),
+  );
+  if (keep) $("tuneWhat").value = keep;
+  fillTuneFields();
+  fillMaps();
+}
+
+function tuneTarget() {
+  const [kind, i] = $("tuneWhat").value.split(" ");
+  return (kind === "class" ? catalog.classes : catalog.weapons)[Number(i)];
+}
+
+function fillTuneFields() {
+  const t = tuneTarget();
+  if (!t) return;
+  const keep = $("tuneField").value;
+  const names = Object.keys(t.fields).sort();
+  $("tuneField").replaceChildren(...names.map((f) => el("option", { value: f }, f)));
+  if (names.includes(keep)) $("tuneField").value = keep;
+  $("tuneValue").value = String(t.fields[$("tuneField").value]);
+}
+
+async function reloadCatalog() {
+  const c = await send("catalog", { quiet: true });
+  if (c.ok) { catalog = c.data; fillCatalog(); }
+}
+
+function fillMaps() {
+  const mode = catalog.modes.find((m) => m.code === $("modeSel").value);
+  const own = mode ? mode.maps.filter((id) => catalog.maps.includes(id)) : [];
+  const ids = own.length ? own : catalog.maps;
+  const others = catalog.maps.filter((id) => !ids.includes(id));
+  $("mapSel").replaceChildren(
+    el("option", { value: "" }, "random"),
+    ...ids.map((id) => el("option", { value: id }, `map ${id}`)),
+    ...others.map((id) => el("option", { value: id }, `map ${id} (not in mode's list)`)),
+  );
+}
+
+function render() {
+  const tabs = state.rooms.map((r) => el("button", {
+    class: view === "room" && r.name === room ? "active" : "",
+    onclick: () => { room = r.name; view = "room"; modeSynced = null; render(); },
+  }, `${r.name} · ${r.mode} · ${r.players.length}/${r.maxPlayers}`));
+  $("roomTabs").replaceChildren(...tabs);
+  $("serverTab").className = view === "server" ? "active" : "";
+  $("roomView").classList.toggle("hidden", view !== "room");
+  $("serverView").classList.toggle("hidden", view !== "server");
+  if (view === "room") renderRoom(); else renderServer();
+}
+
+let modeSynced = null;
+function setIfIdle(id, v) { const i = $(id); if (document.activeElement !== i) i.value = v; }
+
+function renderRoom() {
+  const r = state.rooms.find((x) => x.name === room);
+  if (!r) return;
+  $("roomTitle").textContent = `Room ${r.name}`;
+  const stats = [
+    ["Mode", `${r.modeName} (${r.mode})`], ["Map", r.map], ["Round", r.roundEnd ? "ending" : "running"],
+    ["Players", `${r.players.length}/${r.maxPlayers}`], ["Score limit", r.scoreLimit],
+    ["Leader", `${r.leadPercent}%`], ["Bullets", r.bulletsActive],
+  ];
+  if (r.teams) stats.splice(3, 0, ["Red", r.scoreRed], ["Blue", r.scoreBlue]);
+  $("roomStats").replaceChildren(...stats.map(([k, v]) => el("span", { class: "stat" }, `${k} `, el("b", {}, String(v)))));
+  if (r.paused) $("roomStats").append(el("span", { class: "pill warn" }, "tick paused"));
+  if (modeSynced !== r.name + r.mode) { $("modeSel").value = r.mode; fillMaps(); modeSynced = r.name + r.mode; }
+  $("pauseBtn").textContent = r.paused ? "Resume tick" : "Pause tick";
+  for (const e of document.querySelectorAll(".teamOnly")) e.classList.toggle("hidden", !r.teams);
+  setIfIdle("redScore", r.scoreRed); setIfIdle("blueScore", r.scoreBlue);
+  setIfIdle("scoreLimit", r.scoreLimit); setIfIdle("maxPlayers", r.maxPlayers);
+  setIfIdle("healthMult", r.healthMult); setIfIdle("speedMult", r.speedMult);
+
+  const rows = r.players.map((p) => {
+    const b = (label, line, cls) => el("button", { class: cls || "", title: line, onclick: () => act(line) }, label);
+    const who = `#${p.index}`;
+    const acts = [
+      b("Kill", `kill ${who}`, "danger"),
+      el("button", { class: "danger", onclick: () => {
+        const why = prompt(`Kick ${p.name}? Reason:`, "Kicked by the server");
+        if (why !== null) act(`kick ${who} "${why.replace(/"/g, "'")}"`);
+      } }, "Kick"),
+      b("Win", `win ${who}`),
+      b("Lose", `lose ${who}`),
+      b("Heal", `health ${who} ${p.maxHealth}`),
+      b(p.protected ? "Unprotect" : "Protect", `protect ${who} ${p.protected ? "off" : "on"}`),
+      el("button", { onclick: () => {
+        const n = prompt(`Score for ${p.name}:`, p.score);
+        if (n !== null) act(`score ${who} ${Number(n)}`);
+      } }, "Score"),
+      el("button", { onclick: () => {
+        const n = prompt(`New name for ${p.name}:`, p.name);
+        if (n) act(`rename ${who} "${n.replace(/"/g, "'")}"`);
+      } }, "Rename"),
+    ];
+    if (r.teams) acts.push(b("Swap team", `team ${who} ${p.team === "red" ? "blue" : "red"}`));
+    const teamCls = p.team === "red" ? "team-red" : p.team === "blue" ? "team-blue" : "";
+    return el("tr", { class: p.dead ? "dead" : "" },
+      el("td", {}, String(p.index)),
+      el("td", {}, p.name, ...(p.boss ? [el("span", { class: "pill" }, "boss")] : []),
+        ...(p.protected ? [el("span", { class: "pill" }, "protected")] : []), ...(p.dead ? [el("span", { class: "pill" }, "dead")] : [])),
+      el("td", { class: teamCls }, r.teams ? p.team : "-"),
+      el("td", {}, p.class || String(p.classIndex)),
+      el("td", {}, `${Math.round(p.health)}/${Math.round(p.maxHealth)}`),
+      el("td", {}, `${p.kills}/${p.deaths}`),
+      el("td", {}, String(p.score)),
+      el("td", {}, p.client || ""),
+      el("td", { class: "acts" }, ...acts),
+    );
+  });
+  if (!rows.length) rows.push(el("tr", {}, el("td", { colspan: "9", style: "color:var(--muted)" }, "Nobody in this room.")));
+  $("players").replaceChildren(...rows);
+}
+
+function renderServer() {
+  const up = Math.round(state.uptimeMs / 1000);
+  $("serverStats").replaceChildren(
+    el("span", { class: "stat" }, "Uptime ", el("b", {}, `${Math.floor(up / 60)}m ${up % 60}s`)),
+    el("span", { class: "stat" }, "Balance ", el("b", {}, state.balance)),
+    el("span", { class: "stat" }, "Version ", el("b", {}, state.version)),
+    el("span", { class: "stat" }, "2016 client room ", el("b", {}, state.classicRoom)),
+    el("span", { class: "stat" }, "Rooms ", el("b", {}, String(state.rooms.length))),
+  );
+  if (document.activeElement !== $("balanceSel")) $("balanceSel").value = state.balance;
+  const cs = $("classicSel");
+  if (document.activeElement !== cs) {
+    cs.replaceChildren(...state.rooms.map((r) => el("option", { value: r.name }, r.name)));
+    cs.value = state.classicRoom;
+  }
+  $("tuneList").replaceChildren(...(state.tweaks.length ? state.tweaks : ["nothing tuned"]).map((t) => el("div", {}, t)));
+  const body = $("rules").tBodies[0];
+  if (body.contains(document.activeElement)) return;
+  body.replaceChildren(...Object.entries(state.rules).map(([k, v]) => {
+    const input = el("input", { value: String(v) });
+    return el("tr", {}, el("td", {}, k), el("td", {}, input),
+      el("td", {}, el("button", { onclick: () => act(`rule ${k} ${input.value}`) }, "Set")));
+  }), el("tr", {}, el("td", { colspan: "3" },
+    ...state.rooms.map((r) => el("button", { class: "danger", onclick: () => {
+      if (confirm(`Close ${r.name} and kick its players?`)) act(`close ${r.name}`);
+    } }, `Close ${r.name}`)))));
+}
+
+// Room controls.
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  if (t.dataset.cmd) {
+    const cmd = t.dataset.cmd;
+    act(cmd).then(() => { if (/^(tune|version|balance|reload)/.test(cmd)) reloadCatalog(); });
+  }
+  if (t.dataset.score) act(`score ${t.dataset.score} ${$(t.dataset.score + "Score").value}`);
+  if (t.dataset.set) act(`${t.dataset.set} ${$(t.dataset.from).value}`);
+});
+$("modeSel").onchange = fillMaps;
+$("startRound").onclick = () => act(`mode ${$("modeSel").value} ${$("mapSel").value}`.trim());
+$("restart").onclick = () => act("restart");
+$("pauseBtn").onclick = () => {
+  const r = state.rooms.find((x) => x.name === room);
+  act(r && r.paused ? "resume" : "pause");
+};
+$("setLimit").onclick = () => act(`scorelimit ${$("scoreLimit").value}`);
+$("kickAll").onclick = () => { if (confirm(`Kick everyone in ${room}?`)) act("kickall"); };
+$("sayBtn").onclick = () => { const t = $("sayText").value.trim(); if (t) act(`say ${t}`); $("sayText").value = ""; };
+$("announceBtn").onclick = () => {
+  const t = $("sayText").value.trim();
+  if (t) act(`announce "${t.replace(/"/g, "'")}"`);
+  $("sayText").value = "";
+};
+$("serverTab").onclick = () => { view = "server"; render(); };
+$("balanceBtn").onclick = async () => { await act(`balance ${$("balanceSel").value}`); reloadCatalog(); };
+$("versionUse").onclick = async () => {
+  await act(`version use ${$("versionSel").value}${$("versionBalance").checked ? "" : " label"}`);
+  reloadCatalog();
+};
+$("versionSet").onclick = () => { const t = $("versionText").value.trim(); if (t) act(`version set ${t}`); };
+$("tuneWhat").onchange = fillTuneFields;
+$("tuneField").onchange = fillTuneFields;
+$("tuneSet").onclick = async () => {
+  await act(`tune ${$("tuneWhat").value} ${$("tuneField").value} ${$("tuneValue").value.trim()}`);
+  await reloadCatalog();
+};
+$("classicBtn").onclick = () => act(`classic ${$("classicSel").value}`);
+$("openRoom").onclick = async () => {
+  const n = $("newRoom").value.trim();
+  if (!n) return;
+  await act(`open ${n} ${$("newRoomMode").value}`);
+  room = n; view = "room"; render();
+};
+$("tokenGo").onclick = () => { token = $("tokenIn").value.trim(); connect(); };
+
+// Console: history, completion and usage hints.
+const line = $("line");
+function usage() {
+  if (!catalog) return;
+  const words = line.value.trim().split(/\s+/).filter((w) => !w.startsWith("@"));
+  const c = catalog.commands.find((x) => x.name === words[0]);
+  if (c) { $("hint").textContent = `${c.name} ${c.args}  ·  ${c.help}`; return; }
+  const m = catalog.commands.filter((x) => words[0] && x.name.startsWith(words[0])).map((x) => x.name);
+  $("hint").textContent = m.length ? m.join("  ") : "help lists every command · @ROOM picks a room";
+}
+line.addEventListener("input", usage);
+line.addEventListener("keydown", async (e) => {
+  if (e.key === "Enter") {
+    const v = line.value.trim();
+    if (!v) return;
+    cmdHistory.push(v); histAt = cmdHistory.length; line.value = ""; usage();
+    if (v === "clear") { $("out").replaceChildren(); return; }
+    await act(v);
+  } else if (e.key === "ArrowUp") {
+    if (histAt > 0) { histAt--; line.value = cmdHistory[histAt]; e.preventDefault(); }
+  } else if (e.key === "ArrowDown") {
+    if (histAt < cmdHistory.length) { histAt++; line.value = cmdHistory[histAt] || ""; e.preventDefault(); }
+  } else if (e.key === "Tab" && catalog) {
+    e.preventDefault();
+    const w = line.value.trimStart();
+    if (w.includes(" ")) return;
+    const m = catalog.commands.filter((x) => x.name.startsWith(w));
+    if (m.length === 1) line.value = m[0].name + " ";
+    usage();
+  }
+});
+
+print("Type help for every command. Commands act on the selected room tab; prefix @ROOM to pick another.", "log");
+setInterval(() => { if (ws && ws.readyState === 1) refresh(); }, 1000);
+connect();
+</script>
+</body>
+</html>

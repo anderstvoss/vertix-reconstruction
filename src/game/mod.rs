@@ -14,12 +14,14 @@
 //! configured classic room, and its events pass through
 //! [`crate::classic::adapt`] on the way in and out.
 
+pub mod admin;
 pub mod assumptions;
 pub mod data;
 pub mod map;
 pub mod maps;
 pub mod projectile;
 pub mod room;
+mod tuning;
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -53,6 +55,8 @@ pub enum Ask {
     Rooms(oneshot::Sender<Value>),
     /// `/api/getIP?room=`: which room to join.
     Resolve(String, oneshot::Sender<Option<String>>),
+    /// A command from the admin panel or console.
+    Admin(crate::admin::Request),
 }
 
 const MAX_ROOM_NAME: usize = 24;
@@ -95,6 +99,7 @@ pub struct Game {
     trace: Trace,
     seed: u64,
     start: tokio::time::Instant,
+    admin: admin::Admin,
 }
 
 fn valid_room_name(name: &str) -> bool {
@@ -126,6 +131,7 @@ impl Game {
             trace,
             seed: 0x9E37_79B9_7F4A_7C15,
             start: tokio::time::Instant::now(),
+            admin: admin::Admin::default(),
         };
         for r in rooms {
             if !valid_room_name(&r.name) {
@@ -219,7 +225,7 @@ impl Game {
     }
 
     /// Answers one question from the HTTP side.
-    pub fn answer(&self, ask: Ask) {
+    pub fn answer(&mut self, ask: Ask) {
         match ask {
             Ask::Rooms(reply) => {
                 let _ = reply.send(self.room_list());
@@ -227,6 +233,7 @@ impl Game {
             Ask::Resolve(name, reply) => {
                 let _ = reply.send(self.resolve_room(&name));
             }
+            Ask::Admin(req) => self.admin(req),
         }
     }
 
@@ -285,6 +292,7 @@ impl Game {
                 let Some((name, index)) = self.conns.remove(&conn) else {
                     return;
                 };
+                self.log_leave(&name, index);
                 let (data, rules) = (&self.data, &self.rules.rules);
                 if let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) {
                     s.members.remove(&index);
@@ -293,6 +301,19 @@ impl Game {
                 self.deliver(&name);
             }
         }
+    }
+
+    fn log_leave(&self, room: &str, index: u32) {
+        if self.admin.log.is_none() {
+            return;
+        }
+        let who = self
+            .rooms
+            .iter()
+            .find(|s| s.room.name == room)
+            .and_then(|s| s.room.players.iter().find(|p| p.index == index))
+            .map_or_else(String::new, |p| p.name.clone());
+        self.log(room, "leave", format!("#{index} {who} left"));
     }
 
     /// Applies one transport event from a 2016 client.
@@ -338,6 +359,7 @@ impl Game {
                 let Some((name, index)) = self.classic.remove(&conn).and_then(|c| c.seat) else {
                     return;
                 };
+                self.log_leave(&name, index);
                 let (data, rules) = (&self.data, &self.rules.rules);
                 if let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) {
                     s.members.remove(&index);
@@ -386,6 +408,7 @@ impl Game {
             c.seat = Some((name.clone(), index));
         }
         self.trace.note("join", conn, &name);
+        self.log(&name, "join", format!("#{index} joined (2016 client)"));
         self.deliver(&name);
     }
 
@@ -411,6 +434,7 @@ impl Game {
         s.members.insert(index, Link::Krp(handle));
         self.conns.insert(conn, (name.to_owned(), index));
         self.trace.note("join", conn, name);
+        self.log(name, "join", format!("#{index} joined"));
         self.deliver(name);
     }
 
@@ -422,7 +446,13 @@ impl Game {
         };
         let out = std::mem::take(&mut s.room.out);
         let room = &s.room;
+        let mut log = Vec::new();
         for o in out {
+            if self.admin.log.is_some()
+                && let Some(line) = admin_line(room, &o.event)
+            {
+                log.push(line);
+            }
             let send = |link: &mut Link| send(link, &o.event, room, data);
             match &o.to {
                 To::All => s.members.values_mut().for_each(send),
@@ -437,6 +467,9 @@ impl Game {
                 self.trace.event("out", 0, &o.event);
             }
         }
+        for (kind, text) in log {
+            self.log(name, kind, text);
+        }
     }
 
     /// Advances every room by `dt` milliseconds.
@@ -449,11 +482,43 @@ impl Game {
         let names: Vec<String> = self.rooms.iter().map(|s| s.room.name.clone()).collect();
         for name in names {
             let (data, maps, rules) = (&self.data, &self.maps, &self.rules.rules);
+            if self.admin.paused.contains(&name) {
+                continue;
+            }
             if let Some(s) = self.rooms.iter_mut().find(|s| s.room.name == name) {
                 s.room.tick(data, maps, rules, now, dt);
             }
             self.deliver(&name);
         }
+    }
+}
+
+/// What the admin log shows for an outgoing event: the kill feed, chat
+/// and round ends.
+fn admin_line(room: &Room, event: &Event) -> Option<(&'static str, String)> {
+    let a = &event.args;
+    match event.name.as_str() {
+        "5" => Some(("feed", a.first()?.as_str()?.to_owned())),
+        "cht" => {
+            let m = a.first()?.as_array()?;
+            let text = m.get(1)?.as_str()?;
+            let who = m.first()?.as_u64().and_then(|i| {
+                room.players
+                    .iter()
+                    .find(|p| u64::from(p.index) == i)
+                    .map(|p| format!("#{i} {}", p.name))
+            });
+            Some((
+                "chat",
+                format!("{}: {text}", who.as_deref().unwrap_or("server")),
+            ))
+        }
+        "7" => {
+            let w = a.first()?.as_str().unwrap_or_default();
+            let w = if w.is_empty() { "nobody" } else { w };
+            Some(("round", format!("round over, winner {w}")))
+        }
+        _ => None,
     }
 }
 

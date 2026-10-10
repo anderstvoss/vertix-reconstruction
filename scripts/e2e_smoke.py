@@ -91,13 +91,13 @@ class Polling:
 class WebSocket:
     """Just enough of RFC 6455 for text frames."""
 
-    def __init__(self, host: str, port: int, path: str):
+    def __init__(self, host: str, port: int, path: str, extra: str = ""):
         self.sock = socket.create_connection((host, port), timeout=10)
         key = base64.b64encode(os.urandom(16)).decode()
         self.sock.sendall(
             (
                 f"GET {path} HTTP/1.1\r\nHost: {host}:{port}\r\nUpgrade: websocket\r\n"
-                f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+                f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n{extra}\r\n"
             ).encode()
         )
         head = b""
@@ -154,7 +154,7 @@ def gotit(name: str, cls: int) -> str:
     return "42/DEV0," + json.dumps(["gotit", {"name": name, "classIndex": cls}, False, 0, False])
 
 
-def run(host: str, port: int) -> None:
+def run(host: str, port: int) -> tuple[WebSocket, int]:
     base = (host, port)
     status, body = request(base, "/")
     check("serves the client directory", status == 200 and b"stand-in" in body)
@@ -208,6 +208,116 @@ def run(host: str, port: int) -> None:
     check("leaving removes the player", rem[1] == other["index"])
     rooms = json.loads(request(base, "/api/getRooms")[1])
     check("room counts follow", rooms[0]["pl"] == 1, str(rooms))
+    return ws, me
+
+
+def admin(base: tuple[str, int], token: str, line: str, auth: bool = True) -> tuple[int, dict]:
+    conn = http.client.HTTPConnection(*base, timeout=10)
+    try:
+        headers = {"Content-Type": "application/json"}
+        if auth:
+            headers["Authorization"] = f"Bearer {token}"
+        conn.request("POST", "/api/cmd", body=json.dumps({"line": line}), headers=headers)
+        r = conn.getresponse()
+        body = r.read()
+        return r.status, (json.loads(body) if r.status == 200 else {})
+    finally:
+        conn.close()
+
+
+def run_admin(
+    host: str, port: int, token: str, ws: WebSocket, me: int, stdin, game: tuple[str, int]
+) -> None:
+    """The admin port and the terminal console, seen from a player."""
+    base = (host, port)
+    status, body = request(base, "/")
+    check("admin panel page is served", status == 200 and b"Server Admin" in body)
+    check("admin API needs the token", admin(base, token, "status", auth=False)[0] == 401)
+    check("admin API refuses a wrong token", admin(base, "nope" + token, "status")[0] == 401)
+    status, r = admin(base, token, "status")
+    check("admin status lists rooms", status == 200 and r["ok"] and len(r["data"]["rooms"]) == 2, str(r)[:200])
+    status, r = admin(base, token, "players")
+    check("admin sees the player", "Alpha" in r.get("text", ""), str(r))
+
+    admin(base, token, "kill Alpha")
+    kill = ws.until("/DEV0", "3")
+    check("kill slays the player", kill[1]["gID"] == me and kill[1]["sS"] == 0, str(kill))
+    admin(base, token, "win none")
+    ws.until("/DEV0", "7")
+    check("win ends the round", True)
+    admin(base, token, "restart")
+    welcome = ws.until("/DEV0", "welcome")
+    check("restart sends players to the menu", welcome[2] is True)
+    _, r = admin(base, token, "@DEV1 mode hp")
+    check("mode changes another room", r.get("ok") and "hp" in r["text"], str(r))
+    _, r = admin(base, token, "frobnicate")
+    check("unknown commands are refused", r.get("ok") is False)
+
+    bad = WebSocket(host, port, f"/ws?token={token}", "Origin: http://elsewhere.test\r\n")
+    check("panel socket refuses other origins", bad.status == 403)
+    pw = WebSocket(host, port, f"/ws?token={token}", f"Origin: http://{host}:{port}\r\n")
+    check("panel socket opens", pw.status == 101)
+    pw.send(json.dumps({"id": 7, "line": "rooms"}))
+    reply = json.loads(pw.recv())
+    check("panel socket answers commands", reply["id"] == 7 and reply["reply"]["ok"], str(reply)[:200])
+
+    stdin.write("say hello from the terminal\n")
+    stdin.flush()
+    cht = ws.until("/DEV0", "cht")
+    check("terminal commands reach players", cht[1] == [-1, "hello from the terminal"], str(cht))
+    seen = None
+    for _ in range(20):
+        m = json.loads(pw.recv())
+        if m["type"] == "log" and m["line"]["kind"] == "chat":
+            seen = m["line"]
+            break
+    check("panel log shows chat", seen is not None and "hello from the terminal" in seen["text"], str(seen))
+
+    # The version string reaches the client's menu label and /api/version.
+    status, body = request(game, "/")
+    check("menu label carries the server's version", b"RECON " in body and b"V3.8" not in body, body[:200])
+    _, r = admin(base, token, "version use v3.5")
+    check("a researched version sets string and balance", r.get("ok") and "v3.5" in r["text"], str(r))
+    ver = json.loads(request(game, "/api/version")[1])
+    check("/api/version follows", ver["version"] == "V3.5", str(ver))
+    check("served label follows", b">V3.5 (CHANGELOG)<" in request(game, "/")[1])
+    ws.until("/DEV0", "cht")
+    _, r = admin(base, token, "version set <script>")
+    check("unsafe version strings are refused", r.get("ok") is False)
+    _, r = admin(base, token, "tune class Hunter maxHealth 61")
+    check("tune sets a class value", r.get("ok"), str(r))
+    _, r = admin(base, token, "catalog")
+    hunter = [c for c in r["data"]["classes"] if c["name"] == "Hunter"][0]
+    check("catalog shows tuned values", hunter["fields"]["maxHealth"] == 61, str(hunter))
+
+    admin(base, token, "kick Alpha Bye now")
+    kick = ws.until("/DEV0", "kick")
+    check("kick tells the client why", kick[1] == "Bye now", str(kick))
+    rooms = json.loads(request(game, "/api/getRooms")[1])
+    check("kick frees the seat", rooms[0]["pl"] == 0, str(rooms))
+
+
+def start(cmd: list[str]) -> tuple[subprocess.Popen, dict[str, str]]:
+    """Starts a server and reads the addresses it prints."""
+    proc = subprocess.Popen(
+        cmd, cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
+    )
+    assert proc.stderr is not None
+    seen: dict[str, str] = {}
+    for line in proc.stderr:
+        if m := re.search(r"admin panel on http://([^/]+)/#token=(\S+)", line):
+            seen["admin"], seen["token"] = m.group(1), m.group(2)
+        if m := re.search(r"listening on http://([^/]+)/", line):
+            seen["krp"] = m.group(1)
+            break
+        seen.setdefault("log", "")
+        seen["log"] += line
+    return proc, seen
+
+
+def hostport(s: str) -> tuple[str, int]:
+    h, p = s.rsplit(":", 1)
+    return h, int(p)
 
 
 def main() -> int:
@@ -220,42 +330,58 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         client = Path(tmp) / "client"
         client.mkdir()
-        (client / "index.html").write_text("<!doctype html><title>stand-in</title>stand-in client\n")
+        (client / "index.html").write_text(
+            '<!doctype html><title>stand-in</title>stand-in client <a href="./versions.txt">V3.8 (CHANGELOG)</a>\n'
+        )
         config = (ROOT / "config/server.toml").read_text()
         # The committed config is the one place that names the bind address.
         host = re.search(r'^bind = "([^"]+)"', config, re.M).group(1)
+        ports_file = Path(tmp) / "out" / "server.json"
         config = config.replace('sources = ["archive"]', 'sources = ["files"]')
+        config = config.replace("port = 8082", f"port = {args.port + 2}")
+        config = config.replace('ports_file = "out/server.json"', f"ports_file = {json.dumps(str(ports_file))}")
         config = config.replace('client_dir = "client/dist"', f"client_dir = {json.dumps(str(client))}")
-        start = config.index("rooms = [")
+        start_at = config.index("rooms = [")
         end = config.index("]\n", config.index("pyro")) + 2
         config = (
-            config[:start]
+            config[:start_at]
             + 'rooms = [{ name = "DEV0", mode = "ffa" }, { name = "DEV1", mode = "tdm" }]\n'
             + config[end:]
         )
         cfg = Path(tmp) / "server.toml"
         cfg.write_text(config)
-        proc = subprocess.Popen(
-            [args.server, "--config", str(cfg), "--port", str(args.port)],
-            cwd=ROOT,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        cmd = [args.server, "--config", str(cfg), "--port", str(args.port)]
+        procs = []
         try:
-            assert proc.stderr is not None
-            for line in proc.stderr:
-                if "listening on" in line:
-                    break
-                if proc.poll() is not None:
-                    break
-            if proc.poll() is not None:
-                print("server did not start", file=sys.stderr)
+            proc, seen = start(cmd)
+            procs.append(proc)
+            if "krp" not in seen:
+                print("server did not start\n" + seen.get("log", ""), file=sys.stderr)
                 return 1
             time.sleep(0.1)
-            run(host, args.port)
+            game = hostport(seen["krp"])
+            written = json.loads(ports_file.read_text())
+            check("ports file names the listeners", written["krp"] == f"http://{seen['krp']}/", str(written))
+            ws, me = run(*game)
+            run_admin(host, hostport(seen["admin"])[1], seen["token"], ws, me, proc.stdin, game)
+
+            # A second server on the same ports moves up instead of failing.
+            second, seen2 = start(cmd)
+            procs.append(second)
+            moved = {seen2.get("krp"), seen2.get("admin")}
+            check(
+                "a second server picks free ports",
+                "krp" in seen2 and not moved & {seen["krp"], seen["admin"]} and len(moved) == 2,
+                str(seen2),
+            )
+            check("and serves on them", request(hostport(seen2["krp"]), "/api/getRooms")[0] == 200)
+            strict, seen3 = start([*cmd, "--strict-port"])
+            procs.append(strict)
+            check("--strict-port fails on a taken port", strict.wait(timeout=20) != 0 and "strict" in seen3["log"])
         finally:
-            proc.terminate()
-            proc.wait(timeout=10)
+            for p in procs:
+                p.terminate()
+                p.wait(timeout=10)
     failed = [n for n, ok in CHECKS if not ok]
     print(f"{len(CHECKS) - len(failed)}/{len(CHECKS)} checks passed")
     return 1 if failed else 0

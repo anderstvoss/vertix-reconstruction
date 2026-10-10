@@ -8,7 +8,13 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub bind: String,
+    /// Preferred ports: a taken one moves up unless `strict_ports`.
     pub port: u16,
+    #[serde(default)]
+    pub strict_ports: bool,
+    /// Where the bound addresses are written; empty for nowhere.
+    #[serde(default)]
+    pub ports_file: String,
     #[serde(default)]
     pub archive: String,
     /// The built `KrunkerRevival` client (`scripts/build-client.sh`).
@@ -24,6 +30,24 @@ pub struct Config {
     pub engine_io: EngineIo,
     #[serde(default)]
     pub classic: Classic,
+    #[serde(default)]
+    pub admin: Admin,
+}
+
+/// The admin panel and dev console (`src/admin`).
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct Admin {
+    /// Serve the panel on `bind`:`port`.
+    pub enabled: bool,
+    pub bind: String,
+    pub port: u16,
+    /// The panel's token; empty for a new random one at every start.
+    pub token: String,
+    /// Read commands from the server's standard input.
+    pub stdin: bool,
+    /// Print the admin log (joins, chat, kill feed) to the terminal.
+    pub stdin_log: bool,
 }
 
 /// The archived 2016-08-06 client, served from the archive on its own
@@ -57,6 +81,10 @@ pub struct Game {
     pub max_players: usize,
     /// The rooms opened at start, in the room list's order.
     pub rooms: Vec<crate::game::RoomSpec>,
+    /// The version string clients show in their menu; empty for the
+    /// server's own (`RECON <version>`).
+    #[serde(default)]
+    pub version: String,
 }
 
 const fn default_max_players() -> usize {
@@ -162,5 +190,10 @@ mod tests {
         assert!(c.game.room_specs().iter().all(|r| r.max_players == Some(8)));
         assert_eq!(c.classic.port, 8081);
         assert!(c.classic.manifest.is_file());
+        assert!(c.admin.enabled && c.admin.stdin);
+        assert_eq!(c.admin.port, 8082);
+        assert!(c.admin.token.is_empty());
+        let ip: std::net::IpAddr = c.admin.bind.parse().unwrap();
+        assert!(ip.is_loopback(), "the admin port must default to loopback");
     }
 }

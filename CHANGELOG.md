@@ -28,6 +28,10 @@ this project adheres to [Semantic Versioning 2.0.0][semver].
 - Serves a locally built KRP client (`scripts/build-client.sh`, `.ps1`) with KRP's `/api/getIP`, `/api/getRooms` and `/api/getLbs` routes.
 - Rooms from `config/server.toml`, one per mode by default, with a player limit (`[game] max_players`, 8 by default, or per room) that the custom server form cannot exceed.
 - WebSocket transport with the Engine.IO upgrade.
+- Admin panel and dev console (`[admin]`, docs/ADMIN.md): a page on its own loopback port behind a token, with live rooms and players, round control (mode, map, restart, win, lose, scores, score limit, pause), player actions (kick, kill, kill all, health, protection, team, rename, teleport), room settings, rule and balance changes at run time, opening and closing rooms, raw event emit and inject, and a live log. The same commands work in the server's terminal and through `POST /api/cmd`.
+- Version string issued to clients: written into both clients' menu label and served at `/api/version`; the console picks a researched game version (string and balance) or any string (`[game] version`, `version`).
+- Balance tuning at run time: any class or weapon value over the preset (`tune`).
+- Ports are preferences: a taken port moves to the next free one, listeners never collide, and the bound addresses go to `out/server.json` (`strict_ports`, `--strict-port` to fail instead). Closes #44.
 - `scripts/e2e_smoke.py`: plays through a running server over polling and WebSocket.
 
 ### Changed
