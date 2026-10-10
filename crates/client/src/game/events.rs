@@ -348,7 +348,7 @@ impl Game {
                     }
                     p.on_screen = true;
                 } else if idx >= 0.0 {
-                    self.emit("ftc", vec![json!(idx)]);
+                    self.emit("ftc", vec![json!(idx as u32)]);
                 }
                 if len == 0 {
                     break;
