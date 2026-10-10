@@ -39,9 +39,22 @@ pub struct Menu {
     /// The wrapper's height from the last layout pass.
     pub height: f32,
     pub join: Option<String>,
+    /// The footer's version label, from the server's `/api/version`.
+    pub version_label: Option<String>,
+    version_fetch: Option<Fetch>,
+    version_asked: bool,
 }
 
 const WRAP_W: f32 = 1050.0;
+/// The label KRP's build shows when the server names no version.
+const KRP_VERSION_LABEL: &str = "V3.8 (CHANGELOG)";
+
+/// The `label` of an `/api/version` answer.
+fn version_label(body: &[u8]) -> Option<String> {
+    let v: Value = serde_json::from_slice(body).ok()?;
+    let s = v.get("label")?.as_str()?.trim();
+    (!s.is_empty()).then(|| s.to_owned())
+}
 const GRAY: &str = "#2e3031";
 const BLUE: &str = "#76b3e3";
 const BLUE_DARK: &str = "#6fa9d6";
@@ -81,6 +94,21 @@ impl Game {
     /// Keeps the room list fresh, as KRP's `RoomList` does when the room
     /// changes or REFRESH is clicked.
     pub fn poll_menu(&mut self) {
+        if !self.menu.version_asked {
+            self.menu.version_asked = true;
+            self.menu.version_fetch = Some(Fetch::start(&format!("{}/api/version", self.base)));
+        }
+        if let Some(f) = &mut self.menu.version_fetch {
+            if let Some(r) = f.poll() {
+                self.menu.version_fetch = None;
+                self.menu.version_label = Some(
+                    r.ok()
+                        .as_deref()
+                        .and_then(version_label)
+                        .unwrap_or_else(|| KRP_VERSION_LABEL.to_owned()),
+                );
+            }
+        }
         let stale = !self.menu.rooms_fresh || self.menu.rooms_for != self.room;
         if stale && self.menu.rooms_fetch.is_none() {
             self.menu.rooms_for.clone_from(&self.room);
@@ -330,6 +358,20 @@ impl Game {
         self.menu.height = top + room_h.max(start_h).max(right_h) + 10.0;
     }
 
+    /// `#linkBoxRight`'s version link, at the window's bottom right (CSS
+    /// pixels). The other footer links are not ported.
+    pub fn draw_version_box(&self, ui: &mut Ui, css: (f32, f32)) {
+        let Some(label) = &self.menu.version_label else {
+            return;
+        };
+        let size = 14.0;
+        let w = ui.measure(label, size) + 20.0;
+        let h = size * LINE + 10.0;
+        let (x, y) = (css.0 - w, css.1 - h);
+        ui.rect(x, y, w, h, WHITE);
+        ui.label(label, x + 10.0, y + 5.0, size, hex(GRAY));
+    }
+
     /// The wrapper's transform: menu units to CSS pixels.
     #[must_use]
     pub fn menu_transform(&self, css: (f32, f32)) -> (f32, Vec2) {
@@ -340,5 +382,20 @@ impl Game {
             h * 0.45 - self.menu.height / 2.0 * scale,
         );
         (scale, origin)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::version_label;
+
+    #[test]
+    fn version_labels_come_from_the_server() {
+        assert_eq!(
+            version_label(br#"{"version":"V3.2","label":"V3.2 (CHANGELOG)"}"#).as_deref(),
+            Some("V3.2 (CHANGELOG)")
+        );
+        assert_eq!(version_label(b"<html>"), None);
+        assert_eq!(version_label(br#"{"label":" "}"#), None);
     }
 }
