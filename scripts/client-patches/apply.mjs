@@ -55,8 +55,12 @@ const patches = [
 	},
 ];
 
+// Restore each file once, so several patches can apply to the same file.
+for (const file of new Set(patches.map((p) => p.file))) {
+	execFileSync("git", ["-C", checkout, "checkout", "--", file]);
+}
+
 for (const p of patches) {
-	execFileSync("git", ["-C", checkout, "checkout", "--", p.file]);
 	const path = join(checkout, p.file);
 	const text = readFileSync(path, "utf8");
 	const at = text.indexOf(p.find);
