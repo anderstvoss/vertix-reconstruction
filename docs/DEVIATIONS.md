@@ -76,7 +76,7 @@ mode can restore the original behaviour if wanted.
 
 | Area | Original and KRP | Here | Why |
 | --- | --- | --- | --- |
-| Weapon camos | KRP keeps one weapon object per room, so the last player to pick a camo for a weapon changes it on every player's copy of that gun | Camos are per player, like hats and shirts: each player carries their own weapons, and the server remembers each player's camo per weapon across respawns and class changes (the client sends it once, before it spawns) | A cosmetic should only change the player who chose it. |
+| Weapon camos | KRP (the original server is not recovered) keeps one weapon object per room, so the last player to pick a camo for a weapon changes it on every player's copy of that gun | Camos are per player, like hats and shirts: each player carries their own weapons, and the server remembers each player's camo per weapon across respawns and class changes (the client sends it once, before it spawns) | A cosmetic should only change the player who chose it. |
 
 ## Not done yet
 
