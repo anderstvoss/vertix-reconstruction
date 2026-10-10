@@ -142,6 +142,32 @@ const patches = [
 		replace: "// `slot` (from this server) lets a player keep several sprays on the map:\n// the server cycles it through `sprays_per_player` slots.\nfunction createSpray(plrIdx: number, x: number, y: number, slot = 0) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find(\n\t\t(s) => s.owner === plrIdx && ((s as Sprite & { slot?: number }).slot ?? 0) === slot,\n\t);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite & { slot?: number };\n\t\timg.slot = slot;\n\t\timg.owner = plrIdx;",
 	},
 	{
+		// Hidden tabs: drop shots that arrived while frames were stalled
+		file: "core/src/app.tsx",
+		find: "function someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t}\n\t}\n}",
+		replace: "// Hidden tabs: the browser stops drawing frames but shots keep arriving.\n// KRP armed them all with the frozen frame clock and fired them together\n// when the tab came back. Here a shot remembers when it arrived and is\n// dropped if frames did not run soon after (Projectile.update), shots that\n// arrive while frames are stalled play no sound, and one frame never runs\n// a longer step than MAX_FRAME_MS. localStorage `vertix.hiddenTab` = \"krp\"\n// restores KRP's behaviour.\nconst KRP_HIDDEN_TAB = (() => {\n\ttry {\n\t\treturn localStorage.getItem(\"vertix.hiddenTab\") === \"krp\";\n\t} catch {\n\t\treturn false;\n\t}\n})();\nconst STALE_SHOT_MS = 200;\nconst MAX_FRAME_MS = 100;\nfunction someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tconst now = Date.now();\n\t\t\tif (!KRP_HIDDEN_TAB) {\n\t\t\t\tbullet.silent = document.hidden || now - currentTime > STALE_SHOT_MS;\n\t\t\t}\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t\tif (!KRP_HIDDEN_TAB) bullet.arrivedAt = now;\n\t\t}\n\t}\n}",
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "\tdelta = currentTime - oldTime;\n",
+		replace: "\tdelta = currentTime - oldTime;\n\t// After a hidden tab one frame would run the whole gap as one step.\n\tif (!KRP_HIDDEN_TAB) delta = Math.min(delta, MAX_FRAME_MS);\n",
+	},
+	{
+		file: "core/src/logic/projectile.ts",
+		find: "\tselfDamage = false;\n\tupdate(",
+		replace: "\tselfDamage = false;\n\t// Set by someoneShot (hidden-tab handling, see app.tsx).\n\tarrivedAt = 0;\n\tsilent = false;\n\tupdate(",
+	},
+	{
+		file: "core/src/logic/projectile.ts",
+		find: "\t\t\tif (this.skipMove) {\n\t\t\t\tlifetime = 0;\n\t\t\t\tthis.startTime = currentTime;\n\t\t\t}",
+		replace: "\t\t\tif (this.skipMove) {\n\t\t\t\t// A shot that arrived while frames were not running is in\n\t\t\t\t// the past: drop it instead of firing it late.\n\t\t\t\tconst late = this.arrivedAt ? currentTime - this.arrivedAt : 0;\n\t\t\t\tthis.arrivedAt = 0;\n\t\t\t\tif (late > 200) {\n\t\t\t\t\tthis.active = false;\n\t\t\t\t\tthis.trailAlpha = 0;\n\t\t\t\t\tthis.skipMove = false;\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tlifetime = 0;\n\t\t\t\tthis.startTime = currentTime;\n\t\t\t}",
+	},
+	{
+		file: "core/src/logic/projectile.ts",
+		find: "\t\tthis.active = true;\n\t\tif (typeof window !== \"undefined\") playSound(`shot${this.weaponIndex}`, this.x, this.y);",
+		replace: "\t\tthis.active = true;\n\t\tthis.arrivedAt = 0;\n\t\tif (typeof window !== \"undefined\" && !this.silent) {\n\t\t\tplaySound(`shot${this.weaponIndex}`, this.x, this.y);\n\t\t}\n\t\tthis.silent = false;",
+	},
+	{
 		// The mod tab's link to a Reddit thread of (mostly dead) Dropbox
 		// links now opens this server's list of restored packs.
 		file: "core/src/components/tabs/ModTab.svelte",
