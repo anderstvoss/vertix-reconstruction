@@ -785,7 +785,9 @@ impl Game {
                     self.inputs_sent += 1;
                     self.emit(
                         "4",
-                        vec![json!({"hdt": b, "vdt": d, "ts": ts, "isn": isn, "s": do_jump, "delta": move_delta})],
+                        // isn goes out as an integer, as KRP's client sends it: the
+                        // server reads it as one and would ack nothing otherwise.
+                        vec![json!({"hdt": b, "vdt": d, "ts": ts, "isn": isn as u64, "s": do_jump, "delta": move_delta})],
                     );
                 }
                 if self.user_scroll != 0.0 {
@@ -950,6 +952,7 @@ impl Game {
         let mut down: HashSet<KeyCode> = input.down.clone();
         let mut pressed = input.pressed.clone();
         let mut released = input.released.clone();
+        let mut scripted_fire = None;
         if !self.script.is_empty() && self.game_start && !self.me().dead {
             if self.script_at == 0.0 {
                 self.script_at = self.current_time;
@@ -966,6 +969,7 @@ impl Game {
             let now: HashSet<KeyCode> = keys_now.into_iter().collect();
             pressed = now.difference(&self.key_map).copied().collect();
             released = self.key_map.difference(&now).copied().collect();
+            scripted_fire = Some(now.contains(&FIRE));
             down = now;
         }
         let _ = &down;
@@ -1063,6 +1067,9 @@ impl Game {
         }
         if !input.mouse_down {
             self.keys.lm = false;
+        }
+        if let Some(fire) = scripted_fire {
+            self.keys.lm = fire;
         }
         if input.mouse_moved {
             self.aim(input);
@@ -1465,7 +1472,11 @@ fn clean_name(name: &str) -> String {
     out.chars().take(25).collect()
 }
 
-/// `w+d:500,space:100,:300`: keys held for a time, in order.
+/// The script's stand-in key for the left mouse button.
+const FIRE: KeyCode = KeyCode::Unknown;
+
+/// `w+d:500,space:100,:300`: keys held for a time, in order (`fire`
+/// holds the left mouse button).
 fn parse_script(s: &str) -> Vec<(Vec<KeyCode>, f64)> {
     s.split(',')
         .filter_map(|step| {
@@ -1480,6 +1491,7 @@ fn parse_script(s: &str) -> Vec<(Vec<KeyCode>, f64)> {
                     "d" => Some(KeyCode::D),
                     "space" => Some(KeyCode::Space),
                     "r" => Some(KeyCode::R),
+                    "fire" => Some(FIRE),
                     _ => None,
                 })
                 .collect();
@@ -1518,5 +1530,6 @@ mod tests {
         assert_eq!(s.len(), 2);
         assert_eq!(s[0].0, vec![KeyCode::W, KeyCode::D]);
         assert!(s[1].0.is_empty());
+        assert_eq!(parse_script("s+fire:100")[0].0, vec![KeyCode::S, FIRE]);
     }
 }

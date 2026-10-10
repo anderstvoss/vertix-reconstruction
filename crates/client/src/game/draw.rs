@@ -739,10 +739,13 @@ impl Game {
                 };
                 b.p.update(delta, now, &m.world.clutter, &m.world.tiles, who);
             }
-            for h in &b.p.hits {
-                hit_effects.push((*h, b.p.x, b.p.y, b.p.dir, b.p.sprite_index));
-            }
             if was_active {
+                // `hits` keeps the last update's hits once a bullet is
+                // inactive, so only an update that ran may show them (KRP
+                // makes its effects once, inside hitSomething).
+                for h in &b.p.hits {
+                    hit_effects.push((*h, b.p.x, b.p.y, b.p.dir, b.p.sprite_index));
+                }
                 if b.p.sprite_index == 1 {
                     b.dust_timer -= delta;
                     if b.dust_timer <= 0.0 {
