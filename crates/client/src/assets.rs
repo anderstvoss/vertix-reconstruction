@@ -156,7 +156,24 @@ pub fn krp_loadouts() -> (Vec<ClassInfo>, Vec<String>) {
     (classes, weapons)
 }
 
+/// The server's mod pack holding the 2016 sprites (`/mods/<key>/vertixmod.zip`).
+pub const FLOOR_2016_PACK: &str = "original-2016";
+
 impl Sprites {
+    /// Takes the ground tiles from `pack` (the rest stays as picked).
+    /// Returns whether it had all three.
+    pub fn use_floors_from(&mut self, pack: &Pack) -> bool {
+        let floors: Vec<Option<Image>> = (1..=3)
+            .map(|i| pack.get(&format!("sprites/ground{i}")))
+            .collect();
+        if floors.iter().all(Option::is_some) {
+            self.floors = floors;
+            true
+        } else {
+            false
+        }
+    }
+
     /// `loadPlayerSprites` + `loadDefaultSprites` with base `sprites/`.
     #[must_use]
     pub fn pick(pack: &Pack, classes: &[ClassInfo], weapon_names: &[String]) -> Self {
