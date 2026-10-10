@@ -1,57 +1,47 @@
 # Plan
 
-Milestones, in order. Each one ends with a reproducible command and a trace,
-and records what was tested and what was not.
+Milestones, in order. Each one ends with a reproducible command and
+records what was tested and what was not. The direction is in
+[DEVIATIONS.md](DEVIATIONS.md#direction-2026-10-09): port KrunkerRevival
+(KRP) to Rust so the game feels the same, then refine it with the research.
 
-## 1. The original client boots against a local server
+## 1. Port KRP's server (done)
 
-- **Transport.** Engine.IO 3 / Socket.IO 1.x over long-polling, the protocol
-  the 2016 client speaks: length-prefixed polling payloads, client-sent ping
-  and server pong, Socket.IO events with positional arguments. Tested against
-  the archived Socket.IO client, not only against our own test client.
-  WebSocket upgrade can come later.
-- **Page.** Serve the byte-exact 2016-08-06 `app.js` with the August 2016
-  APK assets, read from a local archive clone and hash-checked. The archive
-  has no same-day `index.html` for this build; the page shell comes from the
-  nearest capture or the APK, and that choice is recorded.
-- **Routing.** The client asks `/getIP` for a server address and connects to
-  it. The local server answers with its own address. No test may contact the
-  original servers; outbound requests are blocked while testing.
-- **Done when:** the unmodified client reaches a rendered game state in a
-  real browser, with a startup trace and screenshots.
-- **Status:** done for polling. `scripts/e2e_boot.py` passes 11 checks with
-  two browsers (join, move, see each other, ping, leave, no outside
-  requests, no page errors). WebSocket upgrade not started.
+- **Transport.** Engine.IO 4 / Socket.IO 5, long-polling with WebSocket
+  upgrade, one namespace per room, as KRP's client connects.
+- **Game.** Rooms, spawning, movement, jumping, shooting with KRP's
+  projectile model, explosions, damage, kills, assists, kill streaks, all
+  nine modes, healthpacks, loot crates, hardpoints, zones, round end, mode
+  votes, chat, likes, sprays and the custom server form.
+- **Data.** KRP's classes, weapons, modes and cosmetics in `data/krp/`,
+  with the balance presets from the research laid over them.
+- **Client.** KRP's client, built locally from a pinned commit. The
+  archived 2016 client stays as a compatibility path on its own port,
+  joining the same rooms through an event translation layer.
+- **Tested:** unit tests for every rule above, and `scripts/e2e_smoke.py`
+  over polling and WebSocket. **Not yet:** a full session in a real browser
+  with the built client.
 
-## 2. Event contracts
+## 2. Play-test against KRP
 
-Each of the 39 client-to-server and 51 server-to-client events, with
-argument count, order and types taken from the client's own handlers and
-tested by sending them to the running client. Known example: the end-of-round
-event `7` takes four positional arguments, and the countdown event `8` takes
-one scalar (it is shown as `<value>: UNTIL NEXT ROUND`). The static
-extraction lives in the research repository; the runtime tests live here.
+Play the same scenarios on KRP and on this server and compare: movement,
+hit registration, explosions, round flow. Fix what feels different.
 
-## 3. Movement, collision and configuration
+## 3. Client refinements
 
-Measure client-side movement, collision, camera and interpolation with
-controlled inputs. Weapon and class numbers come from the research
-repository's dated evidence for the target build; anything not known for
-that date goes in an explicit rules layer (`data/rules/`), never inline in
-game logic. Every value records its status and source, and
-`vertix-server --explain-rules` lists them.
+Patches applied by the build script, never committed copies of the
+client: the `RECON` version label, a fixed input rate, and the
+`devicePixelRatio` fix (research #72).
 
-## 4. One complete free-for-all round
+## 4. Local save and content
 
-Join, spawn, move, shoot, damage, kill, respawn, score and round end, played
-by two unmodified browser clients. Hit rules, spawn selection, score limit
-and anti-cheat are reconstruction choices and are labelled as such.
+A local save with every cosmetic unlocked, behind a swappable interface.
+Then restore what the research recovered: cosmetics, mods and maps.
 
 ## Notes
 
 - The template's `block-local-network-targets` hook rejects loopback
-  addresses anywhere in the tree. When the server needs a default bind
-  address, keep it in one config file and add a narrow `exclude` for that
-  file only.
-- Deviations from the original behaviour (security fixes, modern netcode)
-  are recorded in a deviations list as they are made.
+  addresses anywhere in the tree. The default bind address lives in
+  `config/server.toml` alone, which has a narrow `exclude`.
+- Deviations from KRP and from the original are recorded in
+  [DEVIATIONS.md](DEVIATIONS.md) as they are made.

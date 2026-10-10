@@ -1,8 +1,14 @@
-//! Engine.IO 3 server over HTTP long-polling, with Socket.IO 1.x on top.
+//! Engine.IO 4 server (long-polling and WebSocket) with Socket.IO 5
+//! namespaces on top.
 //!
-//! The transport knows nothing about the game. It turns each client into a
-//! [`ClientHandle`] and reports [`TransportEvent`]s on a channel; the game
+//! The transport knows nothing about the game. Each Socket.IO namespace a
+//! client connects to becomes one [`ClientHandle`] and is reported as a
+//! [`TransportEvent`] on a channel; the game accepts or refuses it and
 //! answers through the handle. That keeps the game testable without HTTP.
+//!
+//! KRP's client opens one namespace per room on a single Engine.IO
+//! connection, and may leave one room and join another on the same
+//! connection, so one Engine.IO session can carry several sockets.
 
 pub mod codec;
 
@@ -20,42 +26,48 @@ use crate::sio::{self, Event, Incoming};
 use crate::trace::Trace;
 use codec::{Packet, PacketType};
 
-/// Identifies one client connection for the game.
+/// Identifies one Socket.IO socket (one namespace on one connection).
 pub type ConnId = u64;
 
-/// Timing the server announces in its open packet. The defaults are the
-/// values in the archived 2016 handshakes.
+/// Heartbeat and polling timing, announced in the open packet.
 #[derive(Debug, Clone, Copy)]
 pub struct Timing {
+    /// The server pings this often; the client must answer.
     pub ping_interval: Duration,
+    /// How long after a ping the client may take to answer.
     pub ping_timeout: Duration,
-    /// How long a poll is held open with nothing to send before it is
-    /// answered with a noop. The 2016 client pings every `ping_interval`,
-    /// which also releases a held poll, so this is only a backstop.
+    /// How long a poll is held open with nothing to send. Server pings
+    /// release held polls, so this is only a backstop.
     pub poll_hold: Duration,
 }
 
 impl Default for Timing {
+    /// The socket.io 4 server defaults, which KRP's server uses.
     fn default() -> Self {
         Self {
             ping_interval: Duration::from_secs(25),
-            ping_timeout: Duration::from_secs(60),
+            ping_timeout: Duration::from_secs(20),
             poll_hold: Duration::from_secs(30),
         }
     }
 }
 
-/// Packets queued for one client beyond this mean it stopped polling.
+/// Largest message the client may send, announced as `maxPayload`.
+pub const MAX_PAYLOAD: usize = 64 * 1024;
+
+/// Packets queued for one client beyond this mean it stopped reading.
 const MAX_OUTBOX: usize = 20_000;
 
 /// What the transport tells the game.
 #[derive(Debug)]
 pub enum TransportEvent {
-    /// `host` is the request's Host header without the port: the name the
-    /// client reached this server by, used in the shareable server key.
+    /// A client asked to join namespace `ns`. The game must call
+    /// [`ClientHandle::accept`] or [`ClientHandle::refuse`]. `host` is the
+    /// request's Host header without the port.
     Connected {
         conn: ConnId,
         handle: ClientHandle,
+        ns: String,
         host: String,
     },
     Event {
@@ -75,11 +87,15 @@ struct SessionState {
     /// Bumped by every poll so an older, still-held poll can tell it was
     /// replaced and return.
     poll_gen: u64,
+    /// Set once the client upgraded to WebSocket: packets go here.
+    ws: Option<mpsc::UnboundedSender<String>>,
+    /// Open namespace sockets on this connection.
+    sockets: HashMap<String, ConnId>,
 }
 
 struct Session {
     sid: String,
-    conn: ConnId,
+    host: String,
     state: Mutex<SessionState>,
     notify: Notify,
 }
@@ -97,6 +113,12 @@ impl Session {
         if st.closed {
             return false;
         }
+        if let Some(ws) = &st.ws {
+            if ws.send(packet.encode()).is_err() {
+                st.closed = true;
+            }
+            return !st.closed;
+        }
         if st.outbox.len() >= MAX_OUTBOX {
             st.closed = true;
             drop(st);
@@ -111,38 +133,60 @@ impl Session {
     }
 }
 
-/// The game's way to talk to one client.
+/// The game's way to talk to one socket.
 #[derive(Clone)]
 pub struct ClientHandle {
     session: Arc<Session>,
+    ns: String,
+    conn: ConnId,
     trace: Trace,
 }
 
 impl std::fmt::Debug for ClientHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ClientHandle")
-            .field("conn", &self.session.conn)
+            .field("conn", &self.conn)
+            .field("ns", &self.ns)
             .finish_non_exhaustive()
     }
 }
 
 impl ClientHandle {
-    /// Queues a Socket.IO event for the client.
-    pub fn emit(&self, event: &Event) {
-        self.trace.event("out", self.session.conn, event);
-        self.session.push(Packet::message(event.encode()));
+    /// Confirms the namespace connect.
+    pub fn accept(&self) {
+        let sid = format!("{}-{}", self.session.sid, self.conn);
+        self.session
+            .push(Packet::message(sio::connect_ok(&self.ns, &sid)));
     }
 
-    /// Closes the connection (Socket.IO disconnect, then Engine.IO close).
+    /// Refuses the namespace connect; no events follow.
+    pub fn refuse(&self, message: &str) {
+        self.session.lock().sockets.remove(&self.ns);
+        self.session
+            .push(Packet::message(sio::connect_error(&self.ns, message)));
+    }
+
+    /// Queues a Socket.IO event for the client.
+    pub fn emit(&self, event: &Event) {
+        self.trace.event("out", self.conn, event);
+        self.session.push(Packet::message(event.encode(&self.ns)));
+    }
+
+    /// Closes this socket (the Engine.IO connection stays up).
     pub fn close(&self) {
-        self.session.push(Packet::message("1"));
-        self.session.push(Packet::new(PacketType::Close, ""));
-        self.session.lock().closed = true;
+        self.session.lock().sockets.remove(&self.ns);
+        self.session
+            .push(Packet::message(sio::disconnect(&self.ns)));
     }
 
     #[must_use]
     pub fn conn(&self) -> ConnId {
-        self.session.conn
+        self.conn
+    }
+
+    #[must_use]
+    pub fn ns(&self) -> &str {
+        &self.ns
     }
 }
 
@@ -173,32 +217,22 @@ impl Reply {
         }
     }
 
-    fn payload(packets: &[Packet], b64: bool) -> Self {
-        if b64 {
-            Self {
-                status: 200,
-                content_type: "text/plain; charset=UTF-8",
-                body: codec::encode_payload_string(packets).into_bytes(),
-            }
-        } else {
-            Self {
-                status: 200,
-                content_type: "application/octet-stream",
-                body: codec::encode_payload_binary(packets),
-            }
+    fn payload(packets: &[Packet]) -> Self {
+        Self {
+            status: 200,
+            content_type: "text/plain; charset=UTF-8",
+            body: codec::encode_payload(packets).into_bytes(),
         }
     }
 }
 
-/// The query parameters Engine.IO polling requests carry.
+/// The query parameters Engine.IO requests carry.
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct Query {
     #[serde(rename = "EIO")]
     pub eio: Option<String>,
     pub transport: Option<String>,
     pub sid: Option<String>,
-    pub b64: Option<String>,
-    pub j: Option<String>,
 }
 
 /// All live Engine.IO sessions.
@@ -208,6 +242,33 @@ pub struct Server {
     timing: Timing,
     events: mpsc::UnboundedSender<TransportEvent>,
     trace: Trace,
+}
+
+/// A WebSocket attached to a session, for the HTTP layer to pump.
+pub struct WsLink {
+    session: Arc<Session>,
+    tx: mpsc::UnboundedSender<String>,
+    /// Text frames to send to the client.
+    pub outgoing: mpsc::UnboundedReceiver<String>,
+}
+
+impl WsLink {
+    /// Resolves once the session behind this link has ended, so the HTTP
+    /// layer can close the socket.
+    pub fn ended(&self) -> impl std::future::Future<Output = ()> + Send + 'static {
+        let session = self.session.clone();
+        async move {
+            loop {
+                let notified = session.notify.notified();
+                tokio::pin!(notified);
+                notified.as_mut().enable();
+                if session.lock().closed {
+                    return;
+                }
+                notified.await;
+            }
+        }
+    }
 }
 
 impl Server {
@@ -236,28 +297,60 @@ impl Server {
         self.sessions().get(sid).cloned()
     }
 
-    fn check(q: &Query) -> Result<(), Reply> {
-        if q.eio.as_deref() != Some("3") {
+    fn check(q: &Query, transport: &str) -> Result<(), Reply> {
+        if q.eio.as_deref() != Some("4") {
             return Err(Reply::error(5, "Unsupported protocol version"));
         }
-        if q.transport.as_deref() != Some("polling") {
-            return Err(Reply::error(0, "Transport unknown"));
-        }
-        if q.j.is_some() {
-            // JSONP polling is only used by browsers without XHR2.
+        if q.transport.as_deref() != Some(transport) {
             return Err(Reply::error(0, "Transport unknown"));
         }
         Ok(())
     }
 
-    /// Handles `GET /socket.io/`: a handshake or a long-poll.
+    fn open_packet(&self, sid: &str) -> Packet {
+        let ms = |d: Duration| u64::try_from(d.as_millis()).unwrap_or(u64::MAX);
+        let open = json!({
+            "sid": sid,
+            "upgrades": ["websocket"],
+            "pingInterval": ms(self.timing.ping_interval),
+            "pingTimeout": ms(self.timing.ping_timeout),
+            "maxPayload": MAX_PAYLOAD,
+        });
+        Packet::new(PacketType::Open, open.to_string())
+    }
+
+    fn new_session(&self, host: &str, ws: Option<mpsc::UnboundedSender<String>>) -> Arc<Session> {
+        let sid: String = rand::rng()
+            .sample_iter(&Alphanumeric)
+            .take(20)
+            .map(char::from)
+            .collect();
+        let session = Arc::new(Session {
+            sid: sid.clone(),
+            host: host.to_owned(),
+            state: Mutex::new(SessionState {
+                outbox: Vec::new(),
+                last_seen: Instant::now(),
+                closed: false,
+                poll_gen: 0,
+                ws,
+                sockets: HashMap::new(),
+            }),
+            notify: Notify::new(),
+        });
+        self.sessions().insert(sid, session.clone());
+        self.trace.note("connect", 0, "engine.io handshake");
+        session
+    }
+
+    /// Handles `GET /socket.io/?transport=polling`: a handshake or a poll.
     pub async fn get(&self, q: &Query, host: &str) -> Reply {
-        if let Err(r) = Self::check(q) {
+        if let Err(r) = Self::check(q, "polling") {
             return r;
         }
-        let b64 = q.b64.is_some();
         let Some(sid) = q.sid.as_deref() else {
-            return self.handshake(b64, host);
+            let session = self.new_session(host, None);
+            return Reply::payload(&[self.open_packet(&session.sid)]);
         };
         let Some(session) = self.find(sid) else {
             return Reply::error(1, "Session ID unknown");
@@ -275,143 +368,193 @@ impl Server {
             let notified = session.notify.notified();
             {
                 let mut st = session.lock();
-                if st.poll_gen != my_gen {
-                    return Reply::payload(&[Packet::new(PacketType::Noop, "")], b64);
+                if st.poll_gen != my_gen || st.ws.is_some() {
+                    return Reply::payload(&[Packet::new(PacketType::Noop, "")]);
                 }
                 if !st.outbox.is_empty() {
                     let packets = std::mem::take(&mut st.outbox);
-                    let closed = st.closed;
-                    drop(st);
-                    if closed {
-                        self.remove(&session, "server close");
-                    }
-                    return Reply::payload(&packets, b64);
+                    return Reply::payload(&packets);
                 }
                 if st.closed {
                     drop(st);
                     self.remove(&session, "server close");
-                    return Reply::payload(&[Packet::new(PacketType::Close, "")], b64);
+                    return Reply::payload(&[Packet::new(PacketType::Close, "")]);
                 }
             }
             if tokio::time::timeout_at(deadline, notified).await.is_err() {
-                return Reply::payload(&[Packet::new(PacketType::Noop, "")], b64);
+                return Reply::payload(&[Packet::new(PacketType::Noop, "")]);
             }
         }
     }
 
-    fn handshake(&self, b64: bool, host: &str) -> Reply {
-        let sid: String = rand::rng()
-            .sample_iter(&Alphanumeric)
-            .take(20)
-            .map(char::from)
-            .collect();
-        let conn = self.next_conn.fetch_add(1, Ordering::Relaxed);
-        let open = json!({
-            "sid": sid,
-            // WebSocket upgrade is not implemented yet; see docs/DEVIATIONS.md.
-            "upgrades": [],
-            "pingInterval": u64::try_from(self.timing.ping_interval.as_millis()).unwrap_or(u64::MAX),
-            "pingTimeout": u64::try_from(self.timing.ping_timeout.as_millis()).unwrap_or(u64::MAX),
-        });
-        let session = Arc::new(Session {
-            sid: sid.clone(),
-            conn,
-            state: Mutex::new(SessionState {
-                outbox: Vec::new(),
-                last_seen: Instant::now(),
-                closed: false,
-                poll_gen: 0,
-            }),
-            notify: Notify::new(),
-        });
-        self.sessions().insert(sid, session.clone());
-        self.trace.note("connect", conn, "engine.io handshake");
-        let handle = ClientHandle {
-            session,
-            trace: self.trace.clone(),
-        };
-        // The open packet and Socket.IO's connect go out together.
-        let packets = [
-            Packet::new(PacketType::Open, open.to_string()),
-            Packet::message(sio::CONNECT),
-        ];
-        let _ = self.events.send(TransportEvent::Connected {
-            conn,
-            handle,
-            host: host.to_owned(),
-        });
-        Reply::payload(&packets, b64)
-    }
-
     /// Handles `POST /socket.io/`: packets from the client.
     pub fn post(&self, q: &Query, body: &[u8]) -> Reply {
-        if let Err(r) = Self::check(q) {
+        if let Err(r) = Self::check(q, "polling") {
             return r;
         }
         let Some(session) = q.sid.as_deref().and_then(|sid| self.find(sid)) else {
             return Reply::error(1, "Session ID unknown");
         };
-        session.lock().last_seen = Instant::now();
         let Ok(text) = std::str::from_utf8(body) else {
             return Reply::error(3, "Bad request");
         };
-        let packets = match codec::decode_payload_string(text) {
+        let packets = match codec::decode_payload(text) {
             Ok(p) => p,
             Err(e) => {
-                self.trace.note("bad-payload", session.conn, &e.to_string());
+                self.trace.note("bad-payload", 0, &e.to_string());
                 return Reply::error(3, "Bad request");
             }
         };
         for p in packets {
-            match p.kind {
-                PacketType::Ping => {
-                    session.push(Packet::new(PacketType::Pong, p.data));
-                }
-                PacketType::Close => {
-                    self.remove(&session, "client close");
-                }
-                PacketType::Message => match sio::decode(&p.data) {
-                    Incoming::Event(event) => {
-                        self.trace.event("in", session.conn, &event);
-                        let _ = self.events.send(TransportEvent::Event {
-                            conn: session.conn,
-                            event,
-                        });
-                    }
-                    Incoming::Disconnect => self.remove(&session, "client disconnect"),
-                    Incoming::Connect | Incoming::Unsupported => {}
-                },
-                _ => {}
-            }
+            self.incoming(&session, &p);
         }
         Reply::ok_text("ok")
     }
 
-    fn remove(&self, session: &Arc<Session>, reason: &'static str) {
-        let removed = self.sessions().remove(&session.sid).is_some();
-        session.lock().closed = true;
-        session.notify.notify_waiters();
-        if removed {
-            self.trace.note("disconnect", session.conn, reason);
-            let _ = self.events.send(TransportEvent::Disconnected {
-                conn: session.conn,
-                reason,
-            });
+    /// Attaches a WebSocket: an upgrade of the polling session `sid`, or a
+    /// new session when `sid` is `None` (WebSocket-only clients).
+    ///
+    /// # Errors
+    /// Returns the HTTP error reply when the request is not acceptable.
+    pub fn ws_open(&self, q: &Query, host: &str) -> Result<WsLink, Reply> {
+        Self::check(q, "websocket")?;
+        let (tx, outgoing) = mpsc::unbounded_channel();
+        let session = if let Some(sid) = q.sid.as_deref() {
+            self.find(sid)
+                .ok_or_else(|| Reply::error(1, "Session ID unknown"))?
+        } else {
+            let session = self.new_session(host, Some(tx.clone()));
+            let _ = tx.send(self.open_packet(&session.sid).encode());
+            session
+        };
+        Ok(WsLink {
+            session,
+            tx,
+            outgoing,
+        })
+    }
+
+    /// Handles one text frame from a WebSocket.
+    pub fn ws_message(&self, link: &WsLink, text: &str) {
+        match text {
+            // Upgrade probe: answered on the new socket only.
+            "2probe" => {
+                let _ = link.tx.send("3probe".into());
+            }
+            // Upgrade done: everything goes over the WebSocket from now on.
+            "5" => {
+                let mut st = link.session.lock();
+                for p in std::mem::take(&mut st.outbox) {
+                    let _ = link.tx.send(p.encode());
+                }
+                st.ws = Some(link.tx.clone());
+                st.last_seen = Instant::now();
+                drop(st);
+                link.session.notify.notify_waiters();
+            }
+            _ => match Packet::decode(text) {
+                Ok(p) => self.incoming(&link.session, &p),
+                Err(e) => self.trace.note("bad-frame", 0, &e.to_string()),
+            },
         }
     }
 
-    /// Closes sessions that have not been heard from within
-    /// ping interval + ping timeout. Call periodically.
-    pub fn reap(&self) {
+    /// The WebSocket closed. If it carried the session, the session ends.
+    pub fn ws_closed(&self, link: &WsLink) {
+        let carried = link
+            .session
+            .lock()
+            .ws
+            .as_ref()
+            .is_some_and(|w| w.same_channel(&link.tx));
+        if carried {
+            self.remove(&link.session, "transport close");
+        }
+    }
+
+    fn incoming(&self, session: &Arc<Session>, p: &Packet) {
+        session.lock().last_seen = Instant::now();
+        match p.kind {
+            PacketType::Close => self.remove(session, "client close"),
+            PacketType::Message => self.message(session, &p.data),
+            // Pong answers our ping; last_seen is already updated.
+            _ => {}
+        }
+    }
+
+    fn message(&self, session: &Arc<Session>, data: &str) {
+        match sio::decode(data) {
+            Incoming::Connect { ns } => {
+                let conn = self.next_conn.fetch_add(1, Ordering::Relaxed);
+                let old = session.lock().sockets.insert(ns.clone(), conn);
+                if let Some(old) = old {
+                    self.disconnected(old, "reconnect");
+                }
+                self.trace.note("connect", conn, &ns);
+                let handle = ClientHandle {
+                    session: session.clone(),
+                    ns: ns.clone(),
+                    conn,
+                    trace: self.trace.clone(),
+                };
+                let _ = self.events.send(TransportEvent::Connected {
+                    conn,
+                    handle,
+                    ns,
+                    host: session.host.clone(),
+                });
+            }
+            Incoming::Disconnect { ns } => {
+                let conn = session.lock().sockets.remove(&ns);
+                if let Some(conn) = conn {
+                    self.disconnected(conn, "client disconnect");
+                }
+            }
+            Incoming::Event { ns, event } => {
+                let conn = session.lock().sockets.get(&ns).copied();
+                if let Some(conn) = conn {
+                    self.trace.event("in", conn, &event);
+                    let _ = self.events.send(TransportEvent::Event { conn, event });
+                }
+            }
+            Incoming::Unsupported => {}
+        }
+    }
+
+    fn disconnected(&self, conn: ConnId, reason: &'static str) {
+        self.trace.note("disconnect", conn, reason);
+        let _ = self
+            .events
+            .send(TransportEvent::Disconnected { conn, reason });
+    }
+
+    fn remove(&self, session: &Arc<Session>, reason: &'static str) {
+        let removed = self.sessions().remove(&session.sid).is_some();
+        let sockets: Vec<ConnId> = {
+            let mut st = session.lock();
+            st.closed = true;
+            st.ws = None;
+            st.sockets.drain().map(|(_, c)| c).collect()
+        };
+        session.notify.notify_waiters();
+        if removed {
+            for conn in sockets {
+                self.disconnected(conn, reason);
+            }
+        }
+    }
+
+    /// Pings every client and closes those that have not been heard from
+    /// within ping interval + ping timeout. Call every ping interval.
+    pub fn heartbeat(&self) {
         let limit = self.timing.ping_interval + self.timing.ping_timeout;
-        let stale: Vec<Arc<Session>> = self
-            .sessions()
-            .values()
-            .filter(|s| s.lock().last_seen.elapsed() > limit)
-            .cloned()
-            .collect();
-        for s in stale {
-            self.remove(&s, "ping timeout");
+        let all: Vec<Arc<Session>> = self.sessions().values().cloned().collect();
+        for s in all {
+            if s.lock().last_seen.elapsed() > limit {
+                self.remove(&s, "ping timeout");
+            } else {
+                s.push(Packet::new(PacketType::Ping, ""));
+            }
         }
     }
 
@@ -433,75 +576,132 @@ mod tests {
 
     fn query(sid: Option<&str>) -> Query {
         Query {
-            eio: Some("3".into()),
+            eio: Some("4".into()),
             transport: Some("polling".into()),
             sid: sid.map(str::to_owned),
-            b64: Some("1".into()),
-            j: None,
         }
     }
 
-    fn string_packets(r: &Reply) -> Vec<Packet> {
-        codec::decode_payload_string(std::str::from_utf8(&r.body).unwrap()).unwrap()
+    fn packets(r: &Reply) -> Vec<Packet> {
+        codec::decode_payload(std::str::from_utf8(&r.body).unwrap()).unwrap()
+    }
+
+    async fn open(server: &Server) -> String {
+        let p = packets(&server.get(&query(None), "h").await);
+        assert_eq!(p[0].kind, PacketType::Open);
+        let open: serde_json::Value = serde_json::from_str(&p[0].data).unwrap();
+        assert_eq!(open["upgrades"], json!(["websocket"]));
+        open["sid"].as_str().unwrap().to_owned()
     }
 
     #[tokio::test]
-    async fn handshake_ping_event_and_close() {
+    async fn namespace_connect_event_and_disconnect() {
         let (tx, mut rx) = mpsc::unbounded_channel();
         let server = Server::new(Timing::default(), tx, Trace::disabled());
-        let r = server.get(&query(None), "h").await;
-        let packets = string_packets(&r);
-        assert_eq!(packets[0].kind, PacketType::Open);
-        assert_eq!(packets[1], Packet::message("0"));
-        let open: serde_json::Value = serde_json::from_str(&packets[0].data).unwrap();
-        assert_eq!(open["pingInterval"], 25_000);
-        assert_eq!(open["pingTimeout"], 60_000);
-        let sid = open["sid"].as_str().unwrap().to_owned();
-        assert_eq!(sid.len(), 20);
-        let TransportEvent::Connected { conn, handle, .. } = rx.recv().await.unwrap() else {
+        let sid = open(&server).await;
+
+        server.post(&query(Some(&sid)), b"40/DEV0,");
+        let TransportEvent::Connected {
+            conn, handle, ns, ..
+        } = rx.recv().await.unwrap()
+        else {
             panic!("expected connect");
         };
+        assert_eq!(ns, "/DEV0");
+        handle.accept();
+        let got = packets(&server.get(&query(Some(&sid)), "h").await);
+        assert!(got[0].data.starts_with("0/DEV0,{\"sid\":"));
 
-        let body = "1:211:42[\"ping1\"]";
-        assert_eq!(server.post(&query(Some(&sid)), body.as_bytes()).status, 200);
-        let TransportEvent::Event { event, .. } = rx.recv().await.unwrap() else {
+        server.post(
+            &query(Some(&sid)),
+            b"42/DEV0,[\"ping1\"]\x1e42/other,[\"x\"]",
+        );
+        let TransportEvent::Event { event, conn: c } = rx.recv().await.unwrap() else {
             panic!("expected event");
         };
-        assert_eq!(event.name, "ping1");
+        assert_eq!((event.name.as_str(), c), ("ping1", conn));
+        // Events for a namespace the client never joined are dropped.
+        assert!(rx.try_recv().is_err());
         handle.emit(&Event::new("pong1", vec![]));
-        let got = string_packets(&server.get(&query(Some(&sid)), "h").await);
         assert_eq!(
-            got,
-            vec![
-                Packet::new(PacketType::Pong, ""),
-                Packet::message("2[\"pong1\"]")
-            ]
+            packets(&server.get(&query(Some(&sid)), "h").await),
+            vec![Packet::message("2/DEV0,[\"pong1\"]")]
         );
 
-        assert_eq!(server.post(&query(Some(&sid)), b"1:1").status, 200);
-        let TransportEvent::Disconnected { conn: gone, .. } = rx.recv().await.unwrap() else {
-            panic!("expected disconnect");
-        };
-        assert_eq!(gone, conn);
+        server.post(&query(Some(&sid)), b"41/DEV0,");
+        assert!(matches!(
+            rx.recv().await,
+            Some(TransportEvent::Disconnected { conn: c, .. }) if c == conn
+        ));
+        assert_eq!(server.len(), 1, "the connection outlives the socket");
+        server.post(&query(Some(&sid)), b"1");
         assert!(server.is_empty());
-        assert_eq!(server.get(&query(Some(&sid)), "h").await.status, 400);
     }
 
     #[tokio::test]
-    async fn binary_handshake_by_default() {
+    async fn refused_namespace_gets_a_connect_error() {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let server = Server::new(Timing::default(), tx, Trace::disabled());
+        let sid = open(&server).await;
+        server.post(&query(Some(&sid)), b"40/nope,");
+        let Some(TransportEvent::Connected { handle, .. }) = rx.recv().await else {
+            panic!("expected connect");
+        };
+        handle.refuse("Invalid namespace");
+        let got = packets(&server.get(&query(Some(&sid)), "h").await);
+        assert_eq!(got[0].data, r#"4/nope,{"message":"Invalid namespace"}"#);
+        server.post(&query(Some(&sid)), b"42/nope,[\"x\"]");
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[tokio::test]
+    async fn websocket_upgrade_moves_the_session() {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let server = Server::new(Timing::default(), tx, Trace::disabled());
+        let sid = open(&server).await;
+        let mut wsq = query(Some(&sid));
+        wsq.transport = Some("websocket".into());
+        let mut link = server.ws_open(&wsq, "h").unwrap();
+        server.ws_message(&link, "2probe");
+        assert_eq!(link.outgoing.recv().await.unwrap(), "3probe");
+        server.post(&query(Some(&sid)), b"40/DEV0,");
+        let Some(TransportEvent::Connected { handle, .. }) = rx.recv().await else {
+            panic!("expected connect");
+        };
+        handle.accept();
+        server.ws_message(&link, "5");
+        // Queued before the upgrade, delivered over the socket.
+        assert!(link.outgoing.recv().await.unwrap().starts_with("40/DEV0,"));
+        // A poll after the upgrade is released with a noop.
+        assert_eq!(
+            packets(&server.get(&query(Some(&sid)), "h").await),
+            vec![Packet::new(PacketType::Noop, "")]
+        );
+        server.ws_message(&link, "42/DEV0,[\"cht\",\"hi\"]");
+        assert!(matches!(
+            rx.recv().await,
+            Some(TransportEvent::Event { .. })
+        ));
+        server.ws_closed(&link);
+        assert!(matches!(
+            rx.recv().await,
+            Some(TransportEvent::Disconnected { .. })
+        ));
+        assert!(server.is_empty());
+    }
+
+    #[tokio::test]
+    async fn websocket_only_clients_get_an_open_packet() {
         let (tx, _rx) = mpsc::unbounded_channel();
         let server = Server::new(Timing::default(), tx, Trace::disabled());
         let mut q = query(None);
-        q.b64 = None;
-        let r = server.get(&q, "h").await;
-        assert_eq!(r.content_type, "application/octet-stream");
-        assert_eq!(r.body[0], 0x00);
-        let sep = r.body.iter().position(|&b| b == 0xFF).unwrap();
-        assert_eq!(r.body[sep + 1], b'0');
+        q.transport = Some("websocket".into());
+        let mut link = server.ws_open(&q, "h").unwrap();
+        assert!(link.outgoing.recv().await.unwrap().starts_with("0{"));
     }
 
-    #[tokio::test(start_paused = true)]
-    async fn held_poll_returns_noop_and_reaper_closes() {
+    #[tokio::test]
+    async fn heartbeat_pings_then_closes_silent_clients() {
         let (tx, mut rx) = mpsc::unbounded_channel();
         let timing = Timing {
             ping_interval: Duration::from_millis(10),
@@ -509,15 +709,16 @@ mod tests {
             poll_hold: Duration::from_millis(50),
         };
         let server = Server::new(timing, tx, Trace::disabled());
-        let packets = string_packets(&server.get(&query(None), "h").await);
-        let open: serde_json::Value = serde_json::from_str(&packets[0].data).unwrap();
-        let sid = open["sid"].as_str().unwrap().to_owned();
+        let sid = open(&server).await;
+        server.post(&query(Some(&sid)), b"40/DEV0,");
         let _ = rx.recv().await;
-        let got = string_packets(&server.get(&query(Some(&sid)), "h").await);
-        assert_eq!(got, vec![Packet::new(PacketType::Noop, "")]);
-        // Instant (std) is not paused; wait out the real limit.
+        server.heartbeat();
+        assert_eq!(
+            packets(&server.get(&query(Some(&sid)), "h").await),
+            vec![Packet::new(PacketType::Ping, "")]
+        );
         std::thread::sleep(Duration::from_millis(30));
-        server.reap();
+        server.heartbeat();
         assert!(matches!(
             rx.recv().await,
             Some(TransportEvent::Disconnected {
@@ -532,10 +733,7 @@ mod tests {
         let (tx, _rx) = mpsc::unbounded_channel();
         let server = Server::new(Timing::default(), tx, Trace::disabled());
         let mut q = query(None);
-        q.eio = Some("4".into());
-        assert_eq!(server.get(&q, "h").await.status, 400);
-        let mut q = query(None);
-        q.transport = Some("websocket".into());
+        q.eio = Some("3".into());
         assert_eq!(server.get(&q, "h").await.status, 400);
     }
 }

@@ -1,0 +1,599 @@
+{
+  "id": "v0.92",
+  "title": "Version v0.92",
+  "kind": "version",
+  "evaluated_at": "2016-04-02",
+  "class_roster_from": "2016-01-18",
+  "classes": {
+    "Triggerman": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-04-01: r/VertixOnline wiki Characters rev 2016-04-01T03:43 (Tony \"Triggerman\" Cavalaro)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Detective": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-04-01: r/VertixOnline wiki Characters rev 2016-04-01T03:43 (Detective Valentine)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Hunter": {
+      "maxHealth": {
+        "value": 40,
+        "basis": "backfill",
+        "source": "RECOVERED B, 2016-04-02: versions.txt v0.98: Decreased Hunter Health to 40 (Now dies from 2 hits by any gun)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Run 'N Gun": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 90,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-05-10: r/VertixOnline wiki Characters rev 2016-05-10T08:20 (Billy \"Run 'n' Gun\")"
+      },
+      "speed": {
+        "value": 0.684,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Vince": {
+      "maxHealth": {
+        "value": 100,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-04-01: r/VertixOnline wiki Characters rev 2016-04-01T03:43 (Vincent \"Vince\" De Vries)"
+      },
+      "speed": {
+        "value": 0.5985,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Rocketeer": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 120,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-04-07: r/VertixOnline wiki Characters rev 2016-04-07T08:55 (General \"Rocketeer\" Weiss)"
+      },
+      "speed": {
+        "value": 0.513,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Average"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Spray N' Pray": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 145,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-19: r/VertixOnline wiki Characters rev 2016-06-19T13:14 (Spray 'n' Pray \"Hank\")"
+      },
+      "speed": {
+        "value": 0.3876,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Slow"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Arsonist": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 100,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-30: r/VertixOnline wiki Characters rev 2016-06-30T17:56 (Arsonist \"Pyro\")"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Duck": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 600,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-07-29: r/VertixOnline wiki Characters rev 2016-07-29T17:02 (Duck)"
+      },
+      "speed": {
+        "value": 0.456,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Slow"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "Nademan": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 110,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Characters rev 2016-09-07T12:33 (Nademan)"
+      },
+      "speed": {
+        "value": 0.57,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Fast"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "???": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 6000,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-04-09: r/VertixOnline wiki Characters rev 2016-04-09T15:21 (Boss1)"
+      },
+      "speed": {
+        "value": 0.456,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)",
+        "fandom_tier": "Slow"
+      },
+      "jumpStrength": {
+        "value": 0.72,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0.0042,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "boss2": {
+      "available": false,
+      "availability_source": "not in the archived client of 2016-01-18",
+      "maxHealth": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "speed": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "jumpStrength": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      },
+      "gravityStrength": {
+        "value": 0,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    }
+  },
+  "weapons": {
+    "smg": {
+      "dmg": {
+        "value": 20,
+        "basis": "backfill",
+        "source": "RECOVERED B, 2016-04-02: versions.txt v0.98: Increased Damage of Triggerman to 20"
+      },
+      "maxAmmo": {
+        "value": 24,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Gun)"
+      },
+      "reloadSpeed": {
+        "value": 800,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Gun)"
+      },
+      "fireRate": {
+        "value": 143,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Gun)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "revolver": {
+      "dmg": {
+        "value": 50,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Desert Eagle)"
+      },
+      "maxAmmo": {
+        "value": 6,
+        "basis": "backfill",
+        "source": "RECOVERED B, 2016-06-08: official versions.txt capture [later patch notes on this weapon: only later evidence]"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Desert Eagle)"
+      },
+      "fireRate": {
+        "value": 390,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Desert Eagle)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "sniper": {
+      "dmg": {
+        "value": 100,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Sniper)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Sniper) [later patch notes on this weapon: only later evidence]"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Sniper)"
+      },
+      "fireRate": {
+        "value": 1170,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Sniper) [later patch notes on this weapon: only later evidence]"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "toygun": {
+      "dmg": {
+        "value": 17,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Toy Blaster)"
+      },
+      "maxAmmo": {
+        "value": 2,
+        "basis": "backfill",
+        "source": "RECOVERED B, 2016-06-08: official versions.txt capture"
+      },
+      "reloadSpeed": {
+        "value": 500,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Toy Blaster)"
+      },
+      "fireRate": {
+        "value": 78,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Toy Blaster)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "shotgun": {
+      "dmg": {
+        "value": 22,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Shotgun) [later patch notes on this weapon: only later evidence]"
+      },
+      "maxAmmo": {
+        "value": 3,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Shotgun)"
+      },
+      "reloadSpeed": {
+        "value": 1000,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Shotgun)"
+      },
+      "fireRate": {
+        "value": 455,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Shotgun)"
+      },
+      "bulletsPerShot": {
+        "value": 5,
+        "basis": "backfill",
+        "source": "INFERRED D, 2019-02-05: Fandom 'Guns' revision 2019-02-05 (rev 1084) [later patch notes on this weapon: only later evidence]"
+      }
+    },
+    "grenades": {
+      "dmg": {
+        "value": 110,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Grenade Launcher)"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Grenade Launcher)"
+      },
+      "reloadSpeed": {
+        "value": 7500,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Grenade Launcher)"
+      },
+      "fireRate": {
+        "value": 0,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Grenade Launcher)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "rockets": {
+      "dmg": {
+        "value": 110,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Rocket Laucher) [later patch notes on this weapon: only later evidence]"
+      },
+      "maxAmmo": {
+        "value": 1,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Rocket Laucher)"
+      },
+      "reloadSpeed": {
+        "value": 1200,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Rocket Laucher)"
+      },
+      "fireRate": {
+        "value": 0,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Rocket Laucher) [later patch notes on this weapon: only later evidence]"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "pistol": {
+      "dmg": {
+        "value": 12,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Pistol)"
+      },
+      "maxAmmo": {
+        "value": 5,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Pistol) [later patch notes on this weapon: only later evidence]"
+      },
+      "reloadSpeed": {
+        "value": 1000,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Pistol)"
+      },
+      "fireRate": {
+        "value": 130,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Machine Pistol) [later patch notes on this weapon: only later evidence]"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "minigun": {
+      "dmg": {
+        "value": 7,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Minigun)"
+      },
+      "maxAmmo": {
+        "value": 50,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Minigun)"
+      },
+      "reloadSpeed": {
+        "value": 1700,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Minigun)"
+      },
+      "fireRate": {
+        "value": 90,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-20: r/VertixOnline wiki Weapons rev 2016-06-20T10:32 (Minigun)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    },
+    "flamethrower": {
+      "dmg": {
+        "value": 10,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-30: r/VertixOnline wiki Weapons rev 2016-06-30T17:59 (Flamethrower)"
+      },
+      "maxAmmo": {
+        "value": 30,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-30: r/VertixOnline wiki Weapons rev 2016-06-30T17:59 (Flamethrower)"
+      },
+      "reloadSpeed": {
+        "value": 1400,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-30: r/VertixOnline wiki Weapons rev 2016-06-30T17:59 (Flamethrower)"
+      },
+      "fireRate": {
+        "value": 80,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-06-30: r/VertixOnline wiki Weapons rev 2016-06-30T17:59 (Flamethrower)"
+      },
+      "bulletsPerShot": {
+        "value": 2,
+        "basis": "backfill",
+        "source": "INFERRED D, 2019-02-05: Fandom 'Guns' revision 2019-02-05 (rev 1084) [later patch notes on this weapon: only later evidence]"
+      }
+    },
+    "orblauncher": {
+      "dmg": {
+        "value": 30,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Nade Launch)"
+      },
+      "maxAmmo": {
+        "value": 3,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Nade Launch)"
+      },
+      "reloadSpeed": {
+        "value": 3000,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Nade Launch)"
+      },
+      "fireRate": {
+        "value": 250,
+        "basis": "backfill",
+        "source": "INFERRED C, 2016-09-07: r/VertixOnline wiki Weapons rev 2016-09-07T12:38 (Nade Launch)"
+      },
+      "bulletsPerShot": {
+        "value": 1,
+        "basis": "krp",
+        "source": "KrunkerRevival loadouts.ts 1e302cb (loadouts.ts last changed upstream 2026-06-05, a78a3b7)"
+      }
+    }
+  }
+}

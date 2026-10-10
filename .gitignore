@@ -64,3 +64,6 @@ out/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# The KrunkerRevival client checkout and build (scripts/build-client.sh)
+/client/

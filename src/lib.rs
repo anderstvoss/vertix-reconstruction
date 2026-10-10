@@ -1,17 +1,24 @@
-//! `vertix_reconstruction` — compatibility server for the original
-//! 2016 Vertix.io browser client.
+//! `vertix_reconstruction`: a Rust reconstruction of Vertix.io's game
+//! mechanics, played in the browser.
 //!
-//! The server speaks the wire protocol the archived client expects
-//! (Engine.IO 3 / Socket.IO 1.x) and reconstructs the game logic the
-//! original server held. Original client files and assets are never
-//! part of this crate; they are loaded from a local archive at run
-//! time and verified by hash.
+//! The server ports the game rules of `KrunkerRevival` (KRP,
+//! `KrunkerRevivalProject/vertix`), with recovered numbers from the research
+//! applied over them, and speaks the protocol KRP's browser client uses
+//! (Engine.IO 4 / Socket.IO 5, one namespace per room). The client build is
+//! loaded from a local directory and never committed.
 //!
-//! Layers, bottom up: [`eio`] (Engine.IO long-polling) and [`sio`]
+//! Layers, bottom up: [`eio`] (Engine.IO polling and WebSocket) and [`sio`]
 //! (Socket.IO events) form the transport; [`game`] owns all game state and
-//! talks to clients only through [`eio::ClientHandle`]; [`originals`]
-//! loads and verifies the archived files; [`http`] wires them together.
+//! talks to clients only through [`eio::ClientHandle`]; [`originals`] reads
+//! verified files (maps, the 2016 client) from an archive clone; [`http`]
+//! wires them together. [`classic`] is the compatibility path for the
+//! archived 2016 client: its own transport, and event translation into the
+//! same rooms.
 
+// The player object `json!` builds is deep.
+#![recursion_limit = "256"]
+
+pub mod classic;
 pub mod config;
 pub mod eio;
 pub mod game;

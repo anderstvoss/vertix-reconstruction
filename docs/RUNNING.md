@@ -1,119 +1,144 @@
 # Running it yourself
 
-This runs the 2016-08-06 client against the reconstruction server on your
-own machine. It works the same on Windows, macOS and Linux.
+This runs the reconstruction server with KrunkerRevival's browser client on
+your own machine. It works the same on Windows, macOS and Linux.
 
 ## What you need
 
 - **Rust.** Install `rustup` from <https://rustup.rs>. The right toolchain
   (pinned in `rust-toolchain.toml`) installs itself on the first build.
-- **Git with Git LFS**, for the two clones below.
-- **The private archive** (`vertix-archive`) with these LFS files pulled.
-  The server reads them at start-up and refuses to run if any hash differs:
-  - `vertix-preservation/originals/wayback/20160806061006/vertix.io/js/app.js.*`
-  - `vertix-preservation/originals/wayback/20160806060840/vertix.io/css/main.css.*`
-  - `vertix-preservation/originals/wayback/20160807195546/vertix.io_80/root.*` (the page)
-  - `vertix-preservation/originals/wayback/20160825094920/vertix.io/images/google-play-badge.png.*`
-  - `vertix-preservation/originals/external/jquery-2.1.4.min.js`
-  - `vertix-preservation/originals/external/socket.io-1.4.5.js`
-  - `vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk`
-    (sprites, `res.zip`, workers and fonts come from inside it)
-  - `vertix-preservation/derived/maps/krp-2026-candidates/map-*.genData.json`
-    (the 24 maps) and `vertix-preservation/manifests/sha256sums.txt`
+- **Git, Node.js and pnpm**, to build the client once
+  (<https://nodejs.org>, then `npm install -g pnpm`).
+- **The private archive** (`vertix-archive`) with Git LFS files pulled, for
+  the maps. The server reads
+  `vertix-preservation/derived/maps/krp-2026-candidates/map-*.genData.json`
+  and checks each against `vertix-preservation/manifests/sha256sums.txt`.
+  Without the archive, switch `[maps] sources` to `["files"]` to play our
+  own placeholder arena.
 
-  A full `git lfs pull` in the archive covers all of these.
-
-## Start the server
+## Build the client
 
 From the repository root:
+
+```bash
+scripts/build-client.sh
+```
+
+On Windows PowerShell:
+
+```powershell
+scripts\build-client.ps1
+```
+
+This clones KRP at the pinned commit into `client/krp`, builds its client
+and copies the result to `client/dist` (both git-ignored). Options:
+
+- `--source PATH` (`-Source`) clones from the archive's mirror
+  (`vertix-preservation/mirrors/KrunkerRevivalProject-vertix.git`) instead
+  of GitHub.
+- `--res-zip FILE` (`-ResZip`) serves another `res.zip`, for example the
+  2020 capture from the archive, instead of KRP's.
+
+Run it again after changing either option; it reuses the checkout.
+
+## Start the server
 
 ```bash
 cargo run --release -- --archive PATH/TO/vertix-archive
 ```
 
-On Windows PowerShell, quote a path that contains spaces:
+Quote a Windows path that contains spaces: `--archive "PATH\TO\vertix archive"`.
 
-```powershell
-cargo run --release -- --archive "PATH\TO\vertix-archive"
-```
-
-The first build takes a few minutes. When it is ready it prints
-`loaded build 20160806061006 ... all hashes verified` and the address it
-is listening on. Open that address in a browser, type a name and press
-**Play**. Open a second browser window (or a private window) to the same
-address to get a second player.
+When it is ready it prints the rules and balance preset in use, the maps
+it loaded and the address it is listening on. Open that address, pick a
+room in the server browser or press Play, and open a second window for a
+second player.
 
 Useful options:
 
-- `--port 9000` to use another port. The default bind address and port are
-  in `config/server.toml`.
+- `--port 9000` to use another port. The bind address and port are in
+  `config/server.toml`.
 - `--trace out/trace.jsonl` writes every event in and out, one JSON line
-  each, for checking protocol behaviour.
-- Setting the `VERTIX_ARCHIVE` environment variable replaces `--archive`.
-- `--explain-rules` prints every game value with its status (recovered,
-  inferred, decided, provisional or assumed), its source and the layer
-  file it came from, then exits. At start-up the server prints the same
-  counts and a hash of the merged rules.
+  each.
+- `VERTIX_ARCHIVE` replaces `--archive`.
+- `--explain-rules` prints every rule constant and every balance value with
+  its status or basis and its source, then exits.
 
-## Changing rules, mode and maps
+## The 2016 client
 
-Game values live in layers listed under `rules` in `config/server.toml`,
-merged in order, value by value. To try something without touching the
-committed files, add your own layer at the end, for example to play
-Hardpoint:
+With an archive, the server also serves the archived 2016-08-06 client on
+a second port, from the archive's files (hash-checked, never copied here):
+open `http://<bind>:8081/`. No client build is needed for it. Its players
+join the room `[classic] room` names (the first room if empty), together
+with players on KRP's client. Set `[classic] enabled = false` to turn it
+off.
 
-```toml
-[layer]
-status = "DECIDED"
-source = "local test"
+`python3 scripts/e2e_boot.py --url http://<bind>:8081/` checks it in a real
+browser (needs Playwright): two players join, move and see each other, and
+no request leaves the server.
 
-[round]
-mode = "hp"   # ffa, tdm, hp, zmtch, lc, snipe or rckt
+## Rooms, balance and rules
 
-[net]
-update_hz = 60   # server tick rate
-```
+`config/server.toml` holds:
 
-Each mode plays the map ids its `maps` list names. `[maps] sources` lists
-where maps come from, in order, and a later source replaces a map with the
-same id: `"archive"` loads every `map-<id>.genData.json` in `archive_dir`
-(by default the 24 provisional maps), and `"files"` loads the text maps
-listed under `files`, keyed by file name (for example our own
-`data/maps/arena.txt`). A mode whose maps are not loaded plays any loaded
-map. Adding a map needs no code change: add the file, and add its id to a
-mode's `maps` list in a rule layer.
+- **`[game] rooms`**: the rooms opened at start, one per mode by default
+  (`DEV0` free for all to `DEV8` Arsonist War, as in KRP's dev server). The
+  room list and `/api/getIP` follow it. A room's mode changes at round end
+  by vote, or through the client's custom server form.
+- **`[game] max_players`**: players per room, 8 by default. A room can set
+  its own (`{ name = "DEV0", mode = "ffa", max_players = 12 }`). The
+  custom server form can lower a room's limit but not raise it.
+- **`[game] balance`**: the balance preset laid over KRP's classes and
+  weapons. `best` (default) uses the best-supported recovered value for
+  each stat, `krp` keeps KRP's numbers, and a version such as `v3.8` plays
+  that version's numbers, hiding classes that did not exist yet. The
+  presets and their sources are in `data/balance/`.
+- **`rules`**: layers of server constants (spawn protection, pickups,
+  hardpoint timing, chat length, tick rate), merged in order, value by
+  value. To try something without touching committed files, add your own
+  layer at the end:
 
-To let another machine on your network join, change `bind` in
-`config/server.toml` to your machine's network address (do not commit
-that change) and open the matching port in your firewall.
+  ```toml
+  [layer]
+  status = "DECIDED"
+  source = "local test"
 
-## What works so far
+  [rules]
+  spawn_protection_ms = 1000
 
-Joining, spawning, walking with wall collision, jumping, switching weapons
-and leaving, in one room playing the configured mode (free for all by
-default) on one of that mode's maps. Team modes split players between red
-and blue, and Sniper War and Rocket War force their class. Shooting does nothing yet, and there
-are no rounds, lobbies or saves. See [DEVIATIONS.md](DEVIATIONS.md) for
-what differs from the original.
+  [net]
+  update_hz = 120
+  ```
 
-## Automated browser check (optional)
+- **`[maps]`**: map sources, in order; a later source replaces a map with
+  the same id. `"archive"` loads every `map-<id>.genData.json` in
+  `archive_dir`, `"files"` loads the text maps listed under `files`. Each
+  mode plays the ids its `maps` list names in `data/krp/gamemodes.json`, or
+  any loaded map if none of those is loaded.
 
-With the server running:
+To let another machine on your network join, change `bind` to your
+machine's network address (do not commit that change) and open the port
+in your firewall.
+
+## Checking it
 
 ```bash
-python3 -m pip install playwright
-python3 -m playwright install chromium
-python3 scripts/e2e_boot.py --url http://HOST:PORT/
+cargo build && python3 scripts/e2e_smoke.py
 ```
 
-It plays the game in two headless browsers with every outside request
-blocked and writes screenshots and a report to `out/e2e/`.
+starts the server with a stand-in client and the placeholder arena, and
+plays through it over long-polling and WebSocket: room list, joining a
+room, spawning, moving, chat after the WebSocket upgrade, a second player
+and leaving.
 
 ## Troubleshooting
 
 - **"hash mismatch" or "is an LFS pointer"** at start-up: that archive file
   was not pulled. Run `git lfs pull` in the archive.
-- **"Disconnected"** in the game: the client never reconnects, so a server
-  restart drops everyone. Reload the page.
-- **Blank page on https:** the 2016 client always connects over plain
-  `http://`, so open the page over http.
+- **"no client build"** warning: run `scripts/build-client.sh`. The 2016
+  client on the second port works without it.
+- **"The system cannot find the path specified"** for the maps: the
+  archive clone predates the map files. Run `git pull` and `git lfs pull`
+  in it.
+- **The page loads but no room joins:** check the server log; the client
+  connects to the same address the page came from.

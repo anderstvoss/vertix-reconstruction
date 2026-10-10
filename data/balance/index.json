@@ -1,0 +1,735 @@
+{
+  "default": "best",
+  "presets": [
+    {
+      "id": "v0.20",
+      "title": "Version v0.20",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.30",
+      "title": "Version v0.30",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.35",
+      "title": "Version v0.35",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.45",
+      "title": "Version v0.45",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.49",
+      "title": "Version v0.49",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.50",
+      "title": "Version v0.50",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.74",
+      "title": "Version v0.74",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.80",
+      "title": "Version v0.80",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.85",
+      "title": "Version v0.85",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.90",
+      "title": "Version v0.90",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.91",
+      "title": "Version v0.91",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.92",
+      "title": "Version v0.92",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.93",
+      "title": "Version v0.93",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.94",
+      "title": "Version v0.94",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.95",
+      "title": "Version v0.95",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.96",
+      "title": "Version v0.96",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.97",
+      "title": "Version v0.97",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.98",
+      "title": "Version v0.98",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "backfill": 57,
+        "krp": 46
+      }
+    },
+    {
+      "id": "v0.99",
+      "title": "Version v0.99",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 4,
+        "krp": 46,
+        "backfill": 53
+      }
+    },
+    {
+      "id": "v1.0",
+      "title": "Version v1.0",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 4,
+        "krp": 46,
+        "backfill": 53
+      }
+    },
+    {
+      "id": "v1.1",
+      "title": "Version v1.1",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v1.2",
+      "title": "Version v1.2",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 4,
+        "krp": 46,
+        "backfill": 53
+      }
+    },
+    {
+      "id": "v1.3",
+      "title": "Version v1.3",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 7,
+        "krp": 46,
+        "backfill": 50
+      }
+    },
+    {
+      "id": "v1.4",
+      "title": "Version v1.4",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 7,
+        "krp": 46,
+        "backfill": 50
+      }
+    },
+    {
+      "id": "v1.5",
+      "title": "Version v1.5",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 7,
+        "krp": 46,
+        "backfill": 50
+      }
+    },
+    {
+      "id": "v1.6",
+      "title": "Version v1.6",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 7,
+        "krp": 46,
+        "backfill": 50
+      }
+    },
+    {
+      "id": "v1.7",
+      "title": "Version v1.7",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 7,
+        "krp": 46,
+        "backfill": 50
+      }
+    },
+    {
+      "id": "v1.8",
+      "title": "Version v1.8",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 7,
+        "krp": 46,
+        "backfill": 50
+      }
+    },
+    {
+      "id": "v1.9",
+      "title": "Version v1.9",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 8,
+        "krp": 46,
+        "backfill": 49
+      }
+    },
+    {
+      "id": "v2.0",
+      "title": "Version v2.0",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v2.1",
+      "title": "Version v2.1",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v2.2",
+      "title": "Version v2.2",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v2.3",
+      "title": "Version v2.3",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v2.4",
+      "title": "Version v2.4",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v2.5",
+      "title": "Version v2.5",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 5,
+        "krp": 46,
+        "backfill": 52
+      }
+    },
+    {
+      "id": "v2.6",
+      "title": "Version v2.6",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 10,
+        "krp": 46,
+        "backfill": 47
+      }
+    },
+    {
+      "id": "v2.7",
+      "title": "Version v2.7",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 10,
+        "krp": 46,
+        "backfill": 47
+      }
+    },
+    {
+      "id": "v2.65",
+      "title": "Version v2.65",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 10,
+        "krp": 46,
+        "backfill": 47
+      }
+    },
+    {
+      "id": "v2.68",
+      "title": "Version v2.68",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 10,
+        "krp": 46,
+        "backfill": 47
+      }
+    },
+    {
+      "id": "v2.71",
+      "title": "Version v2.71",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 10,
+        "krp": 46,
+        "backfill": 47
+      }
+    },
+    {
+      "id": "v2.72",
+      "title": "Version v2.72",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v2.73",
+      "title": "Version v2.73",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v2.74",
+      "title": "Version v2.74",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v2.75",
+      "title": "Version v2.75",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v2.76",
+      "title": "Version v2.76",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v2.77",
+      "title": "Version v2.77",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 49,
+        "krp": 46,
+        "backfill": 8
+      }
+    },
+    {
+      "id": "v2.78",
+      "title": "Version v2.78",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v2.79",
+      "title": "Version v2.79",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 48,
+        "krp": 46,
+        "backfill": 9
+      }
+    },
+    {
+      "id": "v3.0",
+      "title": "Version v3.0",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 50,
+        "krp": 46,
+        "backfill": 7
+      }
+    },
+    {
+      "id": "v3.01",
+      "title": "Version v3.01",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 50,
+        "krp": 46,
+        "backfill": 7
+      }
+    },
+    {
+      "id": "v3.1",
+      "title": "Version v3.1",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 45,
+        "krp": 46,
+        "backfill": 12
+      }
+    },
+    {
+      "id": "v3.02",
+      "title": "Version v3.02",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 50,
+        "krp": 46,
+        "backfill": 7
+      }
+    },
+    {
+      "id": "v3.2",
+      "title": "Version v3.2",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 45,
+        "krp": 46,
+        "backfill": 12
+      }
+    },
+    {
+      "id": "v3.03",
+      "title": "Version v3.03",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 55,
+        "krp": 46,
+        "backfill": 2
+      }
+    },
+    {
+      "id": "v3.3",
+      "title": "Version v3.3",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 45,
+        "krp": 46,
+        "backfill": 12
+      }
+    },
+    {
+      "id": "v3.04",
+      "title": "Version v3.04",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 45,
+        "krp": 46,
+        "backfill": 12
+      }
+    },
+    {
+      "id": "v3.4",
+      "title": "Version v3.4",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 47,
+        "krp": 46,
+        "backfill": 10
+      }
+    },
+    {
+      "id": "v3.5",
+      "title": "Version v3.5",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 47,
+        "krp": 46,
+        "backfill": 10
+      }
+    },
+    {
+      "id": "v3.6",
+      "title": "Version v3.6",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 46,
+        "krp": 46,
+        "backfill": 11
+      }
+    },
+    {
+      "id": "v3.7",
+      "title": "Version v3.7",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 44,
+        "krp": 46,
+        "backfill": 13
+      }
+    },
+    {
+      "id": "v3.8",
+      "title": "Version v3.8",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 46,
+        "krp": 46,
+        "backfill": 11
+      }
+    },
+    {
+      "id": "v3.81",
+      "title": "Version v3.81",
+      "kind": "version",
+      "values": 103,
+      "by_basis": {
+        "research": 53,
+        "krp": 46,
+        "backfill": 4
+      }
+    },
+    {
+      "id": "best",
+      "title": "Best overall (inferred)",
+      "kind": "inferred",
+      "values": 103,
+      "by_basis": {
+        "research": 49,
+        "krp": 46,
+        "inferred": 8
+      }
+    },
+    {
+      "id": "krp",
+      "title": "KrunkerRevival",
+      "kind": "krp",
+      "values": 103,
+      "by_basis": {
+        "krp": 103
+      }
+    }
+  ],
+  "speed_tier_check": {
+    "???": {
+      "krp_speed": 0.456,
+      "fandom_tier": "Slow"
+    },
+    "Arsonist": {
+      "krp_speed": 0.57,
+      "fandom_tier": "Fast"
+    },
+    "Detective": {
+      "krp_speed": 0.57,
+      "fandom_tier": "Average"
+    },
+    "Duck": {
+      "krp_speed": 0.456,
+      "fandom_tier": "Slow"
+    },
+    "Hunter": {
+      "krp_speed": 0.57,
+      "fandom_tier": "Fast"
+    },
+    "Nademan": {
+      "krp_speed": 0.57,
+      "fandom_tier": "Fast"
+    },
+    "Rocketeer": {
+      "krp_speed": 0.513,
+      "fandom_tier": "Average"
+    },
+    "Run 'N Gun": {
+      "krp_speed": 0.684,
+      "fandom_tier": "Fast"
+    },
+    "Spray N' Pray": {
+      "krp_speed": 0.3876,
+      "fandom_tier": "Slow"
+    },
+    "Triggerman": {
+      "krp_speed": 0.57,
+      "fandom_tier": "Average"
+    },
+    "Vince": {
+      "krp_speed": 0.5985,
+      "fandom_tier": "Average"
+    }
+  }
+}

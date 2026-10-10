@@ -9,10 +9,8 @@
 //!
 //! - [`ArchiveGenData`]: every `map-<id>.genData.json` in a directory of a
 //!   vertix-archive clone, each hash-checked against the archive's
-//!   `sha256sums.txt`. By default that is the 24 `KrunkerRevival`
-//!   candidates, whose numbering the mode lists use. They are PROVISIONAL
-//!   (Anders, 2026-10-09) and are never committed here: the source has no
-//!   license.
+//!   `sha256sums.txt`. By default that is KRP's 24 maps, whose numbering
+//!   the mode lists use (PROVISIONAL: no original map file survives).
 //! - [`TextFiles`]: maps in this repository's text format, keyed by file
 //!   stem, for our own layouts.
 
@@ -20,7 +18,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
-use super::assumptions::Mode;
+use super::data::Mode;
 use super::map::{Error, Map};
 use crate::originals::Archive;
 
@@ -40,7 +38,7 @@ pub trait MapSource {
     ///
     /// # Errors
     /// Fails if a map cannot be read, verified or parsed.
-    fn load(&self, tile_scale: f64) -> Result<Vec<MapEntry>, Error>;
+    fn load(&self) -> Result<Vec<MapEntry>, Error>;
 }
 
 /// Default directory of the map candidates inside the archive.
@@ -78,7 +76,7 @@ impl ArchiveGenData {
 }
 
 impl MapSource for ArchiveGenData {
-    fn load(&self, tile_scale: f64) -> Result<Vec<MapEntry>, Error> {
+    fn load(&self) -> Result<Vec<MapEntry>, Error> {
         let archive = Archive::open(&self.root).map_err(|e| Error(e.to_string()))?;
         let dir = self.dir.trim_end_matches('/');
         self.ids()?
@@ -91,8 +89,8 @@ impl MapSource for ArchiveGenData {
                 let gen_data = doc
                     .get("genData")
                     .ok_or_else(|| Error(format!("{rel}: no genData")))?;
-                let map = Map::from_gen_data(gen_data, tile_scale, false)
-                    .map_err(|e| Error(format!("{rel}: {}", e.0)))?;
+                let map =
+                    Map::from_gen_data(gen_data).map_err(|e| Error(format!("{rel}: {}", e.0)))?;
                 Ok(MapEntry {
                     id,
                     source: rel,
@@ -109,14 +107,14 @@ pub struct TextFiles {
 }
 
 impl MapSource for TextFiles {
-    fn load(&self, tile_scale: f64) -> Result<Vec<MapEntry>, Error> {
+    fn load(&self) -> Result<Vec<MapEntry>, Error> {
         self.files
             .iter()
             .map(|p| {
                 let text = std::fs::read_to_string(p)
                     .map_err(|e| Error(format!("{}: {e}", p.display())))?;
-                let map = Map::parse(&text, tile_scale, false)
-                    .map_err(|e| Error(format!("{}: {}", p.display(), e.0)))?;
+                let map =
+                    Map::parse(&text).map_err(|e| Error(format!("{}: {}", p.display(), e.0)))?;
                 Ok(MapEntry {
                     id: stem(p),
                     source: p.display().to_string(),
@@ -191,32 +189,32 @@ impl MapSet {
         }
     }
 
-    /// Picks a map for a mode with a random number, laid out for the mode.
+    /// Picks a map for a mode with a random number.
     #[must_use]
     pub fn pick(&self, mode: &Mode, random: u64) -> (String, Map) {
         let options = self.for_mode(mode);
         let n = u64::try_from(options.len()).unwrap_or(1);
         let e = options[usize::try_from(random % n).unwrap_or(0)];
-        (e.id.clone(), e.map.for_mode(&mode.name))
+        (e.id.clone(), e.map.clone())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::game::assumptions::committed;
+    use crate::game::data::committed;
 
     fn entry(id: &str) -> MapEntry {
         MapEntry {
             id: id.into(),
             source: "test".into(),
-            map: Map::parse(include_str!("../../data/maps/arena.txt"), 100.0, false).unwrap(),
+            map: Map::parse(include_str!("../../data/maps/arena.txt")).unwrap(),
         }
     }
 
     #[test]
     fn modes_pick_from_their_own_list() {
-        let rules = committed().0;
+        let rules = committed("krp");
         let tdm = rules.modes.iter().find(|m| m.code == "tdm").unwrap();
         let set = MapSet::new(["13", "14", "15"].map(entry).to_vec()).unwrap();
         let ids: Vec<&str> = set.for_mode(tdm).iter().map(|e| e.id.as_str()).collect();
@@ -258,7 +256,7 @@ mod tests {
         };
         assert_eq!(src.ids().unwrap(), ["2", "10", "new"]);
         // No sha256sums.txt: nothing unverified is loaded.
-        assert!(src.load(100.0).is_err());
+        assert!(src.load().is_err());
         std::fs::remove_dir_all(&root).unwrap();
     }
 }

@@ -190,6 +190,10 @@ jobs:
       - name: Test
         run: cargo test --locked --workspace --all-features
 
+      - name: End-to-end smoke test
+        if: runner.os == 'Linux'
+        run: cargo build --locked && python3 scripts/e2e_smoke.py
+
   policy:
     name: Policy checks (${{ matrix.os }})
     if: ${{ !github.event.repository.private }}
