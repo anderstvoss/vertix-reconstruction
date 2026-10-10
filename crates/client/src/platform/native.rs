@@ -163,7 +163,7 @@ fn run_socket(
             match ws.read() {
                 Ok(Message::Text(t)) => {
                     idle = false;
-                    let _ = events.send(WsEvent::Message(t.as_str().to_owned()));
+                    let _ = events.send(WsEvent::Message(t.as_str().to_owned(), super::now_ms()));
                 }
                 Ok(Message::Close(_)) => return Err(String::from("closed by server")),
                 Ok(_) => idle = false,

@@ -4,9 +4,9 @@
 //! Launch options (desktop: `--key value`; browser: `?key=value`):
 //! `server`, `room`, `name`, `class`, `input` (`frame` or a rate in Hz),
 //! `display` (`sharp` or `krp`), `floor` (`2016` or `krp`), `effects`
-//! (`persist` or `krp`), `autoplay`, `script`, `duration` (seconds, then
-//! report and quit), `metrics` (desktop: where to write
-//! them), `screenshot` and `shot-at` (desktop).
+//! (`persist` or `krp`), `hidden` (`catch-up` or `krp`), `autoplay`,
+//! `script`, `duration` (seconds, then report and quit), `metrics`
+//! (desktop: where to write them), `screenshot` and `shot-at` (desktop).
 
 // `unsafe` is denied crate-wide (Cargo.toml) and forbidden module by
 // module, except in platform/web.rs, which declares the page's imports.

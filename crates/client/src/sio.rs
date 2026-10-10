@@ -15,8 +15,8 @@ use crate::platform::{Socket, WsEvent};
 pub enum SioEvent {
     /// The namespace accepted us.
     Connected,
-    /// A server `emit`: name and arguments.
-    Event(String, Vec<Value>),
+    /// A server `emit`: name, arguments and when it arrived (`now_ms`).
+    Event(String, Vec<Value>, f64),
     /// The connection or namespace is gone, with a reason.
     Disconnected(String),
 }
@@ -95,7 +95,7 @@ impl SioClient {
         for ev in self.socket.poll() {
             match ev {
                 WsEvent::Open => {}
-                WsEvent::Message(text) => self.packet(&text, &mut out),
+                WsEvent::Message(text, at) => self.packet(&text, at, &mut out),
                 WsEvent::Closed(reason) => {
                     if self.state != State::Closed {
                         self.state = State::Closed;
@@ -107,7 +107,7 @@ impl SioClient {
         out
     }
 
-    fn packet(&mut self, text: &str, out: &mut Vec<SioEvent>) {
+    fn packet(&mut self, text: &str, at: f64, out: &mut Vec<SioEvent>) {
         let Some(kind) = text.chars().next() else {
             return;
         };
@@ -118,18 +118,19 @@ impl SioClient {
                 self.state = State::Joining;
                 self.socket.send(&format!("40{}", self.prefix()));
             }
-            // Engine.IO ping: answer at once.
+            // Engine.IO ping: answer at once. (The browser build answers
+            // in vertix_net.js, so a hidden tab stays connected.)
             '2' => self.socket.send("3"),
             '1' => {
                 self.state = State::Closed;
                 out.push(SioEvent::Disconnected(String::from("server closed")));
             }
-            '4' => self.message(body, out),
+            '4' => self.message(body, at, out),
             _ => {}
         }
     }
 
-    fn message(&mut self, body: &str, out: &mut Vec<SioEvent>) {
+    fn message(&mut self, body: &str, at: f64, out: &mut Vec<SioEvent>) {
         let Some(kind) = body.chars().next() else {
             return;
         };
@@ -169,7 +170,7 @@ impl SioClient {
                     }
                     let name = arr.remove(0);
                     if let Value::String(name) = name {
-                        out.push(SioEvent::Event(name, arr));
+                        out.push(SioEvent::Event(name, arr, at));
                     }
                 }
             }

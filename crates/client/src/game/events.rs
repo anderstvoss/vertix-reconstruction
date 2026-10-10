@@ -511,6 +511,9 @@ impl Game {
             server_index: si,
         };
         self.arm_bullet(bi, pi, shot);
+        if self.bullets[bi].p.active {
+            self.bullets[bi].arrived = Some(self.event_at);
+        }
     }
 
     /// The `"3"` event: someone died.
