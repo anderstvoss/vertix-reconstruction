@@ -374,8 +374,31 @@ fn read_input(
         mouse_pressed: is_mouse_button_pressed(MouseButton::Left),
         mouse_released: is_mouse_button_released(MouseButton::Left),
         mouse_down: is_mouse_button_down(MouseButton::Left),
-        wheel: f64::from(mouse_wheel().1.signum()),
+        wheel: wheel_step(mouse_wheel().1),
         css_size: (f64::from(css.0), f64::from(css.1)),
         in_game_area: in_game,
+    }
+}
+
+/// The wheel as a step of -1, 0 or 1. (`f32::signum` gives 1 for 0, which
+/// would swap weapons every frame.)
+fn wheel_step(dy: f32) -> f64 {
+    if dy == 0.0 {
+        0.0
+    } else {
+        f64::from(dy.signum())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wheel_step;
+
+    #[test]
+    fn a_still_wheel_is_no_step() {
+        assert_eq!(wheel_step(0.0), 0.0);
+        assert_eq!(wheel_step(-0.0), 0.0);
+        assert_eq!(wheel_step(3.5), 1.0);
+        assert_eq!(wheel_step(-120.0), -1.0);
     }
 }
