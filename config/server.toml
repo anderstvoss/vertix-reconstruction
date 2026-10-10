@@ -75,6 +75,20 @@ port = 8081
 room = ""
 manifest = "data/boot/20160806061006.json"
 
+[admin]
+# Admin panel and dev console (docs/ADMIN.md). The panel is a page on its
+# own port; keep it on loopback unless you know who can reach it.
+enabled = true
+bind = "127.0.0.1"
+port = 8082
+# The panel and its API need this token. Empty: a new random one at every
+# start, printed with the panel's address.
+token = ""
+# Also take commands typed into the server's terminal.
+stdin = true
+# Print joins, chat and the kill feed in the terminal.
+stdin_log = false
+
 [engine_io]
 # Socket.IO's defaults, which KRP's server uses.
 ping_interval_ms = 25000

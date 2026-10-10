@@ -19,7 +19,7 @@ use vertix_reconstruction::game::data::GameData;
 use vertix_reconstruction::game::maps::{ArchiveGenData, MapSet, MapSource, TextFiles};
 use vertix_reconstruction::originals::{BootManifest, Store};
 use vertix_reconstruction::trace::Trace;
-use vertix_reconstruction::{classic, eio, http};
+use vertix_reconstruction::{admin, classic, eio, http};
 
 struct Args {
     config: PathBuf,
@@ -115,6 +115,64 @@ fn classic_app(
     })))
 }
 
+/// The trace file from `--trace`, else the config's, else none.
+fn open_trace(cli: Option<String>, config: &Config) -> Result<Trace, String> {
+    let path = cli.or_else(|| (!config.trace.is_empty()).then(|| config.trace.clone()));
+    match path {
+        Some(p) => {
+            Trace::to_file(p.as_ref(), &config.trace_brief).map_err(|e| format!("trace {p}: {e}"))
+        }
+        None => Ok(Trace::disabled()),
+    }
+}
+
+fn admin_paths(config: &Config) -> vertix_reconstruction::game::admin::Paths {
+    vertix_reconstruction::game::admin::Paths {
+        krp_data: config.game.krp_data.clone(),
+        balance_dir: config.game.balance_dir.clone(),
+        rules: config.rules.clone(),
+    }
+}
+
+/// Starts the terminal console and the admin panel, as configured.
+async fn start_admin(
+    cfg: &vertix_reconstruction::config::Admin,
+    game: &mpsc::UnboundedSender<vertix_reconstruction::game::Ask>,
+    log: Option<admin::Log>,
+) -> Result<(), String> {
+    if cfg.stdin {
+        let echo = if cfg.stdin_log { log.clone() } else { None };
+        tokio::spawn(admin::stdin::run(game.clone(), echo));
+    }
+    let (true, Some(log)) = (cfg.enabled, log) else {
+        return Ok(());
+    };
+    let token = if cfg.token.is_empty() {
+        admin::random_token()
+    } else {
+        cfg.token.clone()
+    };
+    let listener = tokio::net::TcpListener::bind((cfg.bind.as_str(), cfg.port))
+        .await
+        .map_err(|e| format!("admin: bind {}:{}: {e}", cfg.bind, cfg.port))?;
+    let addr = listener.local_addr().map_err(|e| e.to_string())?;
+    if !addr.ip().is_loopback() {
+        eprintln!("warning: the admin panel is reachable from other machines on {addr}");
+    }
+    eprintln!("admin panel on http://{addr}/#token={token}");
+    let app = admin::http::router(admin::http::AdminState {
+        game: game.clone(),
+        log,
+        token: token.into(),
+    });
+    tokio::spawn(async move {
+        if let Err(e) = axum::serve(listener, app).await {
+            eprintln!("admin server: {e}");
+        }
+    });
+    Ok(())
+}
+
 async fn run() -> Result<(), String> {
     let args = parse_args()?;
     let config = Config::load(&args.config)?;
@@ -152,14 +210,7 @@ async fn run() -> Result<(), String> {
         );
     }
 
-    let trace_path = args
-        .trace
-        .or_else(|| (!config.trace.is_empty()).then(|| config.trace.clone()));
-    let trace = match trace_path {
-        Some(p) => Trace::to_file(p.as_ref(), &config.trace_brief)
-            .map_err(|e| format!("trace {p}: {e}"))?,
-        None => Trace::disabled(),
-    };
+    let trace = open_trace(args.trace, &config)?;
 
     let (tx, rx) = mpsc::unbounded_channel();
     let (ask_tx, ask_rx) = mpsc::unbounded_channel();
@@ -175,7 +226,11 @@ async fn run() -> Result<(), String> {
     } else {
         None
     };
+    let a = &config.admin;
+    let log = (a.enabled || (a.stdin && a.stdin_log)).then(admin::log_channel);
+    game.set_admin(log.clone(), admin_paths(&config));
     tokio::spawn(game.run(rx, ask_rx, classic_rx));
+    start_admin(a, &ask_tx, log).await?;
     let beat = eio.clone();
     tokio::spawn(async move {
         let mut every = tokio::time::interval(timing.ping_interval);

@@ -91,13 +91,13 @@ class Polling:
 class WebSocket:
     """Just enough of RFC 6455 for text frames."""
 
-    def __init__(self, host: str, port: int, path: str):
+    def __init__(self, host: str, port: int, path: str, extra: str = ""):
         self.sock = socket.create_connection((host, port), timeout=10)
         key = base64.b64encode(os.urandom(16)).decode()
         self.sock.sendall(
             (
                 f"GET {path} HTTP/1.1\r\nHost: {host}:{port}\r\nUpgrade: websocket\r\n"
-                f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+                f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n{extra}\r\n"
             ).encode()
         )
         head = b""
@@ -154,7 +154,7 @@ def gotit(name: str, cls: int) -> str:
     return "42/DEV0," + json.dumps(["gotit", {"name": name, "classIndex": cls}, False, 0, False])
 
 
-def run(host: str, port: int) -> None:
+def run(host: str, port: int) -> tuple[WebSocket, int]:
     base = (host, port)
     status, body = request(base, "/")
     check("serves the client directory", status == 200 and b"stand-in" in body)
@@ -208,6 +208,74 @@ def run(host: str, port: int) -> None:
     check("leaving removes the player", rem[1] == other["index"])
     rooms = json.loads(request(base, "/api/getRooms")[1])
     check("room counts follow", rooms[0]["pl"] == 1, str(rooms))
+    return ws, me
+
+
+def admin(base: tuple[str, int], token: str, line: str, auth: bool = True) -> tuple[int, dict]:
+    conn = http.client.HTTPConnection(*base, timeout=10)
+    try:
+        headers = {"Content-Type": "application/json"}
+        if auth:
+            headers["Authorization"] = f"Bearer {token}"
+        conn.request("POST", "/api/cmd", body=json.dumps({"line": line}), headers=headers)
+        r = conn.getresponse()
+        body = r.read()
+        return r.status, (json.loads(body) if r.status == 200 else {})
+    finally:
+        conn.close()
+
+
+def run_admin(host: str, port: int, token: str, ws: WebSocket, me: int, stdin) -> None:
+    """The admin port and the terminal console, seen from a player."""
+    base = (host, port)
+    status, body = request(base, "/")
+    check("admin panel page is served", status == 200 and b"Server Admin" in body)
+    check("admin API needs the token", admin(base, token, "status", auth=False)[0] == 401)
+    check("admin API refuses a wrong token", admin(base, "nope" + token, "status")[0] == 401)
+    status, r = admin(base, token, "status")
+    check("admin status lists rooms", status == 200 and r["ok"] and len(r["data"]["rooms"]) == 2, str(r)[:200])
+    status, r = admin(base, token, "players")
+    check("admin sees the player", "Alpha" in r.get("text", ""), str(r))
+
+    admin(base, token, "kill Alpha")
+    kill = ws.until("/DEV0", "3")
+    check("kill slays the player", kill[1]["gID"] == me and kill[1]["sS"] == 0, str(kill))
+    admin(base, token, "win none")
+    ws.until("/DEV0", "7")
+    check("win ends the round", True)
+    admin(base, token, "restart")
+    welcome = ws.until("/DEV0", "welcome")
+    check("restart sends players to the menu", welcome[2] is True)
+    _, r = admin(base, token, "@DEV1 mode hp")
+    check("mode changes another room", r.get("ok") and "hp" in r["text"], str(r))
+    _, r = admin(base, token, "frobnicate")
+    check("unknown commands are refused", r.get("ok") is False)
+
+    bad = WebSocket(host, port, f"/ws?token={token}", "Origin: http://elsewhere.test\r\n")
+    check("panel socket refuses other origins", bad.status == 403)
+    pw = WebSocket(host, port, f"/ws?token={token}", f"Origin: http://{host}:{port}\r\n")
+    check("panel socket opens", pw.status == 101)
+    pw.send(json.dumps({"id": 7, "line": "rooms"}))
+    reply = json.loads(pw.recv())
+    check("panel socket answers commands", reply["id"] == 7 and reply["reply"]["ok"], str(reply)[:200])
+
+    stdin.write("say hello from the terminal\n")
+    stdin.flush()
+    cht = ws.until("/DEV0", "cht")
+    check("terminal commands reach players", cht[1] == [-1, "hello from the terminal"], str(cht))
+    seen = None
+    for _ in range(20):
+        m = json.loads(pw.recv())
+        if m["type"] == "log" and m["line"]["kind"] == "chat":
+            seen = m["line"]
+            break
+    check("panel log shows chat", seen is not None and "hello from the terminal" in seen["text"], str(seen))
+
+    admin(base, token, "kick Alpha Bye now")
+    kick = ws.until("/DEV0", "kick")
+    check("kick tells the client why", kick[1] == "Bye now", str(kick))
+    rooms = json.loads(request((host, port - 2), "/api/getRooms")[1])
+    check("kick frees the seat", rooms[0]["pl"] == 0, str(rooms))
 
 
 def main() -> int:
@@ -225,6 +293,7 @@ def main() -> int:
         # The committed config is the one place that names the bind address.
         host = re.search(r'^bind = "([^"]+)"', config, re.M).group(1)
         config = config.replace('sources = ["archive"]', 'sources = ["files"]')
+        config = config.replace("port = 8082", f"port = {args.port + 2}")
         config = config.replace('client_dir = "client/dist"', f"client_dir = {json.dumps(str(client))}")
         start = config.index("rooms = [")
         end = config.index("]\n", config.index("pyro")) + 2
@@ -238,12 +307,17 @@ def main() -> int:
         proc = subprocess.Popen(
             [args.server, "--config", str(cfg), "--port", str(args.port)],
             cwd=ROOT,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             text=True,
         )
         try:
             assert proc.stderr is not None
+            token = ""
             for line in proc.stderr:
+                if "#token=" in line:
+                    token = line.strip().split("#token=")[1]
                 if "listening on" in line:
                     break
                 if proc.poll() is not None:
@@ -252,7 +326,8 @@ def main() -> int:
                 print("server did not start", file=sys.stderr)
                 return 1
             time.sleep(0.1)
-            run(host, args.port)
+            ws, me = run(host, args.port)
+            run_admin(host, args.port + 2, token, ws, me, proc.stdin)
         finally:
             proc.terminate()
             proc.wait(timeout=10)

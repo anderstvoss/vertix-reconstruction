@@ -120,6 +120,16 @@ To let another machine on your network join, change `bind` to your
 machine's network address (do not commit that change) and open the port
 in your firewall.
 
+## Admin panel and console
+
+The server prints `admin panel on http://<bind>:8082/#token=...` when it
+starts. Open that address for a live view of every room with buttons to
+kick, kill, end rounds, change mode and map, and edit rules, plus a
+console for any command. You can also type the same commands straight
+into the server's terminal, for example `status`, `@DEV1 mode hp` or
+`kick Bob`. [ADMIN.md](ADMIN.md) lists them all; `[admin]` in
+`config/server.toml` has the port, token and switches.
+
 ## Checking it
 
 ```bash
@@ -129,7 +139,9 @@ cargo build && python3 scripts/e2e_smoke.py
 starts the server with a stand-in client and the placeholder arena, and
 plays through it over long-polling and WebSocket: room list, joining a
 room, spawning, moving, chat after the WebSocket upgrade, a second player
-and leaving.
+and leaving. It then drives the admin panel's API, its WebSocket and the
+terminal console against that player: kill, round end, restart, mode
+change, chat and kick.
 
 ## Troubleshooting
 

@@ -24,6 +24,24 @@ pub struct Config {
     pub engine_io: EngineIo,
     #[serde(default)]
     pub classic: Classic,
+    #[serde(default)]
+    pub admin: Admin,
+}
+
+/// The admin panel and dev console (`src/admin`).
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct Admin {
+    /// Serve the panel on `bind`:`port`.
+    pub enabled: bool,
+    pub bind: String,
+    pub port: u16,
+    /// The panel's token; empty for a new random one at every start.
+    pub token: String,
+    /// Read commands from the server's standard input.
+    pub stdin: bool,
+    /// Print the admin log (joins, chat, kill feed) to the terminal.
+    pub stdin_log: bool,
 }
 
 /// The archived 2016-08-06 client, served from the archive on its own
@@ -162,5 +180,10 @@ mod tests {
         assert!(c.game.room_specs().iter().all(|r| r.max_players == Some(8)));
         assert_eq!(c.classic.port, 8081);
         assert!(c.classic.manifest.is_file());
+        assert!(c.admin.enabled && c.admin.stdin);
+        assert_eq!(c.admin.port, 8082);
+        assert!(c.admin.token.is_empty());
+        let ip: std::net::IpAddr = c.admin.bind.parse().unwrap();
+        assert!(ip.is_loopback(), "the admin port must default to loopback");
     }
 }

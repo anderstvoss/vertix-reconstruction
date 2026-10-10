@@ -17,7 +17,7 @@ path = "src/main.rs"
 [dependencies]
 # HTTP server for the page, the archived files and Engine.IO long-polling.
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "query", "ws"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "sync", "time", "signal", "fs"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "sync", "time", "signal", "fs", "io-std", "io-util"] }
 # Wire payloads are JSON; config and assumptions are TOML.
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
