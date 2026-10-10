@@ -20,6 +20,9 @@ header h1 { font-size: 16px; margin: 0 8px 0 0; }
 #conn.off { background: #4d1d1d; color: var(--red); }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
 .tabs button.active { background: var(--accent); color: #000; }
+.tabs .x { margin-left: 6px; padding: 0 4px; border-radius: 3px; opacity: .6; }
+.tabs .x:hover { opacity: 1; background: #4d1d1d; color: var(--red); }
+#openBox { display: flex; gap: 4px; align-items: center; }
 main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 40%); gap: 12px; padding: 12px; height: calc(100vh - 50px); }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } }
 section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
@@ -59,7 +62,14 @@ td.acts button { padding: 1px 6px; font-size: 12px; }
   <h1>Server Admin</h1>
   <span id="conn">connecting</span>
   <div class="tabs" id="roomTabs"></div>
-  <div class="tabs"><button id="serverTab">Server</button></div>
+  <div class="tabs">
+    <button id="addRoom" title="Open a new room">+ Room</button>
+    <span id="openBox" class="hidden">
+      <input id="newRoom" placeholder="name" class="num" style="width:90px">
+      <select id="newRoomMode"></select><button id="openRoom">Open</button>
+    </span>
+    <button id="serverTab">Server</button>
+  </div>
 </header>
 
 <section id="auth" class="hidden">
@@ -133,10 +143,6 @@ td.acts button { padding: 1px 6px; font-size: 12px; }
         <div class="row">
           <label>Balance preset</label><select id="balanceSel"></select><button id="balanceBtn">Switch</button>
           <label>2016 client room</label><select id="classicSel"></select><button id="classicBtn">Set</button>
-        </div>
-        <div class="row">
-          <label>Open room</label><input id="newRoom" placeholder="name" class="num" style="width:110px">
-          <select id="newRoomMode"></select><button id="openRoom">Open</button>
         </div>
       </section>
       <section>
@@ -335,7 +341,11 @@ function render() {
   const tabs = state.rooms.map((r) => el("button", {
     class: view === "room" && r.name === room ? "active" : "",
     onclick: () => { room = r.name; view = "room"; modeSynced = null; render(); },
-  }, `${r.name} · ${r.mode} · ${r.players.length}/${r.maxPlayers}`));
+  }, `${r.name} · ${r.mode} · ${r.players.length}/${r.maxPlayers}`,
+  ...(state.rooms.length > 1 ? [el("span", {
+    class: "x", title: `Close ${r.name}`,
+    onclick: (e) => { e.stopPropagation(); closeRoom(r); },
+  }, "×")] : [])));
   $("roomTabs").replaceChildren(...tabs);
   $("serverTab").className = view === "server" ? "active" : "";
   $("roomView").classList.toggle("hidden", view !== "room");
@@ -474,12 +484,42 @@ $("tuneSet").onclick = async () => {
   await reloadCatalog();
 };
 $("classicBtn").onclick = () => act(`classic ${$("classicSel").value}`);
-$("openRoom").onclick = async () => {
+// Opening and closing rooms from the tab bar.
+function nextRoomName() {
+  const taken = new Set(state.rooms.map((r) => r.name.toUpperCase()));
+  for (let i = 0; ; i++) if (!taken.has(`DEV${i}`)) return `DEV${i}`;
+}
+$("addRoom").onclick = () => {
+  const box = $("openBox");
+  box.classList.toggle("hidden");
+  if (!box.classList.contains("hidden")) {
+    $("newRoom").value = nextRoomName();
+    // Default to a mode no open room is playing.
+    const used = new Set(state.rooms.map((r) => r.mode));
+    const free = catalog.modes.find((m) => !used.has(m.code));
+    if (free) $("newRoomMode").value = free.code;
+    $("newRoom").focus();
+  }
+};
+async function openRoom() {
   const n = $("newRoom").value.trim();
   if (!n) return;
-  await act(`open ${n} ${$("newRoomMode").value}`);
-  room = n; view = "room"; render();
-};
+  const r = await send(`open ${n} ${$("newRoomMode").value}`);
+  if (r.ok) { $("openBox").classList.add("hidden"); room = n; view = "room"; }
+  await refresh();
+}
+$("openRoom").onclick = openRoom;
+$("newRoom").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") openRoom();
+  if (e.key === "Escape") $("openBox").classList.add("hidden");
+});
+async function closeRoom(r) {
+  const who = r.players.length ? ` Its ${r.players.length} player(s) will be disconnected.` : "";
+  if (!confirm(`Close ${r.name} (${r.mode})?${who}`)) return;
+  await send(`close ${r.name}`);
+  if (room === r.name) room = null;
+  await refresh();
+}
 $("tokenGo").onclick = () => { token = $("tokenIn").value.trim(); connect(); };
 
 // Console: history, completion and usage hints.

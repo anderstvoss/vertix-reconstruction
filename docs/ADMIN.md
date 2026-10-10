@@ -42,7 +42,10 @@ panel is reachable from other machines.
 ## The panel
 
 - **Room tabs** (one per room, with mode and player count) and a
-  **Server** tab.
+  **Server** tab. **+ Room** opens a new room (the next free `DEVn` name and
+  a mode no room is playing, both changeable); the **×** on a tab closes
+  that room after asking, disconnecting its players. The last room cannot
+  be closed.
 - **Round:** pick a mode and map (or random) and start a new round; restart;
   end the round with red, blue or nobody winning; set team scores and the
   score limit; pause the room's server tick.
@@ -51,8 +54,8 @@ panel is reachable from other machines.
   score, rename and team swap.
 - **Room settings:** player limit, health and speed multipliers, chat and
   announcements from the server.
-- **Server tab:** balance preset, the room the 2016 client joins, opening
-  and closing rooms, and every rule constant, editable in place, with a
+- **Server tab:** balance preset, the room the 2016 client joins, and
+  every rule constant, editable in place, with a
   reload from disk.
 - **Console:** type any command below. `Tab` completes command names, the
   arrow keys recall earlier commands, `clear` empties the log. The log

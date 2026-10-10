@@ -3,6 +3,7 @@
 //!
 //! ```text
 //! vertix-server [--config config/server.toml] [--archive PATH] [--trace FILE] [--port N] [--strict-port]
+//!               [--single] [--room NAME]
 //! vertix-server --explain-rules [--config FILE]
 //! ```
 
@@ -12,7 +13,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::mpsc;
-use vertix_reconstruction::config::{Config, MapSourceKind};
+use vertix_reconstruction::config::{Config, Launch, MapSourceKind};
 use vertix_reconstruction::game::Game;
 use vertix_reconstruction::game::assumptions::Assumptions;
 use vertix_reconstruction::game::data::GameData;
@@ -30,6 +31,8 @@ struct Args {
     port: Option<u16>,
     strict_port: bool,
     explain_rules: bool,
+    single: bool,
+    room: Option<String>,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -40,6 +43,8 @@ fn parse_args() -> Result<Args, String> {
         port: None,
         strict_port: false,
         explain_rules: false,
+        single: false,
+        room: None,
     };
     let mut it = std::env::args().skip(1);
     while let Some(flag) = it.next() {
@@ -53,9 +58,12 @@ fn parse_args() -> Result<Args, String> {
             }
             "--explain-rules" => args.explain_rules = true,
             "--strict-port" => args.strict_port = true,
+            "--single" => args.single = true,
+            "--room" => args.room = Some(value()?),
             "-h" | "--help" => {
                 return Err("usage: vertix-server [--config FILE] [--archive PATH] \
-                     [--trace FILE] [--port N] [--strict-port] [--explain-rules]"
+                     [--trace FILE] [--port N] [--strict-port] [--single] [--room NAME] \
+                     [--explain-rules]"
                     .into());
             }
             other => return Err(format!("unknown argument {other}")),
@@ -201,9 +209,47 @@ fn spawn_heartbeat(eio: Arc<eio::Server>, every: Duration) {
     });
 }
 
+/// Applies `--single` and `--room` over `[game] launch`.
+fn choose_rooms(config: &mut Config, single: bool, room: Option<String>) {
+    if single || room.is_some() {
+        config.game.launch = Launch::Single;
+    }
+    if let Some(r) = room {
+        config.game.single_room = r;
+    }
+}
+
+fn room_list(specs: &[vertix_reconstruction::game::RoomSpec]) -> String {
+    specs
+        .iter()
+        .map(|r| format!("{} ({})", r.name, r.mode))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// Seats the 2016 client in `[classic] room` when that room is open.
+fn classic_room(
+    game: &mut Game,
+    room: &str,
+    specs: &[vertix_reconstruction::game::RoomSpec],
+) -> Result<(), String> {
+    if specs.iter().any(|r| r.name == room) {
+        game.set_classic_room(room)
+    } else {
+        if !room.is_empty() {
+            eprintln!(
+                "2016 client: room {room} is not open, using {}",
+                specs[0].name
+            );
+        }
+        Ok(())
+    }
+}
+
 async fn run() -> Result<(), String> {
-    let args = parse_args()?;
-    let config = Config::load(&args.config)?;
+    let mut args = parse_args()?;
+    let mut config = Config::load(&args.config)?;
+    choose_rooms(&mut config, args.single, args.room.take());
     let (rules, provenance) = Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
     let data = GameData::load(
         &config.game.krp_data,
@@ -245,12 +291,12 @@ async fn run() -> Result<(), String> {
     let (classic_tx, classic_rx) = mpsc::unbounded_channel();
     let timing = config.engine_io.timing();
     let eio = eio::Server::new(timing, tx, trace.clone());
-    let mut game = Game::new(rules, data, maps, &config.game.room_specs(), trace.clone())?;
+    let specs = config.game.room_specs()?;
+    eprintln!("rooms: {}", room_list(&specs));
+    let mut game = Game::new(rules, data, maps, &specs, trace.clone())?;
     let version = server_version(&config)?;
     let classic_app = if config.classic.enabled {
-        if !config.classic.room.is_empty() {
-            game.set_classic_room(&config.classic.room)?;
-        }
+        classic_room(&mut game, &config.classic.room, &specs)?;
         classic_app(&config, archive.as_deref(), classic_tx, &trace, &version)?
     } else {
         None

@@ -365,8 +365,9 @@ def main() -> int:
             ws, me = run(*game)
             run_admin(host, hostport(seen["admin"])[1], seen["token"], ws, me, proc.stdin, game)
 
-            # A second server on the same ports moves up instead of failing.
-            second, seen2 = start(cmd)
+            # A second server on the same ports moves up instead of failing;
+            # this one opens a single room.
+            second, seen2 = start([*cmd, "--room", "DEV1"])
             procs.append(second)
             moved = {seen2.get("krp"), seen2.get("admin")}
             check(
@@ -374,7 +375,10 @@ def main() -> int:
                 "krp" in seen2 and not moved & {seen["krp"], seen["admin"]} and len(moved) == 2,
                 str(seen2),
             )
-            check("and serves on them", request(hostport(seen2["krp"]), "/api/getRooms")[0] == 200)
+            status, body = request(hostport(seen2["krp"]), "/api/getRooms")
+            check("and serves on them", status == 200)
+            names = [r["n"] for r in json.loads(body)]
+            check("--room opens only that room", names == ["DEV1"], str(names))
             strict, seen3 = start([*cmd, "--strict-port"])
             procs.append(strict)
             check("--strict-port fails on a taken port", strict.wait(timeout=20) != 0 and "strict" in seen3["log"])
