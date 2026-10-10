@@ -74,6 +74,11 @@ default). Its players join a KRP room (the first by default) alongside
 KRP's client; the events that changed between the two clients are
 translated in `src/classic/adapt.rs`.
 
+A Rust port of KRP's client lives in `crates/client`. It builds for the
+browser (`scripts/build-rust-client.sh`, served at `/rust/`) and as an
+optional desktop build, and joins the same rooms as the other clients; see
+[crates/client/README.md](crates/client/README.md).
+
 `scripts/e2e_smoke.py` starts the server and plays through it over
 long-polling and WebSocket, with no archive or client build needed.
 

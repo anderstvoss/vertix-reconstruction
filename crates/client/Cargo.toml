@@ -1,0 +1,57 @@
+[package]
+name = "vertix_client"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "AGPL-3.0-only"
+description = "Rust client for the reconstruction: KRP's browser client ported to Rust, built for the browser (WebAssembly) and as a desktop build."
+repository = "https://github.com/anderstvoss/vertix-reconstruction"
+publish = false
+
+[[bin]]
+name = "vertix-client"
+path = "src/main.rs"
+
+[dependencies]
+# Window, input and 2D drawing for both targets. The stock game is silent
+# (KRP turns sound off for its base assets), so audio is left out.
+macroquad = { version = "0.4.16", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+# Sprites come in res.zip, as for KRP's client.
+zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+# The server's own rules, used here for prediction.
+vertix_sim = { path = "../sim" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# Passes strings and buffers to the page's JavaScript (WebSocket, fetch).
+sapp-jsutils = "0.1.7"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# WebSocket for the desktop build; plain ws:// to the reconstruction server.
+tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
+
+[lints.rust]
+# The browser build declares its JavaScript imports (src/platform/web.rs),
+# which needs `unsafe`. Everything else stays forbidden module by module.
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+undocumented_unsafe_blocks = "deny"
+# Ported drawing code converts between f32 (GPU) and f64 (game) constantly.
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_wrap = "allow"
+# The game code follows KRP's JavaScript function by function: its exact
+# float comparisons, flag-heavy objects, long draw routines, many-argument
+# helpers and short coordinate names are kept so the two read side by side.
+float_cmp = "allow"
+struct_excessive_bools = "allow"
+fn_params_excessive_bools = "allow"
+too_many_lines = "allow"
+too_many_arguments = "allow"
+many_single_char_names = "allow"
+struct_field_names = "allow"

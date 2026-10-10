@@ -35,7 +35,7 @@ vertix_sim = { path = "crates/sim" }
 tokio = { version = "1", features = ["test-util"] }
 
 [workspace]
-members = ["crates/sim"]
+members = ["crates/sim", "crates/client"]
 
 [lints]
 workspace = true
