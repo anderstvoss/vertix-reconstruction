@@ -1,6 +1,7 @@
 # Rust build artifacts
 /target
 /target/
+/desktop/krp/target/
 
 # Local environment files
 .env
@@ -67,3 +68,6 @@ __pycache__/
 
 # The KrunkerRevival client checkout and build (scripts/build-client.sh)
 /client/
+
+# Playwright for scripts/ab (npm install --no-save) and comparison runs
+scripts/ab/node_modules/

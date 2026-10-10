@@ -36,6 +36,9 @@ tokio = { version = "1", features = ["test-util"] }
 
 [workspace]
 members = ["crates/sim", "crates/client"]
+# The KRP desktop wrapper needs the system webview's development files on
+# Linux, so it builds on its own (see desktop/krp/README.md).
+exclude = ["desktop/krp"]
 
 [lints]
 workspace = true
