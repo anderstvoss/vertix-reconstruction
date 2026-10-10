@@ -104,6 +104,8 @@ pub struct Player {
     pub hat: Option<Value>,
     pub shirt: Option<Value>,
     pub spray: Value,
+    /// Sprays placed so far; picks the next slot (`sprays_per_player`).
+    pub sprays_made: u32,
     /// Chosen camo per weapon id (`cCamo`, the camo's index; -1 for none).
     /// Kept apart from `weapons`, which every spawn rebuilds.
     pub camos: HashMap<usize, f64>,
@@ -422,6 +424,7 @@ impl Room {
             hat: None,
             shirt: None,
             spray: with_src(&spray),
+            sprays_made: 0,
             camos: HashMap::new(),
             life: 0,
         };
@@ -832,7 +835,17 @@ impl Room {
                 let ang = p.target_f + PI;
                 let x = (p.x + muzzle * ang.cos()).round();
                 let y = (p.y - p.jump_y - y_off / 2.0 + muzzle * ang.sin()).round();
-                self.send(To::All, "crtSpr", vec![json!(index), json!(x), json!(y)]);
+                // The slot this spray takes: a new spray replaces the
+                // player's oldest once they have `sprays_per_player`.
+                let slot = p.sprays_made % rules.sprays_per_player.max(1);
+                if let Some(p) = self.player_mut(index) {
+                    p.sprays_made += 1;
+                }
+                self.send(
+                    To::All,
+                    "crtSpr",
+                    vec![json!(index), json!(x), json!(y), json!(slot)],
+                );
             }
             "ftc" => {
                 // The client asks for a player it has not heard of.

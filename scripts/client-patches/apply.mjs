@@ -136,6 +136,12 @@ const patches = [
 		replace: "window.st = st;\n\n// Sprays the server adds (PNG files in its sprays folder). The saved choice\n// is read now, before the loadout tab clears a spray it does not know yet.\nconst savedSpray = localStorage.getItem(\"prevSpray\");\nfetch(\"/sprays/index.json\")\n\t.then((r) => (r.ok ? r.json() : { sprays: [] }))\n\t.then((d: { sprays: (typeof sprays)[number][] }) => {\n\t\tfor (const spray of d.sprays) {\n\t\t\tif (!st.sprays.some((s) => s.id === spray.id)) st.sprays.push(spray);\n\t\t}\n\t\tif (!st.loadout.spray && savedSpray) {\n\t\t\tst.loadout.spray = st.sprays.find((s) => String(s.id) === savedSpray) ?? null;\n\t\t}\n\t})\n\t.catch(() => {});",
 	},
 	{
+		// Several sprays per player (`sprays_per_player` on the server).
+		file: "core/src/app.tsx",
+		find: "function createSpray(plrIdx: number, x: number, y: number) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find((s) => s.owner === plrIdx);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite;\n\t\timg.owner = plrIdx;",
+		replace: "// `slot` (from this server) lets a player keep several sprays on the map:\n// the server cycles it through `sprays_per_player` slots.\nfunction createSpray(plrIdx: number, x: number, y: number, slot = 0) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find(\n\t\t(s) => s.owner === plrIdx && ((s as Sprite & { slot?: number }).slot ?? 0) === slot,\n\t);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite & { slot?: number };\n\t\timg.slot = slot;\n\t\timg.owner = plrIdx;",
+	},
+	{
 		// The mod tab's link to a Reddit thread of (mostly dead) Dropbox
 		// links now opens this server's list of restored packs.
 		file: "core/src/components/tabs/ModTab.svelte",

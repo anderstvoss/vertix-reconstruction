@@ -982,5 +982,23 @@ fn other_players_see_a_spray_change() {
     assert!(named(&b.send(a, "cSpray", vec![json!(3)]), "add").is_empty());
 }
 
+#[test]
+fn sprays_cycle_through_the_players_slots() {
+    let mut b = Bench::new("ffa");
+    b.rules.rules.sprays_per_player = 3;
+    let a = b.join();
+    b.spawn(a, "a", 1);
+    let slots: Vec<Value> = (0..5)
+        .map(|_| one(&b.send(a, "crtSpr", vec![]), "crtSpr").event.args[3].clone())
+        .collect();
+    assert_eq!(slots, [json!(0), json!(1), json!(2), json!(0), json!(1)]);
+    // KRP's one spray per player: always slot 0.
+    b.rules.rules.sprays_per_player = 1;
+    assert_eq!(
+        one(&b.send(a, "crtSpr", vec![]), "crtSpr").event.args[3],
+        json!(0)
+    );
+}
+
 // The admin console.
 mod admin;

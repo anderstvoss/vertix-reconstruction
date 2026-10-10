@@ -46,6 +46,11 @@ spray's number (`44.png`) replaces that spray's image; any other name
 last one. Nothing else is needed. `/sprays/index.json` lists the added
 sprays, and the patched client shows them in its spray list.
 
+**Sprays per player.** `sprays_per_player` in the rule layers
+(`data/rules/base.toml`, 1 as in KRP) is how many sprays a player can have
+on the map at once; a new spray replaces their oldest. The server numbers
+each spray's slot, and the patched client keeps one spray per slot.
+
 ## Mod packs
 
 A mod pack is a `vertixmod.zip` of replacement sprites, sounds and style
