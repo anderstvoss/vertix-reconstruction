@@ -1,0 +1,2618 @@
+{
+ "source": {
+  "repository": "KrunkerRevivalProject/vertix",
+  "commit": "1e302cbc3015a648aeffb90517ec683ae19ed4df",
+  "files": [
+   "core/src/skins.ts"
+  ],
+  "note": "Converted from KRP's TypeScript by scripts/import_krp.py; do not edit by hand."
+ },
+ "hats": [
+  {
+   "id": 1,
+   "name": "Marvelous Hat",
+   "desc": "A cynical article of clothing if there ever was one.",
+   "chance": 100,
+   "creator": "Sidney",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 2,
+   "name": "Pokers Hat",
+   "desc": "A hat worn by Gamblers and Criminals alike.",
+   "chance": 30,
+   "creator": "Sidney",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 3,
+   "name": "Hunters Headwear",
+   "desc": "Most commonly worn by hunters on the prowl.",
+   "chance": 100,
+   "creator": "Sidney",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 4,
+   "name": "Djiango Headwear",
+   "desc": "A historic artefact. A much more recent one however.",
+   "chance": 30,
+   "creator": "Sidney",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 5,
+   "name": "Nickey Mouse",
+   "desc": "A souvenir from the recently closed Dimsey Land.",
+   "chance": 40,
+   "creator": "HighNoon",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 6,
+   "name": "Officers Hat",
+   "desc": "Standard issue police headwear.",
+   "chance": 90,
+   "creator": "HighNoon",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 7,
+   "name": "Timeless Headwear",
+   "desc": "This headwear is said to bring bless its wearer with Fortune.",
+   "chance": 0.02,
+   "creator": "HighNoon",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 8,
+   "name": "Traffic Cone",
+   "desc": "It wont stop bullets. But at least you look smashing!",
+   "chance": 0.01,
+   "creator": "HighNoon",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 9,
+   "name": "Christmas Hat",
+   "desc": "Merry Christmas.",
+   "chance": 3,
+   "creator": "HighNoon",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 10,
+   "name": "Chefs Hat",
+   "desc": "Only the best chefs earn the right to wear this hat.",
+   "chance": 100,
+   "creator": "HighNoon",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 11,
+   "name": "Pointed Hat",
+   "desc": "An unusual hat from a time long past.",
+   "chance": 10,
+   "creator": "Sidney",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 12,
+   "name": "Teddy Hat",
+   "desc": "No comment.",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 13,
+   "name": "Disco Cut",
+   "desc": "A haircut way ahead of its time.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 14,
+   "name": "Talcat Souvenir",
+   "desc": "A limited edition souvenir. No longer available due to copyright claims by Dimsey Corp.",
+   "chance": 10,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 15,
+   "name": "Tinfoil Hat",
+   "desc": "Worn by members of the Lunar Empire Cult.",
+   "chance": 30,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 16,
+   "name": "Sorting Hat",
+   "desc": "Believed by many to increase a wearers decision making ability.",
+   "chance": 10,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 17,
+   "name": "Homeless Hat",
+   "desc": "Worn by all homeless individuals as required by law.",
+   "chance": 30,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 18,
+   "name": "Straw Hat",
+   "desc": "A cheap hat.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 19,
+   "name": "Zap Hat",
+   "desc": "A legendary Hat.",
+   "chance": 0.1,
+   "creator": "undefined",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 20,
+   "name": "Mughead",
+   "desc": "A souvenir referencing the popular childrens cartoon: Cuphead & Mughead.",
+   "chance": 30,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 21,
+   "name": "USA Hat",
+   "desc": "Vertix has been played over 1 million times in the U.S. Thank you! Here is a hat.",
+   "chance": 60,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 22,
+   "name": "Shroom",
+   "desc": "Not the mario one. Its just a mushroom.",
+   "chance": 0.1,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 23,
+   "name": "Historic Artefact",
+   "desc": "One of several artefacts that went missing during the 'Artefacts of History' exhibition.",
+   "chance": 0.5,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 24,
+   "name": "Cool Cap",
+   "desc": "A cool cap. It becomes even cooler when you rotate it.",
+   "chance": 20,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 25,
+   "name": "Postmans Hat",
+   "desc": "Common hat worn by postmen all around the nation.",
+   "chance": 20,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 26,
+   "name": "Red Headband",
+   "desc": "A headband commonly worn by bikers.",
+   "chance": 20,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 27,
+   "name": "Vape Hat",
+   "desc": "A hat only worn by members of the Vape Nation.",
+   "chance": 30,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 28,
+   "name": "Simple Hat",
+   "desc": "A simple yet oddly familiar hat.",
+   "chance": 30,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 29,
+   "name": "Historic Artefact",
+   "desc": "One of several artefacts that went missing during the 'Artefacts of History' exhibition.",
+   "chance": 0.1,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 30,
+   "name": "Limited Edition",
+   "desc": "A limited edition Dimsey wig. No longer available in stores.",
+   "chance": 0.1,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 31,
+   "name": "Holy Hat",
+   "desc": "The hat of the pope.",
+   "chance": 0.1,
+   "creator": "undefined",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 32,
+   "name": "Angels Dance",
+   "desc": "A hat in memory of Karoline Norgaard Bertelsen.",
+   "chance": 0.1,
+   "creator": "Rons",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 33,
+   "name": "Afghanistan Hat",
+   "desc": "For players from Afghanistan.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 34,
+   "name": "Armenia Hat",
+   "desc": "For players from Armenia.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 35,
+   "name": "Beer Hat",
+   "desc": "You might get Tipsy.",
+   "chance": 20,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 36,
+   "name": "Belgium Flag",
+   "desc": "For players from Belgium.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 37,
+   "name": "Bulgarian Hat",
+   "desc": "For players from Bulgaria.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 38,
+   "name": "Bat Hat",
+   "desc": "Stay out of the light.",
+   "chance": 6,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 39,
+   "name": "Noodle Shop",
+   "desc": "For the ramen lovers.",
+   "chance": 10,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 40,
+   "name": "Colombia Hat",
+   "desc": "For players from Colombia.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 41,
+   "name": "Pan Hat",
+   "desc": "Not peter pan. The other one.",
+   "chance": 5,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 42,
+   "name": "La Crown",
+   "desc": "A crown only for worthy players.",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 43,
+   "name": "Denmark Hat",
+   "desc": "For players from Denmark.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 44,
+   "name": "England Hat",
+   "desc": "For players from England.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 45,
+   "name": "Finland Hat",
+   "desc": "For players from Finland.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 46,
+   "name": "La France",
+   "desc": "For players from France.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 47,
+   "name": "Funnel Hat",
+   "desc": "It's a funnel",
+   "chance": 10,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 48,
+   "name": "Deutschland Hat",
+   "desc": "For players from Germany.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 49,
+   "name": "Giraffe Hat",
+   "desc": "Its a giraffe. Nothing special about it.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 50,
+   "name": "Holland",
+   "desc": "For players from Holland.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 51,
+   "name": "India Hat",
+   "desc": "For players from India.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 52,
+   "name": "Italy Hat",
+   "desc": "For players from Italy.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 53,
+   "name": "Japan Hat",
+   "desc": "For players from Japan.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 54,
+   "name": "Lichtenstein Hat",
+   "desc": "For players from Lichtenstein.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 55,
+   "name": "Long Ears",
+   "desc": "The name already explains what they are...",
+   "chance": 5,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 56,
+   "name": "Madagascar",
+   "desc": "For players from Madagascar.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 57,
+   "name": "Niger Hat",
+   "desc": "For players from Niger.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 58,
+   "name": "Nigeria Hat",
+   "desc": "For players from Nigeria.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 59,
+   "name": "Peru Hat",
+   "desc": "For players from Peru.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 60,
+   "name": "Poland Hat",
+   "desc": "For players from Poland.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 61,
+   "name": "Portugal Hat",
+   "desc": "For players from Portugal.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 62,
+   "name": "Blue Bull Can",
+   "desc": "This hat wont give you wings.",
+   "chance": 30,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 63,
+   "name": "Russia Hat",
+   "desc": "For players from Russia.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 64,
+   "name": "Drowsy Hat",
+   "desc": "Don't fall asleep mid game.",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 65,
+   "name": "Spain Flag",
+   "desc": "For players from Spain.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 66,
+   "name": "Aussie Mate",
+   "desc": "For players from Australia.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 67,
+   "name": "Sweden Flag",
+   "desc": "For players from Sweden.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 68,
+   "name": "Switzerland Hat",
+   "desc": "For players from Switzerland.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 69,
+   "name": "Fez Hat",
+   "desc": "Don't sue me phil.",
+   "chance": 4,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 70,
+   "name": "UAE Hat",
+   "desc": "For players from UAE.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 71,
+   "name": "Ukraine Hat",
+   "desc": "For players from Ukraine.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 72,
+   "name": "Yemen Hat",
+   "desc": "For players from Yemen.",
+   "chance": 100,
+   "creator": "EatMyApples",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 73,
+   "name": "WAGHAT",
+   "desc": "A hat for WorldAtGamesHD.",
+   "chance": 0.1,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 74,
+   "name": "Devil",
+   "desc": "The evilest hat.",
+   "chance": 1,
+   "creator": "Phazex",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 75,
+   "name": "Voxelibre",
+   "desc": "The superior version",
+   "chance": 0,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0,
+   "hide": true
+  },
+  {
+   "id": 76,
+   "name": "Jonkler",
+   "desc": "Why so silly?",
+   "chance": 0,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0,
+   "hide": true
+  },
+  {
+   "id": 77,
+   "name": "Cats",
+   "desc": "Hate that movie",
+   "chance": 0,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0,
+   "hide": true
+  },
+  {
+   "id": 78,
+   "name": "Crown of Legends ",
+   "desc": "maybe?",
+   "chance": 0,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0,
+   "hide": true
+  },
+  {
+   "id": 79,
+   "name": "Brain",
+   "desc": "It wont make you smarter. But you look great!",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 80,
+   "name": "Bucket",
+   "desc": "All Hail Plankton!",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 81,
+   "name": "Cupcake",
+   "desc": "Delicious!",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 82,
+   "name": "Dispenser Hat",
+   "desc": "You dispense things",
+   "chance": 0,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0,
+   "hide": true
+  },
+  {
+   "id": 83,
+   "name": "Donald Trumpster",
+   "desc": "Abolish ICE",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 84,
+   "name": "Hammer Hat",
+   "desc": "A hammer hat. (Germans will get it...)",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 85,
+   "name": "Lighthouse",
+   "desc": "No brain surgeons here.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 86,
+   "name": "Link",
+   "desc": "Headwear of a True Hero!",
+   "chance": 90,
+   "creator": "Unknown",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 87,
+   "name": "Wendigo",
+   "desc": "Horrors within comprehesnion",
+   "chance": 0,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0,
+   "hide": true
+  },
+  {
+   "id": 88,
+   "name": "Plumbers Hat",
+   "desc": "Pap de pupi",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 89,
+   "name": "Midhord",
+   "desc": "Sick horns bruv",
+   "chance": 9,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 90,
+   "name": "Orange",
+   "desc": "Your head has an orange on it dude...",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 91,
+   "name": "Paintbucket",
+   "desc": "Another bucket for your head",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 92,
+   "name": "Pinkey Boo",
+   "desc": "Im not gonna say it...",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 93,
+   "name": "Priesters Hat",
+   "desc": "It kinda looks like a priest right?",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 94,
+   "name": "Sheriff Hat",
+   "desc": "Wow! A Normal looking hat???",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 95,
+   "name": "Stubby",
+   "desc": "Looks pretty good right?",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 96,
+   "name": "Turdhead",
+   "desc": "Yup. We are running out of ideas here...",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 97,
+   "name": "Weight Head",
+   "desc": "Weight What...",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 98,
+   "name": "Batmansk",
+   "desc": "The mask any player deserves.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 99,
+   "name": "Boba Slim",
+   "desc": "If your bounty hunting career doesnt take off, become a rapper.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 100,
+   "name": "Chicken Head",
+   "desc": "Harvested from Free Range Chickens!",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 101,
+   "name": "Trooper Helmet",
+   "desc": "Execute order 69",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 102,
+   "name": "Steve",
+   "desc": "Microsoft dont sue me.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 103,
+   "name": "Deadpool",
+   "desc": "A deadpool Mask.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 104,
+   "name": "Terminator",
+   "desc": "Ill be back.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 105,
+   "name": "Homerino",
+   "desc": "Really dough?",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 106,
+   "name": "Yodu Mask",
+   "desc": "A good mask this is.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 107,
+   "name": "Flash Mask",
+   "desc": "No. It doesnt make you faster.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 108,
+   "name": "Hat Mask",
+   "desc": "Dont get jim carried away with it.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 109,
+   "name": "Finn Hat",
+   "desc": "From that TV show and that one Youtuber who makes videos with Vanoss",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 110,
+   "name": "Sockhead",
+   "desc": "You sock at this.",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 111,
+   "name": "Slimehead",
+   "desc": "Too slime.",
+   "chance": 10,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 112,
+   "name": "Marge",
+   "desc": "Get a haircut m8",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 113,
+   "name": "Cake Hat",
+   "desc": "Get a haircut m8",
+   "chance": 30,
+   "creator": "TheEni45",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 114,
+   "name": "Forester Hat",
+   "desc": "Got wood?",
+   "chance": 30,
+   "creator": "Rexiar",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 115,
+   "name": "Leprechaun Hat",
+   "desc": "It wont make you any luckier...",
+   "chance": 30,
+   "creator": "Rexiar",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 116,
+   "name": "Robber Mask",
+   "desc": "At least you didnt steal this mask",
+   "chance": 80,
+   "creator": "Rexiar",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 117,
+   "name": "Giant Robot",
+   "desc": "I never watched power rangers...",
+   "chance": 5,
+   "creator": "SNI",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 118,
+   "name": "BlueFlame",
+   "desc": "Played too much powdertay aig?",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 119,
+   "name": "Darkness",
+   "desc": "Pure Evil",
+   "chance": 10,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 120,
+   "name": "Flame",
+   "desc": "It will keep you war at night",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 121,
+   "name": "Health Bar",
+   "desc": "An extra health bar?",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 122,
+   "name": "Red Eyes",
+   "desc": "Just a bunch of red eyes",
+   "chance": 80,
+   "creator": "Unknown",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  },
+  {
+   "id": 123,
+   "name": "Siren",
+   "desc": "Wee Woo Wee Woo",
+   "chance": 100,
+   "creator": "Unknown",
+   "left": true,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 124,
+   "name": "Sly",
+   "desc": "Dont really know about this one",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 125,
+   "name": "Tentacle",
+   "desc": "We are all thinking it...",
+   "chance": 20,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 126,
+   "name": "Volume",
+   "desc": "Drop the bass!",
+   "chance": 5,
+   "creator": "Unknown",
+   "left": false,
+   "up": false,
+   "nameY": 0
+  },
+  {
+   "id": 127,
+   "name": "Historic Artefact",
+   "desc": "One of several artefacts that went missing during the 'Artefacts of History' exhibition.",
+   "chance": 25,
+   "creator": "EatMyApples",
+   "left": true,
+   "up": true,
+   "nameY": 0
+  }
+ ],
+ "shirts": [
+  {
+   "id": 1,
+   "name": "Pokeshirt",
+   "desc": "Gotta wear them all.",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 2,
+   "name": "Steves Shirt",
+   "desc": "Microsoft Plis",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 3,
+   "name": "Baseball Shirt",
+   "desc": "Strike One!",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 4,
+   "name": "Bat Shirt",
+   "desc": "You deserve this one",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 5,
+   "name": "Beer Top",
+   "desc": "Dont wear it too long",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 6,
+   "name": "Blue Flame Shirt",
+   "desc": "Supa Hot Faya",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 7,
+   "name": "Bounty Hunter Armor",
+   "desc": "Hey Bobba",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 8,
+   "name": "Bones",
+   "desc": "Are you going trick or treating?",
+   "chance": 30,
+   "left": false,
+   "up": false,
+   "hide": true
+  },
+  {
+   "id": 9,
+   "name": "Booth",
+   "desc": "Its a booth? No idea...",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 10,
+   "name": "Brain Matter",
+   "desc": "Avoid during a zombie outbreak",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 11,
+   "name": "Bucket Top",
+   "desc": "Just as bad as the hat",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 12,
+   "name": "Bug Shirt",
+   "desc": "Really bugs me that I cant think of any puns...",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 13,
+   "name": "Burger Shirt",
+   "desc": "HHHHL",
+   "chance": 30,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 14,
+   "name": "Captains Jacket",
+   "desc": "I like Boats",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 15,
+   "name": "Cat Shirt",
+   "desc": "A shirt with a cat on it",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 16,
+   "name": "Chicken Body",
+   "desc": "Quack quack?",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 17,
+   "name": "Clone Armor",
+   "desc": "Decreased accuracy. For real",
+   "chance": 90,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 18,
+   "name": "Pan Shirt",
+   "desc": "Frying Pan?",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 19,
+   "name": "Champions Top",
+   "desc": "Only For a true Champion!",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 20,
+   "name": "Cupcake Top",
+   "desc": "Yummy!",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 21,
+   "name": "Top Gear",
+   "desc": "HIGHNOON YOU BLITHERING IDIOT",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 22,
+   "name": "Darkness Suit",
+   "desc": "Thats evil!",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 23,
+   "name": "Deadpool Top",
+   "desc": "Deadpools handerrafted top",
+   "chance": 40,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 24,
+   "name": "Dispenser Shirt",
+   "desc": "You dispense things",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 25,
+   "name": "Execution Shirt",
+   "desc": "Perfect for Weddings",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 26,
+   "name": "Flame Shirt",
+   "desc": "I spit that!",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 27,
+   "name": "Funnel Body",
+   "desc": "Yeah we are really running out of ideas",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 28,
+   "name": "Giraffe Top",
+   "desc": "Gives you Neck Length +10",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 29,
+   "name": "Half Robot",
+   "desc": "Beep Boop",
+   "chance": 15,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 30,
+   "name": "Halo Top",
+   "desc": "Microsoft Plis",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 31,
+   "name": "Hammer Shirt",
+   "desc": "Germans will think its great",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 32,
+   "name": "HP Shirt",
+   "desc": "Health Bar Shirt",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 33,
+   "name": "Homers Tummy",
+   "desc": "Doughhhhh",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 34,
+   "name": "Trumps Body",
+   "desc": "Abolish ICE",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 35,
+   "name": "Acid Shirt",
+   "desc": "Dont hurt yourself",
+   "chance": 30,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 36,
+   "name": "Apple Shirt",
+   "desc": "Great minds think different",
+   "chance": 50,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 37,
+   "name": "Aqua Shirtis",
+   "desc": "Aqua vitalis",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 38,
+   "name": "Artificial",
+   "desc": "It aint real",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 39,
+   "name": "Autumn Shirt",
+   "desc": "Its that time of year",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 40,
+   "name": "Avatar Shirt",
+   "desc": "Not that one. The other one",
+   "chance": 60,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 41,
+   "name": "B Shirt",
+   "desc": "From the popular B Movie",
+   "chance": 20,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 42,
+   "name": "Baby Shirt",
+   "desc": "Waaaceeee",
+   "chance": 99,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 43,
+   "name": "Baning Shirt",
+   "desc": "Ban this Shirt",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 44,
+   "name": "FCB Shirt",
+   "desc": "Fc Bacel!!!",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 45,
+   "name": "Battle Shirt",
+   "desc": "To arms men!",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 46,
+   "name": "Beam Shirt",
+   "desc": "Beam me up before you go go",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 47,
+   "name": "Betting Shirt",
+   "desc": "Casino Royale was ok",
+   "chance": 25,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 48,
+   "name": "Blanket",
+   "desc": "This will keep you warm",
+   "chance": 45,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 49,
+   "name": "Bling Shirt",
+   "desc": "Looks Fresh my dude",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 50,
+   "name": "Brace Shirt",
+   "desc": "Caution",
+   "chance": 10,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 51,
+   "name": "Brushed Shirt",
+   "desc": "Looks like my car",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 52,
+   "name": "Bull Shirt",
+   "desc": "Still no wings?",
+   "chance": 40,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 53,
+   "name": "Bullez Shirt",
+   "desc": "This is the cheap version",
+   "chance": 60,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 54,
+   "name": "Burned",
+   "desc": "You are hawt",
+   "chance": 1,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 55,
+   "name": "C Shirt",
+   "desc": "C shirt",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 56,
+   "name": "Christmas Shirt",
+   "desc": "Merry CHRISTmas",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 57,
+   "name": "Metal Top",
+   "desc": "Turns you into a cybork",
+   "chance": 15,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 58,
+   "name": "Jacket",
+   "desc": "Just a normal jacket",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 59,
+   "name": "Jailhouse",
+   "desc": "Imprisoned",
+   "chance": 20,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 60,
+   "name": "Lamp Shirt",
+   "desc": "Nice and bright",
+   "chance": 20,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 61,
+   "name": "Lighthouse",
+   "desc": "Which would be worse...?",
+   "chance": 30,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 62,
+   "name": "Link Shirt",
+   "desc": "Zelda is a girl bro...",
+   "chance": 20,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 63,
+   "name": "Key Shirt",
+   "desc": "Locked up",
+   "chance": 30,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 64,
+   "name": "Marius Shirt",
+   "desc": "From the popular Marius the plumb",
+   "chance": 40,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 65,
+   "name": "Orange Shirt",
+   "desc": "Annoying isnt it?",
+   "chance": 90,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 66,
+   "name": "Outcast Shirt",
+   "desc": "Not the band",
+   "chance": 50,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 67,
+   "name": "Paint Shirt",
+   "desc": "Do you have the bucket?",
+   "chance": 60,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 68,
+   "name": "Pink Shirt",
+   "desc": "Hey Boss?",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 69,
+   "name": "Phins Shirt",
+   "desc": "Algebruv?",
+   "chance": 50,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 70,
+   "name": "Golden Shirt",
+   "desc": "Pure Gold",
+   "chance": 1,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 71,
+   "name": "Rebel Shirt",
+   "desc": "Better aim (Not really)",
+   "chance": 80,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 72,
+   "name": "Stew Shirt",
+   "desc": "What the duce?",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 73,
+   "name": "Stubby Shirt",
+   "desc": "No idea...",
+   "chance": 40,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 74,
+   "name": "Swiss Shirt",
+   "desc": "BEST SHIRT IN THE GAME?!?!",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 75,
+   "name": "Teddy Shirt",
+   "desc": "Please no Ted 3",
+   "chance": 100,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 76,
+   "name": "Turd Shirt",
+   "desc": "Eatpoop.io",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 77,
+   "name": "Ultra Armor",
+   "desc": "Super Sick",
+   "chance": 1,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 78,
+   "name": "V Shirt",
+   "desc": "V shirt",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 79,
+   "name": "Volume Shirt",
+   "desc": "Still no sound??",
+   "chance": 10,
+   "left": true,
+   "up": true
+  },
+  {
+   "id": 80,
+   "name": "Winter Shirt",
+   "desc": "Cool....",
+   "chance": 100,
+   "count": 0,
+   "left": true,
+   "up": true
+  }
+ ],
+ "camos": [
+  {
+   "id": 1,
+   "name": "Art of War",
+   "chance": 1
+  },
+  {
+   "id": 2,
+   "name": "Autumn",
+   "chance": 25
+  },
+  {
+   "id": 3,
+   "name": "Blitz",
+   "chance": 4
+  },
+  {
+   "id": 4,
+   "name": "Bloodshot",
+   "chance": 6
+  },
+  {
+   "id": 5,
+   "name": "Carbon",
+   "chance": 10
+  },
+  {
+   "id": 6,
+   "name": "Caustic",
+   "chance": 8
+  },
+  {
+   "id": 7,
+   "name": "Circuit",
+   "chance": 4
+  },
+  {
+   "id": 8,
+   "name": "Desert",
+   "chance": 80
+  },
+  {
+   "id": 9,
+   "name": "Digital",
+   "chance": 40
+  },
+  {
+   "id": 10,
+   "name": "DNA",
+   "chance": 5
+  },
+  {
+   "id": 11,
+   "name": "Glow",
+   "chance": 6
+  },
+  {
+   "id": 12,
+   "name": "Gold",
+   "chance": 1
+  },
+  {
+   "id": 13,
+   "name": "Ice",
+   "chance": 9
+  },
+  {
+   "id": 14,
+   "name": "Inferno",
+   "chance": 90
+  },
+  {
+   "id": 15,
+   "name": "Lava",
+   "chance": 7
+  },
+  {
+   "id": 16,
+   "name": "Leopard",
+   "chance": 100
+  },
+  {
+   "id": 17,
+   "name": "Lightning",
+   "chance": 3
+  },
+  {
+   "id": 18,
+   "name": "Monster",
+   "chance": 10
+  },
+  {
+   "id": 19,
+   "name": "Moonshine",
+   "chance": 100
+  },
+  {
+   "id": 20,
+   "name": "Navy",
+   "chance": 100
+  },
+  {
+   "id": 21,
+   "name": "Net",
+   "chance": 100
+  },
+  {
+   "id": 22,
+   "name": "Panther",
+   "chance": 90
+  },
+  {
+   "id": 23,
+   "name": "Rainbow",
+   "chance": 40
+  },
+  {
+   "id": 24,
+   "name": "Rogue",
+   "chance": 60
+  },
+  {
+   "id": 25,
+   "name": "Rust",
+   "chance": 80
+  },
+  {
+   "id": 26,
+   "name": "Scale",
+   "chance": 80
+  },
+  {
+   "id": 27,
+   "name": "Snow",
+   "chance": 100
+  },
+  {
+   "id": 28,
+   "name": "Splinter",
+   "chance": 70
+  },
+  {
+   "id": 29,
+   "name": "Stingray",
+   "chance": 25
+  },
+  {
+   "id": 30,
+   "name": "Torn",
+   "chance": 0.1
+  },
+  {
+   "id": 31,
+   "name": "Urban",
+   "chance": 15
+  },
+  {
+   "id": 32,
+   "name": "Woodland",
+   "chance": 100
+  },
+  {
+   "id": 33,
+   "name": "X-Ray",
+   "chance": 5
+  },
+  {
+   "id": 34,
+   "name": "Black Ops",
+   "chance": 60
+  },
+  {
+   "id": 35,
+   "name": "Apples",
+   "chance": 0.1
+  },
+  {
+   "id": 36,
+   "name": "Breach",
+   "chance": 9
+  },
+  {
+   "id": 37,
+   "name": "Chain",
+   "chance": 60
+  },
+  {
+   "id": 38,
+   "name": "Chess",
+   "chance": 0.1
+  },
+  {
+   "id": 39,
+   "name": "Christmas",
+   "chance": 9
+  },
+  {
+   "id": 40,
+   "name": "Zombie",
+   "chance": 100
+  },
+  {
+   "id": 41,
+   "name": "Drift",
+   "chance": 40
+  },
+  {
+   "id": 42,
+   "name": "Ducks",
+   "chance": 0,
+   "hide": true
+  },
+  {
+   "id": 43,
+   "name": "Flank",
+   "chance": 100
+  },
+  {
+   "id": 44,
+   "name": "Hazmat",
+   "chance": 100
+  },
+  {
+   "id": 45,
+   "name": "Intensity",
+   "chance": 5
+  },
+  {
+   "id": 46,
+   "name": "Cash Money",
+   "chance": 100
+  },
+  {
+   "id": 47,
+   "name": "Police",
+   "chance": 100
+  },
+  {
+   "id": 48,
+   "name": "Pop",
+   "chance": 90
+  },
+  {
+   "id": 49,
+   "name": "Taxi",
+   "chance": 100
+  },
+  {
+   "id": 50,
+   "name": "Tiger",
+   "chance": 100
+  },
+  {
+   "id": 51,
+   "name": "Adaptive",
+   "chance": 9
+  },
+  {
+   "id": 52,
+   "name": "Neon",
+   "chance": 15
+  },
+  {
+   "id": 53,
+   "name": "Dirt",
+   "chance": 100
+  },
+  {
+   "id": 54,
+   "name": "Webbing",
+   "chance": 100
+  },
+  {
+   "id": 55,
+   "name": "Aqua",
+   "chance": 100
+  },
+  {
+   "id": 56,
+   "name": "Bacon",
+   "chance": 100
+  },
+  {
+   "id": 57,
+   "name": "Barb Wire",
+   "chance": 100
+  },
+  {
+   "id": 58,
+   "name": "Battle Camo",
+   "chance": 100
+  },
+  {
+   "id": 59,
+   "name": "Blingeringo",
+   "chance": 30
+  },
+  {
+   "id": 60,
+   "name": "Brick",
+   "chance": 100
+  },
+  {
+   "id": 61,
+   "name": "Caliber",
+   "chance": 100
+  },
+  {
+   "id": 62,
+   "name": "Champion",
+   "chance": 9
+  },
+  {
+   "id": 63,
+   "name": "Curl",
+   "chance": 100
+  },
+  {
+   "id": 64,
+   "name": "Dragon",
+   "chance": 40
+  },
+  {
+   "id": 65,
+   "name": "Dust",
+   "chance": 100
+  },
+  {
+   "id": 66,
+   "name": "Eclipse",
+   "chance": 100
+  },
+  {
+   "id": 67,
+   "name": "Emerald",
+   "chance": 80
+  },
+  {
+   "id": 68,
+   "name": "Flopper",
+   "chance": 100
+  },
+  {
+   "id": 69,
+   "name": "Missing",
+   "chance": 100
+  },
+  {
+   "id": 70,
+   "name": "Octopus",
+   "chance": 100
+  },
+  {
+   "id": 71,
+   "name": "Paradox",
+   "chance": 100
+  },
+  {
+   "id": 72,
+   "name": "Piano",
+   "chance": 100
+  },
+  {
+   "id": 73,
+   "name": "Portal",
+   "chance": 100
+  },
+  {
+   "id": 74,
+   "name": "Skulls",
+   "chance": 22
+  },
+  {
+   "id": 75,
+   "name": "Takenout",
+   "chance": 100
+  },
+  {
+   "id": 76,
+   "name": "Versa",
+   "chance": 100
+  },
+  {
+   "id": 77,
+   "name": "Herb",
+   "chance": 100
+  },
+  {
+   "id": 78,
+   "name": "Joker",
+   "chance": 100
+  },
+  {
+   "id": 79,
+   "name": "Jungle",
+   "chance": 100
+  },
+  {
+   "id": 80,
+   "name": "Abstract",
+   "chance": 80
+  },
+  {
+   "id": 81,
+   "name": "Avatar",
+   "chance": 50
+  },
+  {
+   "id": 82,
+   "name": "Baning",
+   "chance": 100
+  },
+  {
+   "id": 83,
+   "name": "Beam",
+   "chance": 100
+  },
+  {
+   "id": 84,
+   "name": "Betting",
+   "chance": 100
+  },
+  {
+   "id": 85,
+   "name": "Blanket",
+   "chance": 100
+  },
+  {
+   "id": 86,
+   "name": "Brace",
+   "chance": 100
+  },
+  {
+   "id": 87,
+   "name": "Bulletz",
+   "chance": 100
+  },
+  {
+   "id": 89,
+   "name": "Busters",
+   "chance": 100
+  },
+  {
+   "id": 90,
+   "name": "Coutch",
+   "chance": 100
+  },
+  {
+   "id": 91,
+   "name": "Crimson",
+   "chance": 100
+  },
+  {
+   "id": 92,
+   "name": "Crumble",
+   "chance": 100
+  },
+  {
+   "id": 93,
+   "name": "Dash",
+   "chance": 100
+  },
+  {
+   "id": 94,
+   "name": "Daybreak",
+   "chance": 100
+  },
+  {
+   "id": 95,
+   "name": "Execution",
+   "chance": 40
+  },
+  {
+   "id": 96,
+   "name": "Finding",
+   "chance": 100
+  },
+  {
+   "id": 97,
+   "name": "Flat",
+   "chance": 100
+  },
+  {
+   "id": 98,
+   "name": "Fries",
+   "chance": 40
+  },
+  {
+   "id": 99,
+   "name": "Fright",
+   "chance": 100
+  },
+  {
+   "id": 100,
+   "name": "Future",
+   "chance": 100
+  },
+  {
+   "id": 101,
+   "name": "Go",
+   "chance": 100
+  },
+  {
+   "id": 102,
+   "name": "Herringbone",
+   "chance": 100
+  },
+  {
+   "id": 103,
+   "name": "Hydro",
+   "chance": 10
+  },
+  {
+   "id": 104,
+   "name": "Insane",
+   "chance": 100
+  },
+  {
+   "id": 105,
+   "name": "Kite",
+   "chance": 100
+  },
+  {
+   "id": 106,
+   "name": "Lore",
+   "chance": 100
+  },
+  {
+   "id": 107,
+   "name": "Mime",
+   "chance": 100
+  },
+  {
+   "id": 108,
+   "name": "Neon",
+   "chance": 100
+  },
+  {
+   "id": 109,
+   "name": "Pede",
+   "chance": 100
+  },
+  {
+   "id": 110,
+   "name": "Pika",
+   "chance": 100
+  },
+  {
+   "id": 111,
+   "name": "Poison",
+   "chance": 100
+  },
+  {
+   "id": 112,
+   "name": "Present",
+   "chance": 100
+  },
+  {
+   "id": 113,
+   "name": "Rainen",
+   "chance": 100
+  },
+  {
+   "id": 114,
+   "name": "Redstone",
+   "chance": 100
+  },
+  {
+   "id": 115,
+   "name": "Robbing",
+   "chance": 100
+  },
+  {
+   "id": 116,
+   "name": "Roulette",
+   "chance": 100
+  },
+  {
+   "id": 117,
+   "name": "Shark",
+   "chance": 100
+  },
+  {
+   "id": 118,
+   "name": "Slob",
+   "chance": 100
+  },
+  {
+   "id": 119,
+   "name": "Spank",
+   "chance": 100
+  },
+  {
+   "id": 120,
+   "name": "Spek",
+   "chance": 100
+  },
+  {
+   "id": 121,
+   "name": "Spike",
+   "chance": 100
+  },
+  {
+   "id": 122,
+   "name": "Splat",
+   "chance": 100
+  },
+  {
+   "id": 123,
+   "name": "Stuck",
+   "chance": 100
+  },
+  {
+   "id": 124,
+   "name": "Stunning",
+   "chance": 100
+  },
+  {
+   "id": 125,
+   "name": "Swiss",
+   "chance": 100
+  },
+  {
+   "id": 125,
+   "name": "Tarment",
+   "chance": 100
+  },
+  {
+   "id": 126,
+   "name": "Track",
+   "chance": 100
+  },
+  {
+   "id": 127,
+   "name": "Unknown",
+   "chance": 0,
+   "hide": true
+  },
+  {
+   "id": 128,
+   "name": "Castle",
+   "chance": 100
+  },
+  {
+   "id": 129,
+   "name": "Ultra",
+   "chance": 10
+  },
+  {
+   "id": 130,
+   "name": "Wood",
+   "chance": 100
+  },
+  {
+   "id": 131,
+   "name": "Flute",
+   "chance": 10
+  },
+  {
+   "id": 132,
+   "name": "Pleck",
+   "chance": 10
+  },
+  {
+   "id": 133,
+   "name": "Faded",
+   "chance": 10
+  }
+ ]
+}

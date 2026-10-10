@@ -1,0 +1,49 @@
+# Base rule layer: server settings and game constants, PROVISIONAL.
+#
+# Class and weapon numbers are not here: they come from KRP's loadouts
+# (data/krp/) with a balance preset on top (data/balance/). This layer holds
+# what KRP's server hard-codes, so each constant can be corrected by a later
+# layer with its own source. See src/game/assumptions.rs for the format.
+#
+# Units follow the client: distances in world pixels, speeds in pixels per
+# millisecond, times in milliseconds.
+
+[layer]
+status = "PROVISIONAL"
+source = "KrunkerRevivalProject/vertix 1e302cb (server/room.ts, server/game.ts)"
+
+[world]
+tile_scale = 256
+max_screen_width = 1920
+max_screen_height = 1080
+view_mult = 1
+
+[net]
+status = "ASSUMED"
+source = "our choice: KRP advances each bullet on the shooter's frame delta; we use one fixed server tick"
+update_hz = 60
+
+[rules]
+max_players = 8
+spawn_protection_ms = 2000
+explosive_clutter_hit_damage = 100
+explosive_clutter_blast_radius = 200
+# KRP marks both Duck values "// ?".
+duck_hit_damage = 330
+duck_hit_radius = 240
+lootcrate_points = 100
+max_active_loot = 3
+loot_interval_ms = 5000
+hardpoint_points = 10
+hardpoint_interval_ms = 1000
+zone_war_points = 100
+healthpack_heal = 100
+healthpack_respawn_ms = 15000
+boss_kill_score = 2000
+kill_streak_window_ms = 2500
+round_end_countdown_s = 15
+bullet_pool = 100
+# Our own input limits; KRP's server does not check them (its README lists
+# input validation as a to-do). The client caps chat at 50 and names at 25.
+chat_max_len = 50
+name_max_len = 25

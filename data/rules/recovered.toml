@@ -1,0 +1,13 @@
+# Recovered rule layer: values read from first-party clients.
+#
+# Overrides the base layer value by value. Class and weapon numbers with
+# dated evidence live in the balance presets (data/balance/) instead.
+
+[layer]
+status = "RECOVERED"
+source = "app.js 2016-08-06 and the 2019-07-21 client: maxScreenWidth 1920, maxScreenHeight 1080, viewMult 1"
+
+[world]
+max_screen_width = 1920
+max_screen_height = 1080
+view_mult = 1

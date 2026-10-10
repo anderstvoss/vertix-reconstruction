@@ -1,9 +1,10 @@
 ; Placeholder arena, our own layout: no original Vertix.io map survives.
-; One character per map pixel: # wall, . floor, g and y floor variants.
+; One character per map pixel: # wall, . floor, g and y floor variants,
+; r and b red and blue spawn cells.
 ; The outer two rings are border, as in the client's map format.
 ######################
 ######################
-##..................##
+##r................b##
 ##..................##
 ##...###......###...##
 ##...#..........#...##
@@ -16,6 +17,6 @@
 ##...#..........#...##
 ##...###......###...##
 ##..................##
-##..................##
+##r................b##
 ######################
 ######################

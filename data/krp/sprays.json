@@ -1,0 +1,759 @@
+{
+ "source": {
+  "repository": "KrunkerRevivalProject/vertix",
+  "commit": "1e302cbc3015a648aeffb90517ec683ae19ed4df",
+  "files": [
+   "core/src/sprays.ts"
+  ],
+  "note": "Converted from KRP's TypeScript by scripts/import_krp.py; do not edit by hand."
+ },
+ "sprays": [
+  {
+   "id": 1,
+   "name": "Strike",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 2,
+   "name": "Schweiz",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 3,
+   "name": "Deutschland",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 4,
+   "name": "Brasil",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 5,
+   "name": "USA",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 6,
+   "name": "Argentina",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 7,
+   "name": "Polska",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 8,
+   "name": "Россия",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 9,
+   "name": "Australia",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 10,
+   "name": "Medpack",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 11,
+   "name": "इंडिया (India)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 12,
+   "name": "中國 (China)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 13,
+   "name": "日本 (Japan)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 14,
+   "name": "대한민국 (Korea)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 15,
+   "name": "Україна (Ukraine)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 16,
+   "name": "Fc Basel",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 17,
+   "name": "Türkiye",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 18,
+   "name": "Danmark",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 19,
+   "name": "la France",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 20,
+   "name": "коммунист",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 21,
+   "name": "Pebe the Toad",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 22,
+   "name": "ประเทศไทย (Thailand)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 23,
+   "name": "venezolano",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 24,
+   "name": "WAGHD",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 25,
+   "name": "MASTER GAMING",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 26,
+   "name": "AwkwardGuyGamer",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 27,
+   "name": "Pyro Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 28,
+   "name": "Carl Ho",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 29,
+   "name": "W++ Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 30,
+   "name": "Mr. Fruit",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 31,
+   "name": "DMG Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 32,
+   "name": "Bodil40",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 33,
+   "name": "Dank Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 34,
+   "name": "everynightxRIOT",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 35,
+   "name": "Piggie",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 36,
+   "name": "Heart",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 37,
+   "name": "Skullz",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 38,
+   "name": "MARS Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 39,
+   "name": "WIND Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 40,
+   "name": "MOTO Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 41,
+   "name": "Verge Radio",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 42,
+   "name": "TEAM Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 43,
+   "name": "XRAY Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 44,
+   "name": "Dawe",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 45,
+   "name": "General Mudkip",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 46,
+   "name": "Hush",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 47,
+   "name": "Fabz",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 48,
+   "name": "On my way",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 49,
+   "name": "S8N",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 50,
+   "name": "1337 Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 51,
+   "name": "Starzzz",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 52,
+   "name": "Fluffylion",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 53,
+   "name": "ANI",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 54,
+   "name": "ROEL",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 55,
+   "name": "AWSM",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 56,
+   "name": "HighNoon643",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 57,
+   "name": "Starzzz",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 58,
+   "name": "Master Ptato",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 59,
+   "name": "FlowOcTo",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 60,
+   "name": "The Warm",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 61,
+   "name": "Katniss",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 62,
+   "name": "Antech",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 63,
+   "name": "Arceus",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 64,
+   "name": "Hail Satan",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 65,
+   "name": "Dawe (new)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 66,
+   "name": "Meatman",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 67,
+   "name": "MindfulSpoon",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 68,
+   "name": "Sharp",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 69,
+   "name": "TJ Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 70,
+   "name": "Awake",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 71,
+   "name": "WINX Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 72,
+   "name": "RCX Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 73,
+   "name": "TACOS FOR YOU",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 74,
+   "name": "StormStripe",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 75,
+   "name": "Not a Troll",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 76,
+   "name": "S8N New",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 77,
+   "name": "Haramey",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 78,
+   "name": "BOT! Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 79,
+   "name": "Awake (new)",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 80,
+   "name": "jbernz18",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 81,
+   "name": "Mau Clan Spray",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 82,
+   "name": "CustomVan",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 30
+   }
+  },
+  {
+   "id": 83,
+   "name": "Italia",
+   "info": {
+    "scale": 64,
+    "alpha": 1,
+    "resolution": 40
+   }
+  }
+ ]
+}
