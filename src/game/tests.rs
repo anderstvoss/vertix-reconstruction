@@ -955,5 +955,32 @@ fn weapon_camos_survive_spawning_and_class_changes() {
     assert_eq!(camo_of(&b, shared), json!(-1.0));
 }
 
+#[test]
+fn other_players_see_a_spray_change() {
+    let mut b = Bench::new("ffa");
+    // A spray added from the sprays folder.
+    b.data.cosmetics.sprays.push(
+        json!({"id": 84, "name": "Added", "info": {"scale": 64, "alpha": 1, "resolution": 30}}),
+    );
+    let (a, c) = (b.join(), b.join());
+    b.spawn(c, "c", 1);
+    let spray_in = |out: &[Out]| -> Value {
+        let add = one(out, "add");
+        let s: Value = serde_json::from_str(add.event.args[0].as_str().unwrap()).unwrap();
+        s["spray"].clone()
+    };
+    // Chosen before spawning: the spawn announces it.
+    b.send(a, "cSpray", vec![json!(84)]);
+    let out = b.spawn(a, "a", 1);
+    assert_eq!(spray_in(&out)["src"], json!("/assets/sprays/84.png"));
+    // Changed while alive: everyone hears it at once, not at the next spawn.
+    let out = b.send(a, "cSpray", vec![json!(2)]);
+    assert!(matches!(one(&out, "add").to, To::All));
+    assert_eq!(spray_in(&out)["id"], json!(2));
+    // While dead nothing is sent; the next spawn carries it.
+    b.p_mut(a).dead = true;
+    assert!(named(&b.send(a, "cSpray", vec![json!(3)]), "add").is_empty());
+}
+
 // The admin console.
 mod admin;

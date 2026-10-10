@@ -294,14 +294,16 @@ async fn run() -> Result<(), String> {
     start_admin(a, &ask_tx, log, &mut ports).await?;
     spawn_heartbeat(eio.clone(), timing.ping_interval);
 
-    let app = content::router(Arc::new(restored)).merge(http::router(http::AppState {
+    let restored = Arc::new(restored);
+    let app = content::router(restored.clone()).merge(http::router(http::AppState {
         client_dir: Arc::new(config.client_dir.clone()),
         eio,
         game: ask_tx,
         trace,
         version,
     }));
-    if let Some(app) = classic_app {
+    // The 2016 client loads hats, camos and sprays too.
+    if let Some(app) = classic_app.map(|a| content::router(restored).merge(a)) {
         let listener = ports
             .bind(&config.bind, "classic", config.classic.port)
             .await?;

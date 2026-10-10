@@ -694,6 +694,15 @@ impl Room {
                     && let Some(p) = self.player_mut(index)
                 {
                     p.spray = s;
+                    // Others only hear a player's spray in `add`, sent on
+                    // spawning: resend it now, or they would draw the old
+                    // spray until the next spawn (KRP did not).
+                    if !p.dead
+                        && let Some(p) = self.player(index)
+                    {
+                        let add = self.player_json(p).to_string();
+                        self.send(To::All, "add", vec![json!(add)]);
+                    }
                 }
             }
             "gotit" => self.on_gotit(data, rules, index, a, now),

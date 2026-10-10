@@ -38,6 +38,7 @@ the translation is INFERRED to be what its server did.
 | `like` | Names the target only | Names liker and target | The sender is the liker. |
 | `1` hit | `amount`, `bi`, `h` | `healthDelta`, `bulletIndex`, `health` | Renamed. |
 | `upd` | `sp` a number, `l` a count | `sp` a bool, `l` a list | Converted. |
+| Cosmetics | Loaded from its own server | Hats, camos and sprays (restored and added) are served on the 2016 port too | Without them the 2016 client showed none past the 18 files of its build. |
 | `ts` | Bar widths in percent, or the score limit in free for all | Raw scores | Computed from the room's scores and the mode's limit. |
 | `7` round end | Also carries the player list | No player list | The room's players are added. |
 | `tprt` | `scor`, `oldX`, `oldY` | `score`, no old position | Renamed; the old position repeats the new one. |
@@ -65,6 +66,7 @@ the translation is INFERRED to be what its server did.
 | `/api/getIP` | Names a fixed host and port | Answers with the host and port the request used | The client connects to its own origin either way. |
 | Boss class | Selectable like any class | Reserved for the boss in Boss mode even when a balance version hides it | The boss must spawn as the boss. |
 | Cosmetic art | Its fan-repository copies of every hat, shirt, camo and spray | First-party copies from the archive where they exist (`data/content/cosmetics.json`), KRP's for the rest | Recovered assets override KRP's (Anders, 2026-10-09). Sprays 1 to 43 keep their 2016 sizes instead of KRP's 30 px re-sizes. |
+| Spray changes | A spray picked while alive reaches other players only in the `add` sent at the next spawn, so they keep drawing the old one | The server resends the player to everyone when a living player changes spray | Bug fix (found by Anders, 2026-10-10). |
 | Mod packs | A mod key goes to Dropbox (dead links); a path such as `/mods/x/vertixmod.zip` becomes `http:///mods/...` and fails; no packs shipped | Keys and paths load from this server, which serves 21 community packs from the archive (`/mods/`); a client patch applied at build time (`scripts/client-patches/apply.mjs`) | Mods work offline; the stock game is silent, so packs are the only sound. |
 
 ## Player-expectation changes (not faithful)
