@@ -82,8 +82,11 @@ struct PackSource {
 enum SourceRef {
     Archive {
         archive_path: String,
+        /// A zip member of `archive_path` (the APK's res.zip), if set.
         #[serde(default)]
-        capture: String,
+        member: Option<String>,
+        /// Where the copy came from, for the list.
+        origin: String,
     },
     Bundle {
         bundle: String,
@@ -96,13 +99,21 @@ pub struct Pack {
     pub key: String,
     pub name: String,
     pub aliases: Vec<String>,
-    /// The verified file, read again for each request.
-    pub path: PathBuf,
+    pub data: PackData,
     pub bytes: u64,
     pub sprites: u32,
     pub real_sounds: u32,
     /// Where the copy came from, for the list.
     pub origin: String,
+}
+
+/// Where a pack's verified bytes are.
+#[derive(Debug, Clone)]
+pub enum PackData {
+    /// A large file, read again for each request.
+    File(PathBuf),
+    /// A pack read out of a container (the APK), kept in memory.
+    Memory(Bytes),
 }
 
 /// Everything restored, verified and ready to serve.
@@ -174,37 +185,16 @@ impl Content {
         for entry in m.packs {
             let mut found = None;
             for src in &entry.sources {
-                let (path, origin) = match &src.source {
-                    SourceRef::Archive {
-                        archive_path,
-                        capture,
-                    } => match archive {
-                        Some(root) => (root.join(archive_path), format!("Wayback {capture}")),
-                        None => continue,
-                    },
-                    SourceRef::Bundle { bundle } => (
-                        mods_dir.join(&entry.key).join("vertixmod.zip"),
-                        format!(
-                            "fan repository {}",
-                            bundle.rsplit('/').next().unwrap_or(bundle)
-                        ),
-                    ),
-                };
-                let Ok(bytes) = std::fs::read(&path) else {
+                let Some((data, origin)) =
+                    pack_source(&src.source, &src.sha256, &entry.key, mods_dir, archive)?
+                else {
                     continue;
                 };
-                if sha256_of(&bytes) != src.sha256 {
-                    return Err(format!(
-                        "mod pack {}: {} does not match its hash",
-                        entry.key,
-                        path.display()
-                    ));
-                }
                 found = Some(Pack {
                     key: entry.key.clone(),
                     name: entry.name.clone(),
                     aliases: entry.aliases.clone(),
-                    path,
+                    data,
                     bytes: src.bytes,
                     sprites: src.sprites,
                     real_sounds: src.real_sounds,
@@ -264,6 +254,66 @@ impl Content {
     }
 }
 
+/// Reads and verifies one source of a pack; `None` if it is not here.
+fn pack_source(
+    source: &SourceRef,
+    sha256: &str,
+    key: &str,
+    mods_dir: &Path,
+    archive: Option<&Path>,
+) -> Result<Option<(PackData, String)>, String> {
+    let mismatch = |what: &str| format!("mod pack {key}: {what} does not match its hash");
+    match source {
+        SourceRef::Archive {
+            archive_path,
+            member: Some(member),
+            origin,
+        } => {
+            let Some(root) = archive else { return Ok(None) };
+            let mut a = Archive::open(root).map_err(|e| format!("archive: {e}"))?;
+            match a.file(archive_path, Some(member), sha256) {
+                Ok(b) => Ok(Some((PackData::Memory(Bytes::from(b)), origin.clone()))),
+                Err(ArchiveError::HashMismatch { .. }) => Err(mismatch(member)),
+                Err(_) => Ok(None),
+            }
+        }
+        SourceRef::Archive {
+            archive_path,
+            member: None,
+            origin,
+        } => {
+            let Some(root) = archive else { return Ok(None) };
+            let path = root.join(archive_path);
+            verify_file(&path, sha256, &mismatch)
+                .map(|ok| ok.map(|()| (PackData::File(path), origin.clone())))
+        }
+        SourceRef::Bundle { bundle } => {
+            let path = mods_dir.join(key).join("vertixmod.zip");
+            let origin = format!(
+                "fan repository {}",
+                bundle.rsplit('/').next().unwrap_or(bundle)
+            );
+            verify_file(&path, sha256, &mismatch)
+                .map(|ok| ok.map(|()| (PackData::File(path), origin)))
+        }
+    }
+}
+
+fn verify_file(
+    path: &Path,
+    sha256: &str,
+    mismatch: &dyn Fn(&str) -> String,
+) -> Result<Option<()>, String> {
+    let Ok(bytes) = std::fs::read(path) else {
+        return Ok(None);
+    };
+    if sha256_of(&bytes) == sha256 {
+        Ok(Some(()))
+    } else {
+        Err(mismatch(&path.display().to_string()))
+    }
+}
+
 /// The version live on `date` (the latest first seen on or before it),
 /// else the earliest; `true` when only later versions exist.
 fn pick_version<'a>(
@@ -310,7 +360,11 @@ async fn mod_pack(State(c): State<Arc<Content>>, UrlPath(key): UrlPath<String>) 
     let Some(pack) = c.pack(&key) else {
         return StatusCode::NOT_FOUND.into_response();
     };
-    match tokio::fs::read(&pack.path).await {
+    let bytes = match &pack.data {
+        PackData::Memory(b) => Ok(b.clone()),
+        PackData::File(path) => tokio::fs::read(path).await.map(Bytes::from),
+    };
+    match bytes {
         Ok(bytes) => {
             let mut res = Response::new(Body::from(bytes));
             res.headers_mut().insert(
@@ -429,7 +483,7 @@ mod tests {
                 key: "sonic-mod-primary".into(),
                 name: "Sonic".into(),
                 aliases: vec!["13xlc5n3ipudqsn".into()],
-                path: PathBuf::new(),
+                data: PackData::Memory(Bytes::new()),
                 bytes: 0,
                 sprites: 0,
                 real_sounds: 0,

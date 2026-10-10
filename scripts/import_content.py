@@ -209,7 +209,7 @@ def bundle_packs(archive: Path, sums: dict[str, str]) -> tuple[str, list[dict]]:
 def build_mods(archive: Path, sums: dict[str, str]) -> dict:
     wayback = wayback_packs(archive, sums)
     head, bundled = bundle_packs(archive, sums)
-    packs = []
+    packs = original_packs(archive, sums)
     for p in sorted(bundled, key=lambda p: p["name"].lower()):
         packs.append({
             "key": slug(p["name"]),
@@ -221,7 +221,7 @@ def build_mods(archive: Path, sums: dict[str, str]) -> dict:
     # the fan repository's repack (CAPTURE_OF below).
     for w in wayback:
         entry = {k: w[k] for k in ("source", "sha256", "bytes", "members", "sprites", "real_sounds")}
-        entry["source"] = dict(entry["source"], capture=w["capture"])
+        entry["source"] = dict(entry["source"], origin="Wayback %s" % w["capture"])
         match = next((p for p in packs if p["key"] == CAPTURE_OF.get(w["dropbox_key"])), None)
         if match is None:
             match = {"key": w["dropbox_key"], "name": "Dropbox pack %s" % w["dropbox_key"], "aliases": [], "sources": []}
@@ -238,6 +238,41 @@ def build_mods(archive: Path, sums: dict[str, str]) -> dict:
         },
         "packs": packs,
     }
+
+
+# The game's own asset packs, offered as packs so a client can load the
+# original art (the Rust client takes its 2016 floor tiles from here). The
+# 2016-08-04 res.zip inside the Android APK is the one the 2016 client
+# path serves (data/boot), with the same paths as the 2019 capture.
+ORIGINAL_PACKS = [
+    {
+        "key": "original-2016",
+        "name": "Original 2016 art (res.zip, Aug 2016)",
+        "archive_path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk",
+        "member": "assets/www/res.zip",
+        "origin": "Android APK 0.0.3 (2016-08-04)",
+    },
+]
+
+
+def original_packs(archive: Path, sums: dict[str, str]) -> list[dict]:
+    out = []
+    for o in ORIGINAL_PACKS:
+        container = verified(archive, sums, o["archive_path"])
+        with zipfile.ZipFile(io.BytesIO(container)) as z:
+            data = z.read(o["member"])
+        out.append({
+            "key": o["key"],
+            "name": o["name"],
+            "aliases": [],
+            "sources": [{
+                "source": {"kind": "archive", "archive_path": o["archive_path"], "member": o["member"], "origin": o["origin"]},
+                "sha256": sha256(data),
+                "bytes": len(data),
+                **pack_facts(data),
+            }],
+        })
+    return out
 
 
 # Dropbox key -> the fan-repo pack it is the original of, as established by

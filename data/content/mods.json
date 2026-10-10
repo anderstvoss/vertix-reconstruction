@@ -7,6 +7,26 @@
  },
  "packs": [
   {
+   "key": "original-2016",
+   "name": "Original 2016 art (res.zip, Aug 2016)",
+   "aliases": [],
+   "sources": [
+    {
+     "source": {
+      "kind": "archive",
+      "archive_path": "vertix-preservation/originals/external/android/tbs.vertix.io-0.0.3.apk",
+      "member": "assets/www/res.zip",
+      "origin": "Android APK 0.0.3 (2016-08-04)"
+     },
+     "sha256": "04fef398de195a3fe4fa54129644bb58c5bfac8395f89e6fe92b9fc31cd8d19e",
+     "bytes": 179783,
+     "members": 250,
+     "sprites": 231,
+     "real_sounds": 0
+    }
+   ]
+  },
+  {
    "key": "aether-s-aecension-2-0",
    "name": "Aether_s Aecension 2.0",
    "aliases": [],
@@ -206,7 +226,7 @@
      "source": {
       "kind": "archive",
       "archive_path": "vertix-preservation/originals/wayback/20190227131740/dl.dropboxusercontent.com/s/e3lib880qd7rjcl/vertixmod.zip.2HG2ILWZPH4STTAPZB6BSQQ6F7ZQT7AW",
-      "capture": "20190227131740"
+      "origin": "Wayback 20190227131740"
      },
      "sha256": "794d974d25249390ffdf92a4680c2dd8d2418ee98b0058b6bd8619ce96133ddb",
      "bytes": 15712711,
@@ -325,7 +345,7 @@
      "source": {
       "kind": "archive",
       "archive_path": "vertix-preservation/originals/wayback/20161217025353/dl.dropboxusercontent.com/s/13xlc5n3ipudqsn/vertixmod.zip.WFWB3DU3EDZLFEP5TKCD47XWYO3EN6U3",
-      "capture": "20161217025353"
+      "origin": "Wayback 20161217025353"
      },
      "sha256": "5125010d2b3d55d672eb162c23ee4a6aa9bbcc7122b5bb45034f405f2b3a0e2b",
      "bytes": 6223020,

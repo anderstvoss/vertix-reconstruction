@@ -20,7 +20,7 @@ no copy of that list was captured. Every item is unlocked (no accounts).
 | Camos | 1 to 130 (there is no camo 88): Android APK | 131 to 133 |
 | Sprays | 1 to 43 at their 2016 sizes (25 to 80 px): Android APK, Wayback | 44 to 83 (30 px) |
 | Shirts | The hover image (`display.png`): Wayback 2016-12-20 | 1 to 80 (all shirt art) |
-| Mod packs | 21 community packs: 2 from Wayback captures of their Dropbox originals (Sonic, Nuclear Throne), 19 from a fan repository's copies in the archive | none (KRP ships no packs) |
+| Mod packs | The 2016 `res.zip` as pack `original-2016`, and 21 community packs: 2 from Wayback captures of their Dropbox originals (Sonic, Nuclear Throne), 19 from a fan repository's copies in the archive | none (KRP ships no packs) |
 
 The research behind this is `assets-research/` in vertix-research: every
 fan-repository copy of the 2016 art matches the APK byte for byte, and the
@@ -53,6 +53,11 @@ to hear sounds.
   a path from its own server. `scripts/client-patches/apply.mjs` patches
   that in the pinned client source when `scripts/build-client.sh` builds
   it, and points the tab's "Get more mods here" link at `/mods/`.
+
+**`original-2016`** is the game's own art as a pack: the 2016-08-04
+`res.zip` from the Android APK (the one the 2016 client path serves), read
+from the archive. The Rust client takes its 2016 floor tiles
+(`sprites/ground1-3.png`) from it when the server offers it.
 
 19 of the packs exist only inside a git bundle in the archive, which the
 server cannot read directly. Unpack them once (into `content/mods/`,
