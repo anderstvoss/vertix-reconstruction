@@ -15,6 +15,9 @@
 //             were on screen, dropped when they leave it). Needs the client
 //             built with our patches (scripts/client-patches/apply.mjs),
 //             which read it from localStorage "vertix.effects".
+//   hidden    "catch-up" (shots that arrived while a hidden tab drew no
+//             frames are dropped, not fired late) or "krp". The same
+//             patches read it from localStorage "vertix.hiddenTab".
 //   name      player name to type into the start menu.
 //   autoplay  press ENTER GAME once the room is joined.
 //   script    scripted keys, the Rust client's format: "d:1500,s:800,a+w:1000,:500".
@@ -35,6 +38,7 @@
 
 	try {
 		localStorage.setItem("vertix.effects", opts.effects === "krp" ? "krp" : "persist");
+		localStorage.setItem("vertix.hiddenTab", opts.hidden === "krp" ? "krp" : "catch-up");
 	} catch {
 		// No storage (private window): the patched client persists effects.
 	}

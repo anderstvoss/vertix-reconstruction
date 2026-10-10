@@ -20,8 +20,8 @@ out/ab/<time>/.
 
 By default every client runs as KRP does (one input per frame, CSS-pixel
 display), so differences come from the clients rather than their settings.
-`--input 60`, `--display sharp` and `--effects persist` apply the
-reconstruction's options to all four. KRP's client draws and sends input in one loop, so its input rate
+`--input 60`, `--display sharp`, `--effects persist` and `--hidden
+catch-up` apply the reconstruction's options to all four. KRP's client draws and sends input in one loop, so its input rate
 caps that loop; the Rust client sends input on its own tick and keeps
 drawing every frame.
 
@@ -177,6 +177,7 @@ def main() -> int:
     ap.add_argument("--input", default="frame", help="'frame' or a rate in Hz, for every client")
     ap.add_argument("--display", default="krp", help="'krp' or 'sharp', for every client")
     ap.add_argument("--effects", default="krp", help="'krp' or 'persist', for every client")
+    ap.add_argument("--hidden", default="krp", help="'krp' or 'catch-up', for every client")
     ap.add_argument("--shot-at", type=float, default=10, help="seconds in to take screenshots")
     ap.add_argument("--channel", default="", help="browser to use, e.g. chrome or msedge")
     ap.add_argument("--node", default="node")
@@ -201,7 +202,8 @@ def main() -> int:
             spec |= {"inject": str(inject), "shell": shell}
         return run([args.node, str(ROOT / "scripts" / "ab" / "browser.mjs"), json.dumps(spec)], limit)
 
-    common = {"input": args.input, "display": args.display, "effects": args.effects, "autoplay": True,
+    common = {"input": args.input, "display": args.display, "effects": args.effects, "hidden": args.hidden,
+              "autoplay": True,
               "script": script, "duration": str(args.duration)}
     results: dict = {}
     for key in [k.strip().upper() for k in args.clients.split(",") if k.strip()]:
@@ -214,7 +216,7 @@ def main() -> int:
         elif key == "C":
             exe = ROOT / "desktop" / "krp" / "target" / "release" / f"vertix-krp-desktop{EXE}"
             cmd = [str(exe), "--server", server, "--room", args.room, "--name", name, "--autoplay"]
-            for k in ("input", "display", "effects", "script", "duration"):
+            for k in ("input", "display", "effects", "hidden", "script", "duration"):
                 cmd += [f"--{k}", str(common[k])]
             r = run(cmd, limit)
         elif key == "D":
@@ -224,7 +226,7 @@ def main() -> int:
             exe = ROOT / "target" / "release" / f"vertix-client{EXE}"
             cmd = [str(exe), "--server", server, "--room", args.room, "--name", name, "--autoplay", "1",
                    "--screenshot", str(shot), "--shot-at", str(args.shot_at)]
-            for k in ("input", "display", "effects", "script", "duration"):
+            for k in ("input", "display", "effects", "hidden", "script", "duration"):
                 cmd += [f"--{k}", str(common[k])]
             r = run(cmd, limit)
         else:
@@ -235,7 +237,7 @@ def main() -> int:
         print("  " + (r["error"] if "error" in r else f"{r['fps_mean']:.1f} fps"), flush=True)
 
     settings = {"room": args.room, "seconds each": args.duration, "input": args.input,
-                "display": args.display, "effects": args.effects, "browser": args.channel or "Playwright Chromium"}
+                "display": args.display, "effects": args.effects, "hidden": args.hidden, "browser": args.channel or "Playwright Chromium"}
     text = report(results | {"_dir": out}, settings)
     (out / "report.md").write_text(text + "\n")
     print(f"report: {out / 'report.md'}")

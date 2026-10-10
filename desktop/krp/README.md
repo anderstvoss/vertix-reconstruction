@@ -53,6 +53,7 @@ desktop/krp/target/release/vertix-krp-desktop --room DEV0
 | `--input frame\|HZ` | One input per frame (KRP) or a cap in Hz |
 | `--display sharp\|krp` | Device-pixel canvas (default) or KRP's CSS-pixel canvas |
 | `--effects persist\|krp` | Effects stay where they happened, even off screen (default), or KRP's on-screen-only effects. Needs the server's client built with `scripts/client-patches` |
+| `--hidden catch-up\|krp` | Drop shots that arrived while the window drew no frames (default), or KRP's late burst. Needs the patched client, as `--effects` does |
 | `--autoplay` | Press ENTER GAME once the room is joined |
 | `--script KEYS` | Scripted keys, e.g. `d:1500,s:800,a+w:1000,:500` |
 | `--duration S` | Quit after S seconds and report metrics |
