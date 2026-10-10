@@ -81,15 +81,15 @@ long-polling and WebSocket, with no archive or client build needed.
 
 ```bash
 cargo build
-cargo test
+cargo test --workspace
 ```
 
 Local gates (also run in CI once the repository is public):
 
 ```bash
 cargo fmt --all -- --check
-cargo clippy --locked --all-targets --all-features -- -D warnings
-cargo test --locked --all-features
+cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+cargo test --locked --workspace --all-features
 python3 scripts/e2e_smoke.py
 python3 -m unittest discover -s scripts/tests
 gitleaks detect
