@@ -59,6 +59,9 @@ Useful options:
 - Ports are preferences: a second server on the same machine moves to the
   next free ports and prints them (also in `out/server.json`).
   `--strict-port` fails instead.
+- `--single` opens one room instead of all nine (the first in
+  `[game] rooms`); `--room DEV2` opens just that one. More rooms can be
+  opened later from the admin panel.
 
 - `--port 9000` to use another port. The bind address and port are in
   `config/server.toml`.
@@ -89,6 +92,9 @@ no request leaves the server.
   (`DEV0` free for all to `DEV8` Arsonist War, as in KRP's dev server). The
   room list and `/api/getIP` follow it. A room's mode changes at round end
   by vote, or through the client's custom server form.
+- **`[game] launch`**: `all` (default) opens every room in the list;
+  `single` opens only `single_room` (or the first). The admin panel opens
+  and closes rooms while the server runs either way.
 - **`[game] max_players`**: players per room, 8 by default. A room can set
   its own (`{ name = "DEV0", mode = "ffa", max_players = 12 }`). The
   custom server form can lower a room's limit but not raise it.

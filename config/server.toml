@@ -77,6 +77,12 @@ rooms = [
   { name = "DEV8", mode = "pyro" },
 ]
 
+# "all" opens every room above; "single" opens one (`single_room`, or the
+# first). The admin panel can open and close rooms while running either
+# way. `--single` or `--room NAME` on the command line pick single.
+launch = "all"
+single_room = ""
+
 [classic]
 # The archived 2016-08-06 client, kept as a compatibility path. It is
 # served from the archive (never from this repository) on its own port,
