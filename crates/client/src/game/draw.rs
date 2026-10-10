@@ -6,7 +6,7 @@ use std::f64::consts::PI;
 
 use macroquad::prelude::*;
 
-use super::{Game, Gfx, MapState, TEAM_BLUE, TEAM_RED, snap_angle};
+use super::{Game, Gfx, LATE_SHOT_MS, MapState, TEAM_BLUE, TEAM_RED, snap_angle};
 use crate::game::model::Player;
 use crate::game::rand::random_int;
 use crate::gfx::{Blend, Canvas, Image, Painter, hex};
@@ -729,9 +729,23 @@ impl Game {
         let empty: [vertix_sim::projectile::Target<'_>; 0] = [];
         let mut hit_effects: Vec<(Hit, f64, f64, f64, u32)> = Vec::new();
         let mut dust: Vec<(f64, f64)> = Vec::new();
+        let catch_up = self.opts.catch_up;
         for b in &mut self.bullets {
             let was_active = b.p.active;
-            if let Some(m) = &self.map {
+            let late = b
+                .arrived
+                .take()
+                .map(|at| now - at)
+                .filter(|&lag| catch_up && was_active && lag > LATE_SHOT_MS);
+            if let (Some(lag), Some(m)) = (late, &self.map) {
+                // A shot that waited (the tab was hidden) is moved on to
+                // where it would be now. If it ended meanwhile it is
+                // dropped unseen: no trail, no hit effects.
+                catch_up_bullet(&mut b.p, lag, now, &m.world.clutter, &m.world.tiles);
+                if !b.p.active {
+                    b.trail_alpha = 0.0;
+                }
+            } else if let Some(m) = &self.map {
                 // KRP's client only checks player hits for its own bullets.
                 let who: &[vertix_sim::projectile::Target<'_>] = if Some(b.p.owner.index) == me {
                     &targets
@@ -1124,4 +1138,62 @@ fn minimap_base(gfx: &mut Gfx, m: &MapState, my_team: &str) -> Canvas {
     // Hand the wall canvas to the cache so it lives until drawn.
     gfx.weapon_canvases.push(walls);
     out
+}
+
+/// Moves a just-armed bullet on by `lag` milliseconds, in frame-sized
+/// steps, as if it had been updated since it arrived. Remote bullets only
+/// collide with the map here; their player hits come from the server.
+fn catch_up_bullet(
+    p: &mut vertix_sim::projectile::Projectile,
+    lag: f64,
+    now: f64,
+    clutter: &[vertix_sim::map::Clutter],
+    tiles: &[vertix_sim::map::Tile],
+) {
+    const STEP_MS: f64 = 1000.0 / 60.0;
+    let start = now - lag;
+    // The first update only starts the bullet's clock, as KRP's does.
+    p.update(STEP_MS, start, clutter, tiles, &[]);
+    let mut t = 0.0;
+    while p.active && t < lag {
+        let step = STEP_MS.min(lag - t);
+        t += step;
+        p.update(step, start + t, clutter, tiles, &[]);
+    }
+    p.hits.clear();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vertix_sim::projectile::Projectile;
+
+    fn armed(speed: f64, life: f64) -> Projectile {
+        Projectile {
+            active: true,
+            speed,
+            dir: 0.0,
+            update_accuracy: 1,
+            height: 4.0,
+            max_life_time: Some(life),
+            skip_move: true,
+            ..Projectile::default()
+        }
+    }
+
+    #[test]
+    fn a_late_shot_is_moved_on() {
+        let mut p = armed(1.0, 1000.0);
+        catch_up_bullet(&mut p, 300.0, 10_000.0, &[], &[]);
+        assert!(p.active);
+        assert!((p.x - 300.0).abs() < 1e-6, "x = {}", p.x);
+    }
+
+    #[test]
+    fn a_shot_that_ended_meanwhile_is_dropped() {
+        let mut p = armed(1.0, 200.0);
+        catch_up_bullet(&mut p, 5000.0, 10_000.0, &[], &[]);
+        assert!(!p.active);
+        assert!(p.hits.is_empty());
+    }
 }

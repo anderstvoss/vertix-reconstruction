@@ -64,6 +64,11 @@ pub struct Options {
     /// keeps KRP's: only what was on screen when it happened, dropped
     /// once it leaves the screen.
     pub persistent_effects: bool,
+    /// After the frame loop stalls (a hidden browser tab), other players'
+    /// shots are moved on by the time since they arrived, and the first
+    /// frame back is capped at `MAX_FRAME_MS`. `hidden=krp` keeps KRP's:
+    /// every shot fired meanwhile starts at its muzzle in one frame.
+    pub catch_up: bool,
 }
 
 impl Options {
@@ -92,6 +97,7 @@ impl Options {
             autoplay: get("autoplay").is_some(),
             script: get("script"),
             persistent_effects: get("effects").as_deref() != Some("krp"),
+            catch_up: get("hidden").as_deref() != Some("krp"),
         }
     }
 }
@@ -166,6 +172,9 @@ pub struct Bullet {
     pub glow_width: f64,
     pub glow_height: f64,
     pub dust_timer: f64,
+    /// When the server's shot for this bullet arrived (`now_ms`), until its
+    /// first update.
+    pub arrived: Option<f64>,
 }
 
 /// The round's map: KRP's tiles for drawing, the shared crate's world for
@@ -365,6 +374,8 @@ pub struct Game {
     this_input: Vec<SentInput>,
     current_time: f64,
     old_time: f64,
+    /// When the server event being handled arrived (`now_ms`).
+    event_at: f64,
     input_accum: f64,
     pub fps: f64,
     fps_delta: f64,
@@ -416,6 +427,13 @@ enum TimerKind {
 }
 
 pub(super) const OVERLAY_MAX_ALPHA: f64 = 0.5;
+/// The longest frame the game moves by at once when catching up (the
+/// server caps a movement step the same way).
+pub const MAX_FRAME_MS: f64 = 100.0;
+/// A shot that arrived this long before the frame that handles it is
+/// moved on by that time instead of starting at the muzzle.
+pub const LATE_SHOT_MS: f64 = 100.0;
+
 const OVERLAY_FADE_UP: f64 = 0.01;
 const OVERLAY_FADE_DOWN: f64 = 0.04;
 pub(super) const MINIMAP_EVERY: i32 = 4;
@@ -477,6 +495,7 @@ impl Game {
             this_input: Vec::new(),
             current_time: now,
             old_time: now,
+            event_at: now,
             input_accum: 0.0,
             fps: 0.0,
             fps_delta: 0.0,
@@ -608,7 +627,10 @@ impl Game {
         for ev in events {
             match ev {
                 SioEvent::Connected => {}
-                SioEvent::Event(name, args) => self.on_event(&name, &args, gfx),
+                SioEvent::Event(name, args, at) => {
+                    self.event_at = at;
+                    self.on_event(&name, &args, gfx);
+                }
                 SioEvent::Disconnected(reason) => {
                     self.log.push(format!("disconnected: {reason}"));
                     self.kick("Disconnected. Your connection timed out.");
@@ -694,6 +716,13 @@ impl Game {
             self.fps_samples.clear();
         }
         self.old_time = self.current_time;
+        // The first frame after a stall (a hidden tab) would otherwise move
+        // everything by the whole stall at once.
+        let delta = if self.opts.catch_up {
+            delta.min(MAX_FRAME_MS)
+        } else {
+            delta
+        };
 
         let (mut b, mut d) = (0.0_f64, 0.0_f64);
         if self.keys.u {
@@ -1168,6 +1197,7 @@ impl Game {
 
     /// KRP `shootNextBullet` for player `pi` into bullet `bi`.
     fn arm_bullet(&mut self, bi: usize, pi: usize, shot: Shot) {
+        self.bullets[bi].arrived = None;
         let plr = &self.players[pi];
         let Some(w) = plr.weapon() else { return };
         let rand_scale = w.spec.b_rand_scale.map(|r| random_float(r[0], r[1]));
@@ -1509,6 +1539,13 @@ fn parse_script(s: &str) -> Vec<(Vec<KeyCode>, f64)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn catch_up_unless_krp() {
+        let pairs = |v: &str| vec![("hidden".to_owned(), v.to_owned())];
+        assert!(Options::from_pairs(&[]).catch_up);
+        assert!(!Options::from_pairs(&pairs("krp")).catch_up);
+    }
 
     #[test]
     fn effects_persist_unless_krp() {

@@ -17,10 +17,11 @@ mod web;
 pub use web::{Fetch, Socket, launch_options, report, server_base};
 
 /// Something that happened on a WebSocket since the last poll.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum WsEvent {
     Open,
-    Message(String),
+    /// A text frame and when it arrived (`now_ms`).
+    Message(String, f64),
     Closed(String),
 }
 

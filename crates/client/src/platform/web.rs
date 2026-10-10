@@ -100,7 +100,14 @@ impl Socket {
             ev.field("d").to_string(&mut data);
             out.push(match kind.as_str() {
                 "open" => WsEvent::Open,
-                "msg" => WsEvent::Message(data),
+                "msg" => {
+                    let field = ev.field("at");
+                    let mut at = String::new();
+                    if !field.is_undefined() {
+                        field.to_string(&mut at);
+                    }
+                    WsEvent::Message(data, at.parse().unwrap_or_else(|_| super::now_ms()))
+                }
                 _ => WsEvent::Closed(data),
             });
         }

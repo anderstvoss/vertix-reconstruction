@@ -1,6 +1,11 @@
 // WebSocket and fetch for the Rust client's browser build, as a miniquad
 // plugin. Rust polls these once per frame (src/platform/web.rs); nothing
 // here calls back into Rust.
+//
+// Browsers stop drawing frames in a hidden tab, so messages wait here until
+// the tab is shown again. Each one carries the time it arrived, and the
+// Engine.IO ping is answered here, as it arrives, so the server keeps a
+// hidden tab connected.
 "use strict";
 
 (function () {
@@ -18,7 +23,12 @@
                 ws = new WebSocket(consume_js_object(url));
                 ws.onopen = function () { queue.push({ t: "open", d: "" }); };
                 ws.onmessage = function (ev) {
-                    if (typeof ev.data === "string") queue.push({ t: "msg", d: ev.data });
+                    if (typeof ev.data !== "string") return;
+                    if (ev.data === "2") {
+                        ws.send("3");
+                        return;
+                    }
+                    queue.push({ t: "msg", d: ev.data, at: String(Date.now()) });
                 };
                 ws.onclose = function (ev) { queue.push({ t: "close", d: "closed (" + ev.code + ")" }); };
                 ws.onerror = function () { queue.push({ t: "close", d: "connection error" }); };
