@@ -54,8 +54,12 @@ impl Game {
     /// shape (players hold indexes into them).
     fn reload_data(&self, id: &str, tweaks: &Value) -> Result<GameData, String> {
         let p = &self.admin.paths;
-        let data = GameData::load_tuned(&p.krp_data, &p.balance_dir, id, tweaks)
+        let mut data = GameData::load_tuned(&p.krp_data, &p.balance_dir, id, tweaks)
             .map_err(|e| e.to_string())?;
+        // Sprays added from the sprays folder are not in the preset.
+        data.cosmetics
+            .sprays
+            .clone_from(&self.data.cosmetics.sprays);
         if data.modes.len() != self.data.modes.len()
             || data.classes.len() != self.data.classes.len()
             || data.weapons.len() != self.data.weapons.len()

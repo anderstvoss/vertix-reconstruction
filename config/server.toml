@@ -96,6 +96,11 @@ date = "2017-07-01"
 mods = true
 mods_manifest = "data/content/mods.json"
 mods_dir = "content/mods"
+# Drop PNG files in this folder to add sprays (read at start-up): a file
+# named after a spray's number (44.png) replaces that spray's image, any
+# other name (My Spray.png) adds a new spray with that name. Each spray is
+# drawn from its own image, so no size or other settings are needed.
+sprays_dir = "content/sprays"
 
 [classic]
 # The archived 2016-08-06 client, kept as a compatibility path. It is

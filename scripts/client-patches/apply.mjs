@@ -117,6 +117,25 @@ const patches = [
 		].join("\n"),
 	},
 	{
+		// Sprays: sized from the image file alone instead of KRP's
+		// per-spray scale and resolution (see cacheSpray below).
+		file: "core/src/app.tsx",
+		find: "\ttmpSpray.xPos = x - tmpSpray.scale! / 2;\n\ttmpSpray.yPos = y - tmpSpray.scale! / 2;",
+		replace: "\t// The spray's centre; its size comes from its image (cacheSpray).\n\ttmpSpray.xPos = x;\n\ttmpSpray.yPos = y;",
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "function cacheSpray(img: Sprite) {\n\tconst tmpIndex = `${img.src}`;\n\tlet tmpSpray = cachedSprays[tmpIndex];\n\tif (tmpSpray || img.width === 0) return;\n\n\tlet initialCanvas = document.createElement(\"canvas\");\n\tlet initialCtx = initialCanvas.getContext(\"2d\")!;\n\tinitialCanvas.width = img.resolution!;\n\tinitialCanvas.height = img.resolution!;\n\tinitialCtx.drawImage(img, 0, 0, img.resolution!, img.resolution!);\n\tlet finalCanvas = document.createElement(\"canvas\");\n\tlet finalCtx = finalCanvas.getContext(\"2d\")!;\n\tfinalCanvas.width = img.scale!;\n\tfinalCanvas.height = img.scale!;\n\tfinalCtx.imageSmoothingEnabled = false;\n\tfinalCtx.globalAlpha = img.alpha!;\n\tfinalCtx.drawImage(initialCanvas, 0, 0, img.scale!, img.scale!);\n\ttmpSpray = finalCanvas;\n\tcachedSprays[tmpIndex] = tmpSpray;\n}\nfunction drawSprays() {\n\tif (!st.settings.showSprays) return;\n\tfor (const sp of userSprays) {\n\t\tif (!sp.active) continue;\n\t\tlet tmpSpray = cachedSprays[`${sp.src}`];\n\t\tif (!tmpSpray) continue;\n\t\tgraph.drawImage(tmpSpray, sp.xPos! - st.startX, sp.yPos! - st.startY);\n\t}\n}",
+		replace: "// A spray is just its image file: drawn at SPRAY_PX world pixels per\n// image pixel and at most SPRAY_MAX across. Small images scale up with\n// crisp pixels; larger ones are kept at full resolution and scaled down\n// when drawn, so they keep their detail.\nconst SPRAY_PX = 2;\nconst SPRAY_MAX = 64;\nconst sprayDrawSize: Record<string, [number, number]> = {};\nfunction cacheSpray(img: Sprite) {\n\tconst tmpIndex = `${img.src}`;\n\tif (cachedSprays[tmpIndex] || img.naturalWidth === 0) return;\n\tconst w = img.naturalWidth;\n\tconst h = img.naturalHeight;\n\tconst fit = Math.min(SPRAY_PX, SPRAY_MAX / Math.max(w, h));\n\tconst up = Math.max(1, fit);\n\tconst canvas = document.createElement(\"canvas\");\n\tconst ctx = canvas.getContext(\"2d\")!;\n\tcanvas.width = Math.round(w * up);\n\tcanvas.height = Math.round(h * up);\n\tctx.imageSmoothingEnabled = false;\n\tctx.globalAlpha = img.alpha ?? 1;\n\tctx.drawImage(img, 0, 0, canvas.width, canvas.height);\n\tcachedSprays[tmpIndex] = canvas;\n\tsprayDrawSize[tmpIndex] = [w * fit, h * fit];\n}\nfunction drawSprays() {\n\tif (!st.settings.showSprays) return;\n\tfor (const sp of userSprays) {\n\t\tif (!sp.active) continue;\n\t\tconst tmpSpray = cachedSprays[`${sp.src}`];\n\t\tconst size = sprayDrawSize[`${sp.src}`];\n\t\tif (!tmpSpray || !size) continue;\n\t\tconst [dw, dh] = size;\n\t\tconst down = tmpSpray.width > dw;\n\t\tif (down) graph.imageSmoothingEnabled = true;\n\t\tgraph.drawImage(tmpSpray, sp.xPos! - dw / 2 - st.startX, sp.yPos! - dh / 2 - st.startY, dw, dh);\n\t\tif (down) graph.imageSmoothingEnabled = false;\n\t}\n}",
+	},
+	{
+		// Sprays added on the server (`[content] sprays_dir`) join the
+		// spray list.
+		file: "core/src/state.svelte.ts",
+		find: "window.st = st;",
+		replace: "window.st = st;\n\n// Sprays the server adds (PNG files in its sprays folder). The saved choice\n// is read now, before the loadout tab clears a spray it does not know yet.\nconst savedSpray = localStorage.getItem(\"prevSpray\");\nfetch(\"/sprays/index.json\")\n\t.then((r) => (r.ok ? r.json() : { sprays: [] }))\n\t.then((d: { sprays: (typeof sprays)[number][] }) => {\n\t\tfor (const spray of d.sprays) {\n\t\t\tif (!st.sprays.some((s) => s.id === spray.id)) st.sprays.push(spray);\n\t\t}\n\t\tif (!st.loadout.spray && savedSpray) {\n\t\t\tst.loadout.spray = st.sprays.find((s) => String(s.id) === savedSpray) ?? null;\n\t\t}\n\t})\n\t.catch(() => {});",
+	},
+	{
 		// The mod tab's link to a Reddit thread of (mostly dead) Dropbox
 		// links now opens this server's list of restored packs.
 		file: "core/src/components/tabs/ModTab.svelte",

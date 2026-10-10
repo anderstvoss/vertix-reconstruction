@@ -52,6 +52,9 @@ pub struct Content {
     pub mods_manifest: PathBuf,
     /// Where `scripts/extract_mods.py` unpacks packs held in git bundles.
     pub mods_dir: PathBuf,
+    /// Every PNG in this folder is a spray: `<id>.png` replaces that spray's
+    /// image, any other name adds a new spray named after the file.
+    pub sprays_dir: PathBuf,
 }
 
 impl Default for Content {
@@ -63,6 +66,7 @@ impl Default for Content {
             mods: true,
             mods_manifest: "data/content/mods.json".into(),
             mods_dir: "content/mods".into(),
+            sprays_dir: "content/sprays".into(),
         }
     }
 }

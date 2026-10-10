@@ -34,7 +34,17 @@ day: `2017-07-01` (v3.8, the version KRP's client follows) by default.
 A later date serves the re-size.
 
 **Sprays** are served at both `/images/sprays/<id>.png` (the original path)
-and `/assets/sprays/<id>.png` (where KRP's client loads them).
+and `/assets/sprays/<id>.png` (where KRP's client loads them). The patched
+client sizes each spray from its image alone: 2 world pixels per image
+pixel, at most 64 px across (larger images are scaled down, keeping their
+detail). This is a deliberate change from KRP (docs/DEVIATIONS.md).
+
+**Adding sprays.** Put PNG files in `content/sprays/` (`[content]
+sprays_dir`, git-ignored) and restart the server. A file named after a
+spray's number (`44.png`) replaces that spray's image; any other name
+(`My Spray.png`) adds a new spray called "My Spray", numbered after the
+last one. Nothing else is needed. `/sprays/index.json` lists the added
+sprays, and the patched client shows them in its spray list.
 
 ## Mod packs
 
@@ -83,6 +93,7 @@ They are served from your archive copy only, never committed.
 - `date` picks among first-party versions, as above.
 - `mods = false` turns off `/mods/`.
 - `mods_dir` is where `extract_mods.py` unpacked the bundled packs.
+- `sprays_dir` is the folder of added sprays.
 
 ## Still missing
 

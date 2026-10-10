@@ -86,12 +86,29 @@ fn load_maps(config: &Config, archive: Option<&Path>) -> Result<MapSet, String> 
     MapSet::new(loaded).map_err(|e| format!("maps: {e}"))
 }
 
-/// Cosmetics and mod packs restored from the archive. Their routes answer
-/// before the client build's fallback, so recovered files win.
-fn restored(config: &Config, archive: Option<&Path>) -> Result<axum::Router, String> {
-    let restored = Content::load(&config.content, archive)?;
+/// Cosmetics and mod packs restored from the archive, and sprays from the
+/// sprays folder (added to `data`). Their routes answer before the client
+/// build's fallback, so recovered and added files win.
+fn restored(
+    config: &Config,
+    archive: Option<&Path>,
+    data: &mut GameData,
+) -> Result<Content, String> {
+    let mut restored = Content::load(&config.content, archive)?;
     eprintln!("{}", restored.summary());
-    Ok(content::router(Arc::new(restored)))
+    for w in restored.add_folder_sprays(&config.content.sprays_dir, &mut data.cosmetics.sprays) {
+        eprintln!("sprays: {w}");
+    }
+    if !restored.folder_sprays.is_empty() {
+        let added = restored.folder_sprays.iter().filter(|s| s.2).count();
+        eprintln!(
+            "sprays: {} from {} ({added} new, {} replaced)",
+            restored.folder_sprays.len(),
+            config.content.sprays_dir.display(),
+            restored.folder_sprays.len() - added
+        );
+    }
+    Ok(restored)
 }
 
 /// The 2016 client's routes, if the archive that holds it is given.
@@ -214,7 +231,7 @@ async fn run() -> Result<(), String> {
     let args = parse_args()?;
     let config = Config::load(&args.config)?;
     let (rules, provenance) = Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
-    let data = GameData::load(
+    let mut data = GameData::load(
         &config.game.krp_data,
         &config.game.balance_dir,
         &config.game.balance,
@@ -247,6 +264,7 @@ async fn run() -> Result<(), String> {
         );
     }
 
+    let restored = restored(&config, archive.as_deref(), &mut data)?;
     let trace = open_trace(args.trace, &config)?;
 
     let (tx, rx) = mpsc::unbounded_channel();
@@ -276,7 +294,7 @@ async fn run() -> Result<(), String> {
     start_admin(a, &ask_tx, log, &mut ports).await?;
     spawn_heartbeat(eio.clone(), timing.ping_interval);
 
-    let app = restored(&config, archive.as_deref())?.merge(http::router(http::AppState {
+    let app = content::router(Arc::new(restored)).merge(http::router(http::AppState {
         client_dir: Arc::new(config.client_dir.clone()),
         eio,
         game: ask_tx,

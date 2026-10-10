@@ -127,6 +127,8 @@ pub struct Content {
     pub later_only: usize,
     /// Packs listed but not available here, by key.
     pub missing_packs: Vec<String>,
+    /// Sprays from `sprays_dir` (id, name, added rather than replaced).
+    pub folder_sprays: Vec<(u64, String, bool)>,
 }
 
 impl Content {
@@ -338,12 +340,105 @@ fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T, String> {
     serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))
 }
 
+/// Largest spray image read from `sprays_dir`.
+const MAX_SPRAY_BYTES: u64 = 4 << 20;
+
+impl Content {
+    /// Reads every PNG in `dir` as a spray (see `[content] sprays_dir`).
+    /// `<id>.png` replaces spray `id`'s image; any other file is a new
+    /// spray, numbered after the highest id in `sprays` in file-name order
+    /// and named after the file. New sprays are appended to `sprays` with
+    /// KRP's default display values, which the patched client ignores (it
+    /// sizes a spray from its image). Returns warnings for skipped files.
+    pub fn add_folder_sprays(
+        &mut self,
+        dir: &Path,
+        sprays: &mut Vec<serde_json::Value>,
+    ) -> Vec<String> {
+        let mut warnings = Vec::new();
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return warnings;
+        };
+        let mut files: Vec<PathBuf> = entries
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("png")))
+            .collect();
+        files.sort();
+        let id_of = |s: &serde_json::Value| s.get("id").and_then(serde_json::Value::as_u64);
+        let mut next = sprays.iter().filter_map(id_of).max().unwrap_or(0);
+        for path in files {
+            let stem = path
+                .file_stem()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let bytes = match std::fs::metadata(&path) {
+                Ok(m) if m.len() > MAX_SPRAY_BYTES => {
+                    warnings.push(format!("{}: larger than 4 MB, skipped", path.display()));
+                    continue;
+                }
+                Ok(_) => match std::fs::read(&path) {
+                    Ok(b) => b,
+                    Err(e) => {
+                        warnings.push(format!("{}: {e}", path.display()));
+                        continue;
+                    }
+                },
+                Err(e) => {
+                    warnings.push(format!("{}: {e}", path.display()));
+                    continue;
+                }
+            };
+            if !bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
+                warnings.push(format!("{}: not a PNG image, skipped", path.display()));
+                continue;
+            }
+            let (id, added) = match stem.parse::<u64>() {
+                Ok(id) if id > 0 => (id, !sprays.iter().any(|s| id_of(s) == Some(id))),
+                _ => {
+                    next += 1;
+                    (next, true)
+                }
+            };
+            let name = if stem.parse::<u64>().is_ok() && !added {
+                sprays
+                    .iter()
+                    .find(|s| id_of(s) == Some(id))
+                    .and_then(|s| s.get("name"))
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned()
+            } else {
+                stem.replace(['_', '-'], " ")
+            };
+            if added {
+                next = next.max(id);
+                sprays.push(json!({
+                    "id": id,
+                    "name": name,
+                    "info": {"scale": 64, "alpha": 1, "resolution": 30},
+                }));
+            }
+            let bytes = Bytes::from(bytes);
+            for p in [
+                format!("/assets/sprays/{id}.png"),
+                format!("/images/sprays/{id}.png"),
+            ] {
+                self.files.insert(p, (bytes.clone(), "image/png"));
+            }
+            self.folder_sprays.push((id, name, added));
+        }
+        warnings
+    }
+}
+
 /// Routes for every restored file, to merge ahead of the client build.
 pub fn router(content: Arc<Content>) -> Router {
     let mut r = Router::new()
         .route("/mods/", get(mod_list))
         .route("/mods/index.json", get(mod_index))
-        .route("/mods/{key}/vertixmod.zip", get(mod_pack));
+        .route("/mods/{key}/vertixmod.zip", get(mod_pack))
+        .route("/sprays/index.json", get(spray_index));
     for (path, (bytes, ctype)) in &content.files {
         let (bytes, ctype) = (bytes.clone(), *ctype);
         r = r.route(
@@ -375,6 +470,21 @@ async fn mod_pack(State(c): State<Arc<Content>>, UrlPath(key): UrlPath<String>) 
         }
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
+}
+
+/// The sprays added from `sprays_dir`, for the client's spray list.
+async fn spray_index(State(c): State<Arc<Content>>) -> Response {
+    let sprays: Vec<_> = c
+        .folder_sprays
+        .iter()
+        .filter(|(_, _, added)| *added)
+        .map(|(id, name, _)| json!({"id": id, "name": name, "info": {"scale": 64, "alpha": 1, "resolution": 30}}))
+        .collect();
+    (
+        [(header::CONTENT_TYPE, "application/json")],
+        json!({ "sprays": sprays }).to_string(),
+    )
+        .into_response()
 }
 
 async fn mod_index(State(c): State<Arc<Content>>) -> Response {
@@ -444,6 +554,43 @@ mod tests {
             first_seen: first_seen.to_owned(),
             archive_path: String::new(),
             member: None,
+        }
+    }
+
+    #[test]
+    fn png_files_in_the_sprays_folder_become_sprays() {
+        let dir = std::env::temp_dir().join(format!("vertix-sprays-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let png = b"\x89PNG\r\n\x1a\nrest".to_vec();
+        std::fs::write(dir.join("2.png"), &png).unwrap();
+        std::fs::write(dir.join("My_Spray.png"), &png).unwrap();
+        std::fs::write(dir.join("b-side.PNG"), &png).unwrap();
+        std::fs::write(dir.join("broken.png"), b"not a png").unwrap();
+        std::fs::write(dir.join("notes.txt"), b"ignored").unwrap();
+        let mut sprays = vec![
+            json!({"id": 1, "name": "Strike"}),
+            json!({"id": 2, "name": "Schweiz"}),
+        ];
+        let mut c = Content::default();
+        let warnings = c.add_folder_sprays(&dir, &mut sprays);
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(warnings.len(), 1, "{warnings:?}");
+        assert_eq!(
+            c.folder_sprays,
+            vec![
+                (2, "Schweiz".to_owned(), false),
+                (3, "My Spray".to_owned(), true),
+                (4, "b side".to_owned(), true),
+            ]
+        );
+        let ids: Vec<_> = sprays.iter().map(|s| s["id"].clone()).collect();
+        assert_eq!(ids, [json!(1), json!(2), json!(3), json!(4)]);
+        for p in [
+            "/assets/sprays/2.png",
+            "/images/sprays/3.png",
+            "/assets/sprays/4.png",
+        ] {
+            assert_eq!(c.files[p].0.as_ref(), png.as_slice(), "{p}");
         }
     }
 

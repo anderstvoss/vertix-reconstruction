@@ -77,6 +77,8 @@ mode can restore the original behaviour if wanted.
 | Area | Original and KRP | Here | Why |
 | --- | --- | --- | --- |
 | Weapon camos | KRP (the original server is not recovered) keeps one weapon object per room, so the last player to pick a camo for a weapon changes it on every player's copy of that gun | Camos are per player, like hats and shirts: each player carries their own weapons, and the server remembers each player's camo per weapon across respawns and class changes (the client sends it once, before it spawns) | A cosmetic should only change the player who chose it. |
+| Spray size | KRP's server gives every spray a size (64 px) and a resolution (30 px, one 40 px): the client shrinks the image to that resolution, then blows it up to that size with hard pixels, so detailed sprays turn blocky | A spray is just its image file: the patched client draws it at 2 world pixels per image pixel, at most 64 px across. Small images scale up with crisp pixels; larger ones keep their full resolution and are scaled down when drawn (`scripts/client-patches/apply.mjs`) | Sprays look like the picture the player picked, and new sprays need no settings. |
+| Adding sprays | KRP's spray list is built into its client | Every PNG in the server's sprays folder (`[content] sprays_dir`) is a spray: a number name (`44.png`) replaces that spray's image, any other name adds a spray named after the file, and the patched client lists them | Adding a spray is dropping a file in a folder. |
 
 ## Not done yet
 
