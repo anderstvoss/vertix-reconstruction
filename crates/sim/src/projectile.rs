@@ -396,9 +396,9 @@ impl Projectile {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::game::data::committed;
-    use crate::game::map::tests::{SPAWNS, mode, no_random};
-    use crate::game::map::{Map, World};
+    use crate::data::committed;
+    use crate::map::tests::{SPAWNS, mode, no_random};
+    use crate::map::{Map, World};
 
     fn target(index: u32, x: f64, y: f64) -> Target<'static> {
         Target {

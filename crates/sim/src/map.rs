@@ -479,7 +479,7 @@ pub fn dot_in_rect(px: f64, py: f64, x: f64, y: f64, w: f64, h: f64) -> bool {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-    use crate::game::data::committed;
+    use crate::data::committed;
 
     pub(crate) const SPAWNS: &str = "\
 #########

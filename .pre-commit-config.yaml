@@ -116,19 +116,19 @@ repos:
 
       - id: cargo-check
         name: cargo check
-        entry: cargo check --locked --all-targets --all-features
+        entry: cargo check --locked --workspace --all-targets --all-features
         language: system
         pass_filenames: false
 
       - id: cargo-clippy
         name: cargo clippy
-        entry: cargo clippy --locked --all-targets --all-features -- -D warnings
+        entry: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
         language: system
         pass_filenames: false
 
       - id: cargo-test
         name: cargo test
-        entry: cargo test --locked --all-features
+        entry: cargo test --locked --workspace --all-features
         language: system
         pass_filenames: false
 
