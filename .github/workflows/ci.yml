@@ -396,6 +396,11 @@ jobs:
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: on-failure
+          # glib 0.18 (RUSTSEC-2024-0429: VariantStrIter is unsound) reaches
+          # desktop/krp only through tao and wry's Linux GTK backend, which
+          # pin gtk-rs 0.18; nothing there iterates GVariant strings. Remove
+          # once tao moves to a fixed glib.
+          allow-ghsas: GHSA-wrw7-89jp-8q8g
 
   python-scripts:
     name: Python script tests
