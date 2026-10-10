@@ -102,6 +102,9 @@ pub struct Player {
     pub hat: Option<Value>,
     pub shirt: Option<Value>,
     pub spray: Value,
+    /// Chosen camo per weapon id (`cCamo`, the camo's index; -1 for none).
+    /// Kept apart from `weapons`, which every spawn rebuilds.
+    pub camos: HashMap<usize, f64>,
     /// Bumped on every spawn, so a stale spawn-protection timer is ignored.
     life: u64,
 }
@@ -404,6 +407,7 @@ impl Room {
             hat: None,
             shirt: None,
             spray: with_src(&spray),
+            camos: HashMap::new(),
             life: 0,
         };
         self.players.push(player);
@@ -479,7 +483,10 @@ impl Room {
             .map(|&w| {
                 let mut o = data.weapons[w].json.clone();
                 // Each player carries their own camo (KRP shares one per room).
-                o.entry("camo").or_insert(json!(-1));
+                o.insert(
+                    "camo".into(),
+                    json!(p.camos.get(&w).copied().unwrap_or(-1.0)),
+                );
                 o
             })
             .collect();
@@ -643,12 +650,19 @@ impl Room {
                 let arg = a.first();
                 let weapon = num(arg.and_then(|v| v.get("weaponID")));
                 let camo = num(arg.and_then(|v| v.get("camoID")));
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                 if let (Some(w), Some(c)) = (weapon, camo)
+                    && w >= 0.0
+                    && w.fract() == 0.0
+                    && (w as usize) < data.weapons.len()
                     && let Some(p) = self.player_mut(index)
                 {
+                    // Remembered per weapon, so it survives respawns and
+                    // class changes: KRP's client sends it once.
+                    let w = w as usize;
+                    p.camos.insert(w, c - 1.0);
                     for (slot, &id) in p.weapon_ids.iter().enumerate() {
-                        #[allow(clippy::cast_precision_loss)]
-                        if (id as f64 - w).abs() < f64::EPSILON {
+                        if id == w {
                             p.weapons[slot].insert("camo".into(), json!(c - 1.0));
                         }
                     }

@@ -922,3 +922,35 @@ fn player_limit_is_a_server_setting() {
     b.send(i, "cSrv", csrv("1"));
     assert_eq!(b.room.max_players, 2);
 }
+
+#[test]
+fn weapon_camos_survive_spawning_and_class_changes() {
+    let mut b = Bench::new("ffa");
+    let i = b.join();
+    let camo_of = |b: &Bench, weapon: usize| {
+        let p = b.p(i);
+        let slot = p.weapon_ids.iter().position(|&w| w == weapon).unwrap();
+        p.weapons[slot]["camo"].clone()
+    };
+    // A weapon two classes share (KRP: classes 1 and 4 both carry 5).
+    let shared = b.data.classes[1].weapon_indexes[1];
+    let other = (0..b.data.classes.len())
+        .find(|&c| c != 1 && b.data.classes[c].weapon_indexes.contains(&shared))
+        .unwrap();
+    // KRP's client sends its saved camos as soon as it connects, before it
+    // spawns, and again only when the loadout changes.
+    b.send(i, "cCamo", vec![json!({"weaponID": shared, "camoID": 5})]);
+    b.spawn(i, "a", 1);
+    assert_eq!(camo_of(&b, shared), json!(4.0));
+    // Respawning (a new `gotit`) keeps it.
+    b.spawn(i, "a", 1);
+    assert_eq!(camo_of(&b, shared), json!(4.0));
+    // Another class with the same weapon wears the same camo.
+    b.spawn(i, "a", other);
+    assert_eq!(camo_of(&b, shared), json!(4.0));
+    // Camo 0 takes it off.
+    b.send(i, "cCamo", vec![json!({"weaponID": shared, "camoID": 0})]);
+    assert_eq!(camo_of(&b, shared), json!(-1.0));
+    b.spawn(i, "a", 1);
+    assert_eq!(camo_of(&b, shared), json!(-1.0));
+}
