@@ -149,6 +149,10 @@ pub struct Room {
     round: u64,
     timers: Vec<(f64, Timer)>,
     rng: StdRng,
+    /// Sprays on the map this round, as `crtSpr` sent them (owner, x, y,
+    /// slot): resent to each player as they spawn, since KRP's client
+    /// clears its sprays on every `gameSetup` and a late joiner has none.
+    sprays: Vec<(u32, f64, f64, u32)>,
     pub out: Vec<Out>,
 }
 
@@ -222,6 +226,7 @@ impl Room {
             bullets: Vec::new(),
             next_bullet: 0,
             next_index: 0,
+            sprays: Vec::new(),
             round: 0,
             timers: Vec::new(),
             rng,
@@ -305,6 +310,7 @@ impl Room {
         _now: f64,
     ) {
         self.round += 1;
+        self.sprays.clear();
         self.score_red = 0.0;
         self.score_blue = 0.0;
         self.score_lb = 0.0;
@@ -841,6 +847,8 @@ impl Room {
                 if let Some(p) = self.player_mut(index) {
                     p.sprays_made += 1;
                 }
+                self.sprays.retain(|s| (s.0, s.3) != (index, slot));
+                self.sprays.push((index, x, y, slot));
                 self.send(
                     To::All,
                     "crtSpr",
@@ -963,6 +971,10 @@ impl Room {
             self.send(me.clone(), "6", msg);
         }
         self.send(To::All, "add", vec![json!(add)]);
+        for (owner, x, y, slot) in self.sprays.clone() {
+            let a = vec![json!(owner), json!(x), json!(y), json!(slot)];
+            self.send(me.clone(), "crtSpr", a);
+        }
         let rsd = self.rsd(None);
         self.send(me.clone(), "rsd", vec![rsd]);
         if self.round_end {
@@ -1612,6 +1624,8 @@ impl Room {
             return;
         };
         let gone = self.players.remove(at);
+        // A later player can take this index; their sprays go with them.
+        self.sprays.retain(|s| s.0 != index);
         // KRP scores the leaver after removing them: only the boards update.
         self.players.push(gone);
         self.update_score(data, rules, 0.0, index, now);

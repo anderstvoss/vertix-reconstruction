@@ -63,6 +63,11 @@ version = ""
 # server form can lower a room's limit, never raise it.
 max_players = 8
 
+# Sprays each player can have on the map at once; placing another replaces
+# their oldest. 1 as in KRP. The admin console's `rule sprays_per_player N`
+# changes it while running.
+sprays_per_player = 1
+
 # The rooms opened at start, one per mode as in KRP's dev server. A client
 # picks one in the server browser; mode codes are those in data/krp.
 rooms = [

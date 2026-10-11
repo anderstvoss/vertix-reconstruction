@@ -28,6 +28,7 @@ fn game(rooms: &[(&str, &str)]) -> Game {
                 concat!(env!("CARGO_MANIFEST_DIR"), "/data/rules/base.toml").into(),
                 concat!(env!("CARGO_MANIFEST_DIR"), "/data/rules/recovered.toml").into(),
             ],
+            sprays_per_player: 1,
         },
         crate::version::Version::default(),
     );

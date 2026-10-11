@@ -142,6 +142,14 @@ const patches = [
 		replace: "// `slot` (from this server) lets a player keep several sprays on the map:\n// the server cycles it through `sprays_per_player` slots.\nfunction createSpray(plrIdx: number, x: number, y: number, slot = 0) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find(\n\t\t(s) => s.owner === plrIdx && ((s as Sprite & { slot?: number }).slot ?? 0) === slot,\n\t);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite & { slot?: number };\n\t\timg.slot = slot;\n\t\timg.owner = plrIdx;",
 	},
 	{
+		// KRP ignores `add` for the player themself, so after changing spray in
+		// game they kept placing the old one (others saw the new one). Take
+		// the spray from it; nothing else of their own is replaced.
+		file: "core/src/app.tsx",
+		find: "\t\t\tst.players[st.players.indexOf(existingUser)] = parsed;\n\t\t}\n\t}\n}",
+		replace: "\t\t\tst.players[st.players.indexOf(existingUser)] = parsed;\n\t\t}\n\t} else if (parsed.spray) {\n\t\tst.player.spray = parsed.spray;\n\t\tconst me = findUserByIndex(parsed.index);\n\t\tif (me) me.spray = parsed.spray;\n\t}\n}",
+	},
+	{
 		// Hidden tabs: drop shots that arrived while frames were stalled
 		file: "core/src/app.tsx",
 		find: "function someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t}\n\t}\n}",

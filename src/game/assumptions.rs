@@ -98,7 +98,9 @@ pub struct Rules {
     pub round_end_countdown_s: u32,
     pub bullet_pool: usize,
     pub chat_max_len: usize,
-    /// Sprays a player can have on the map at once (KRP: 1).
+    /// Sprays a player can have on the map at once (KRP: 1). A server
+    /// setting, `[game] sprays_per_player`, not a rule layer value.
+    #[serde(default = "one")]
     pub sprays_per_player: u32,
     pub name_max_len: usize,
 }
@@ -376,6 +378,10 @@ impl Assumptions {
         }
         Ok(())
     }
+}
+
+const fn one() -> u32 {
+    1
 }
 
 /// The committed layers, for tests.

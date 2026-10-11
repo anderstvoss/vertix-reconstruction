@@ -1000,5 +1000,39 @@ fn sprays_cycle_through_the_players_slots() {
     );
 }
 
+#[test]
+fn players_who_spawn_later_get_the_sprays_already_placed() {
+    let mut b = Bench::new("ffa");
+    let a = b.join();
+    b.spawn(a, "a", 1);
+    let placed = one(&b.send(a, "crtSpr", vec![]), "crtSpr")
+        .event
+        .args
+        .clone();
+    // A second spray from the same slot replaces the first.
+    let placed2 = one(&b.send(a, "crtSpr", vec![]), "crtSpr")
+        .event
+        .args
+        .clone();
+    assert_eq!(placed, placed2);
+    // KRP's client clears sprays on every gameSetup, so a newcomer (and
+    // anyone respawning) is sent each one after it.
+    let c = b.join();
+    b.take();
+    let out = b.spawn(c, "c", 1);
+    let names = names(&out);
+    let setup = names.iter().position(|n| *n == "gameSetup").unwrap();
+    let spray = names.iter().position(|n| *n == "crtSpr").unwrap();
+    assert!(setup < spray);
+    let got = one(&out, "crtSpr");
+    assert_eq!(got.to, To::One(c));
+    assert_eq!(got.event.args, placed);
+    // The owner's sprays go when they leave: their index can be reused.
+    let (data, rules, now) = (b.data.clone(), b.rules.rules.clone(), b.now);
+    b.room.leave(&data, &rules, a, now);
+    b.take();
+    assert!(named(&b.spawn(c, "c", 1), "crtSpr").is_empty());
+}
+
 // The admin console.
 mod admin;

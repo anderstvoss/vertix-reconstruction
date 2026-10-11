@@ -182,6 +182,7 @@ fn admin_paths(config: &Config) -> vertix_reconstruction::game::admin::Paths {
         krp_data: config.game.krp_data.clone(),
         balance_dir: config.game.balance_dir.clone(),
         rules: config.rules.clone(),
+        sprays_per_player: config.game.sprays_per_player,
     }
 }
 
@@ -272,11 +273,30 @@ fn classic_room(
     }
 }
 
+/// The rule layers, with the server's own `[game] sprays_per_player`.
+fn load_rules(
+    config: &Config,
+) -> Result<
+    (
+        Assumptions,
+        vertix_reconstruction::game::assumptions::Provenance,
+    ),
+    String,
+> {
+    let (mut rules, provenance) =
+        Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
+    if config.game.sprays_per_player == 0 {
+        return Err("[game] sprays_per_player must be at least 1".into());
+    }
+    rules.rules.sprays_per_player = config.game.sprays_per_player;
+    Ok((rules, provenance))
+}
+
 async fn run() -> Result<(), String> {
     let mut args = parse_args()?;
     let mut config = Config::load(&args.config)?;
     choose_rooms(&mut config, args.single, args.room.take());
-    let (rules, provenance) = Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
+    let (rules, provenance) = load_rules(&config)?;
     let mut data = GameData::load(
         &config.game.krp_data,
         &config.game.balance_dir,

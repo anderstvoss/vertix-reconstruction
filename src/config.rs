@@ -116,6 +116,10 @@ pub struct Game {
     /// custom server form can lower a room's limit but not raise it.
     #[serde(default = "default_max_players")]
     pub max_players: usize,
+    /// Sprays each player can have on the map at once; a new one replaces
+    /// their oldest. 1 as in KRP.
+    #[serde(default = "default_sprays_per_player")]
+    pub sprays_per_player: u32,
     /// The rooms opened at start, in the room list's order.
     pub rooms: Vec<crate::game::RoomSpec>,
     /// `all` opens every room in `rooms`; `single` opens only one of them
@@ -145,6 +149,10 @@ pub enum Launch {
 
 const fn default_max_players() -> usize {
     8
+}
+
+const fn default_sprays_per_player() -> u32 {
+    1
 }
 
 impl Game {
