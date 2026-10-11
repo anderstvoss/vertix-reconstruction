@@ -34,10 +34,10 @@ day: `2017-07-01` (v3.8, the version KRP's client follows) by default.
 A later date serves the re-size.
 
 **Sprays** are served at both `/images/sprays/<id>.png` (the original path)
-and `/assets/sprays/<id>.png` (where KRP's client loads them). The patched
-client sizes each spray from its image alone: 2 world pixels per image
-pixel, at most 64 px across (larger images are scaled down, keeping their
-detail). This is a deliberate change from KRP (docs/DEVIATIONS.md).
+and `/assets/sprays/<id>.png` (where KRP's client loads them). Each is drawn
+as in the 2016 client and KRP: shrunk to 30 px, then blown up to a 64 px
+square with hard pixels. An image that is not square keeps its shape
+inside that square instead of being stretched (docs/DEVIATIONS.md).
 
 **Adding sprays.** Put PNG files in `content/sprays/` (`[content]
 sprays_dir`, git-ignored) and restart the server. A file named after a
