@@ -176,6 +176,18 @@ const patches = [
 		replace: "\t\tthis.active = true;\n\t\tthis.arrivedAt = 0;\n\t\tif (typeof window !== \"undefined\" && !this.silent) {\n\t\t\tplaySound(`shot${this.weaponIndex}`, this.x, this.y);\n\t\t}\n\t\tthis.silent = false;",
 	},
 	{
+		// Flag waving: the client steps a flag's animation once every five
+		// drawn frames. The 2016 client drew at 30 fps, so a flag changed
+		// picture every 167 ms; KRP draws every display refresh, so flags
+		// wave 2x faster at 60 Hz and almost 5x at 144 Hz. The countdown now
+		// runs on elapsed time measured in 30 fps frames, which keeps the 2016
+		// speed at any refresh rate. localStorage `vertix.flagSpeed` = "krp"
+		// restores KRP's per-frame stepping.
+		file: "core/src/app.tsx",
+		find: "function drawFlag(flg: FlagObject) {\n\tflg.ac--;\n\tif (flg.ac <= 0) {\n\t\tflg.ac = 5;\n",
+		replace: "const KRP_FLAG_SPEED = (() => {\n\ttry {\n\t\treturn localStorage.getItem(\"vertix.flagSpeed\") === \"krp\";\n\t} catch {\n\t\treturn false;\n\t}\n})();\nconst FLAG_FRAME_MS = 1000 / 30;\nfunction drawFlag(flg: FlagObject) {\n\tflg.ac -= KRP_FLAG_SPEED ? 1 : delta / FLAG_FRAME_MS;\n\tif (flg.ac <= 0) {\n\t\t// Keep the leftover so the average is exactly one picture per\n\t\t// five 2016 frames (6 per second).\n\t\tflg.ac = KRP_FLAG_SPEED ? 5 : Math.max(flg.ac + 5, 1);\n",
+	},
+	{
 		// The mod tab's link to a Reddit thread of (mostly dead) Dropbox
 		// links now opens this server's list of restored packs.
 		file: "core/src/components/tabs/ModTab.svelte",
