@@ -8,7 +8,13 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub bind: String,
+    /// Preferred ports: a taken one moves up unless `strict_ports`.
     pub port: u16,
+    #[serde(default)]
+    pub strict_ports: bool,
+    /// Where the bound addresses are written; empty for nowhere.
+    #[serde(default)]
+    pub ports_file: String,
     #[serde(default)]
     pub archive: String,
     /// The built `KrunkerRevival` client (`scripts/build-client.sh`).
@@ -24,6 +30,61 @@ pub struct Config {
     pub engine_io: EngineIo,
     #[serde(default)]
     pub classic: Classic,
+    #[serde(default)]
+    pub content: Content,
+    #[serde(default)]
+    pub admin: Admin,
+}
+
+/// Cosmetic art and mod packs restored from the archive (`src/content.rs`).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+pub struct Content {
+    /// Serve the archive's hats, shirts, camos and sprays over the client
+    /// build's copies.
+    pub cosmetics: bool,
+    pub cosmetics_manifest: PathBuf,
+    /// For a file with several first-party versions, the one live on this
+    /// day (`YYYY-MM-DD`) is served.
+    pub date: String,
+    /// Serve the community mod packs at `/mods/`.
+    pub mods: bool,
+    pub mods_manifest: PathBuf,
+    /// Where `scripts/extract_mods.py` unpacks packs held in git bundles.
+    pub mods_dir: PathBuf,
+    /// Every PNG in this folder is a spray: `<id>.png` replaces that spray's
+    /// image, any other name adds a new spray named after the file.
+    pub sprays_dir: PathBuf,
+}
+
+impl Default for Content {
+    fn default() -> Self {
+        Self {
+            cosmetics: true,
+            cosmetics_manifest: "data/content/cosmetics.json".into(),
+            date: "2017-07-01".into(),
+            mods: true,
+            mods_manifest: "data/content/mods.json".into(),
+            mods_dir: "content/mods".into(),
+            sprays_dir: "content/sprays".into(),
+        }
+    }
+}
+
+/// The admin panel and dev console (`src/admin`).
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct Admin {
+    /// Serve the panel on `bind`:`port`.
+    pub enabled: bool,
+    pub bind: String,
+    pub port: u16,
+    /// The panel's token; empty for a new random one at every start.
+    pub token: String,
+    /// Read commands from the server's standard input.
+    pub stdin: bool,
+    /// Print the admin log (joins, chat, kill feed) to the terminal.
+    pub stdin_log: bool,
 }
 
 /// The archived 2016-08-06 client, served from the archive on its own
@@ -55,26 +116,86 @@ pub struct Game {
     /// custom server form can lower a room's limit but not raise it.
     #[serde(default = "default_max_players")]
     pub max_players: usize,
+    /// Sprays each player can have on the map at once; a new one replaces
+    /// their oldest. 1 as in KRP.
+    #[serde(default = "default_sprays_per_player")]
+    pub sprays_per_player: u32,
     /// The rooms opened at start, in the room list's order.
     pub rooms: Vec<crate::game::RoomSpec>,
+    /// `all` opens every room in `rooms`; `single` opens only one of them
+    /// (`single_room`, or the first). More can be opened later from the
+    /// admin panel either way.
+    #[serde(default)]
+    pub launch: Launch,
+    /// The room `launch = "single"` opens; empty for the first.
+    #[serde(default)]
+    pub single_room: String,
+    /// The version string clients show in their menu; empty for the
+    /// server's own (`RECON <version>`).
+    #[serde(default)]
+    pub version: String,
+}
+
+/// Which of the configured rooms open at start.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Launch {
+    /// Every room in the list, one per mode as in KRP's dev server.
+    #[default]
+    All,
+    /// One room only.
+    Single,
 }
 
 const fn default_max_players() -> usize {
     8
 }
 
+const fn default_sprays_per_player() -> u32 {
+    1
+}
+
 impl Game {
-    /// The rooms with `max_players` filled in from the server default.
-    #[must_use]
-    pub fn room_specs(&self) -> Vec<crate::game::RoomSpec> {
-        self.rooms
-            .iter()
+    /// The rooms to open at start, after `launch`, with `max_players`
+    /// filled in from the server default.
+    ///
+    /// # Errors
+    /// Fails if `single_room` names no room in the list, or the list is
+    /// empty.
+    pub fn room_specs(&self) -> Result<Vec<crate::game::RoomSpec>, String> {
+        let chosen: Vec<&crate::game::RoomSpec> = match self.launch {
+            Launch::All => self.rooms.iter().collect(),
+            Launch::Single if self.single_room.is_empty() => self.rooms.iter().take(1).collect(),
+            Launch::Single => {
+                let r = self
+                    .rooms
+                    .iter()
+                    .find(|r| r.name.eq_ignore_ascii_case(&self.single_room))
+                    .ok_or_else(|| {
+                        format!(
+                            "single room {} is not in [game] rooms ({})",
+                            self.single_room,
+                            self.rooms
+                                .iter()
+                                .map(|r| r.name.as_str())
+                                .collect::<Vec<_>>()
+                                .join(" ")
+                        )
+                    })?;
+                vec![r]
+            }
+        };
+        if chosen.is_empty() {
+            return Err("[game] rooms is empty".into());
+        }
+        Ok(chosen
+            .into_iter()
             .cloned()
             .map(|mut r| {
                 r.max_players = r.max_players.or(Some(self.max_players));
                 r
             })
-            .collect()
+            .collect())
     }
 }
 
@@ -159,8 +280,22 @@ mod tests {
         assert_eq!(c.game.balance, "best");
         assert_eq!(c.game.rooms.len(), 9);
         assert_eq!(c.game.max_players, 8);
-        assert!(c.game.room_specs().iter().all(|r| r.max_players == Some(8)));
+        let all = c.game.room_specs().unwrap();
+        assert_eq!(all.len(), 9);
+        assert!(all.iter().all(|r| r.max_players == Some(8)));
+        let mut one = c.game.clone();
+        one.launch = Launch::Single;
+        assert_eq!(one.room_specs().unwrap().len(), 1);
+        one.single_room = "dev2".into();
+        assert_eq!(one.room_specs().unwrap()[0].name, "DEV2");
+        one.single_room = "NOPE".into();
+        assert!(one.room_specs().is_err());
         assert_eq!(c.classic.port, 8081);
         assert!(c.classic.manifest.is_file());
+        assert!(c.admin.enabled && c.admin.stdin);
+        assert_eq!(c.admin.port, 8082);
+        assert!(c.admin.token.is_empty());
+        let ip: std::net::IpAddr = c.admin.bind.parse().unwrap();
+        assert!(ip.is_loopback(), "the admin port must default to loopback");
     }
 }

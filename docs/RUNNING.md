@@ -56,6 +56,13 @@ second player.
 
 Useful options:
 
+- Ports are preferences: a second server on the same machine moves to the
+  next free ports and prints them (also in `out/server.json`).
+  `--strict-port` fails instead.
+- `--single` opens one room instead of all nine (the first in
+  `[game] rooms`); `--room DEV2` opens just that one. More rooms can be
+  opened later from the admin panel.
+
 - `--port 9000` to use another port. The bind address and port are in
   `config/server.toml`.
 - `--trace out/trace.jsonl` writes every event in and out, one JSON line
@@ -63,6 +70,21 @@ Useful options:
 - `VERTIX_ARCHIVE` replaces `--archive`.
 - `--explain-rules` prints every rule constant and every balance value with
   its status or basis and its source, then exits.
+
+## Cosmetics and mod packs
+
+With an archive, the server serves the recovered hats, camos, sprays and
+shirt image over the client build's copies, and the community mod packs at
+`/mods/` (see [CONTENT.md](CONTENT.md)). Most packs live in a git bundle in
+the archive; unpack them once:
+
+```bash
+python3 scripts/extract_mods.py --archive PATH/TO/vertix-archive
+```
+
+The start-up log says how many files and packs it restored. Load a pack by
+typing its key (listed at `/mods/`) in the MODS tab; a client built before
+this change needs `scripts/build-client.sh` again for keys to load locally.
 
 ## The 2016 client
 
@@ -85,6 +107,9 @@ no request leaves the server.
   (`DEV0` free for all to `DEV8` Arsonist War, as in KRP's dev server). The
   room list and `/api/getIP` follow it. A room's mode changes at round end
   by vote, or through the client's custom server form.
+- **`[game] launch`**: `all` (default) opens every room in the list;
+  `single` opens only `single_room` (or the first). The admin panel opens
+  and closes rooms while the server runs either way.
 - **`[game] max_players`**: players per room, 8 by default. A room can set
   its own (`{ name = "DEV0", mode = "ffa", max_players = 12 }`). The
   custom server form can lower a room's limit but not raise it.
@@ -120,6 +145,16 @@ To let another machine on your network join, change `bind` to your
 machine's network address (do not commit that change) and open the port
 in your firewall.
 
+## Admin panel and console
+
+The server prints `admin panel on http://<bind>:8082/#token=...` when it
+starts. Open that address for a live view of every room with buttons to
+kick, kill, end rounds, change mode and map, and edit rules, plus a
+console for any command. You can also type the same commands straight
+into the server's terminal, for example `status`, `@DEV1 mode hp` or
+`kick Bob`. [ADMIN.md](ADMIN.md) lists them all; `[admin]` in
+`config/server.toml` has the port, token and switches.
+
 ## Checking it
 
 ```bash
@@ -129,12 +164,17 @@ cargo build && python3 scripts/e2e_smoke.py
 starts the server with a stand-in client and the placeholder arena, and
 plays through it over long-polling and WebSocket: room list, joining a
 room, spawning, moving, chat after the WebSocket upgrade, a second player
-and leaving.
+and leaving. It then drives the admin panel's API, its WebSocket and the
+terminal console against that player: kill, round end, restart, mode
+change, chat and kick.
 
 ## Troubleshooting
 
 - **"hash mismatch" or "is an LFS pointer"** at start-up: that archive file
   was not pulled. Run `git lfs pull` in the archive.
+- **Fewer cosmetic files or mod packs than expected** at start-up: the
+  APK, Wayback files or JeanPaulDot bundle were not pulled (`git lfs pull`
+  in the archive), or `scripts/extract_mods.py` has not been run.
 - **"no client build"** warning: run `scripts/build-client.sh`. The 2016
   client on the second port works without it.
 - **"The system cannot find the path specified"** for the maps: the

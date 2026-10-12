@@ -5,6 +5,12 @@
 # loopback blocker in .pre-commit-config.yaml excludes this file alone.
 bind = "127.0.0.1"
 port = 8080
+# Ports here are preferences: if one is taken (another server on this
+# machine), the next free port up is used, else one the system picks.
+# strict_ports (or --strict-port) fails instead.
+strict_ports = false
+# The addresses actually bound, as JSON, for scripts; empty for none.
+ports_file = "out/server.json"
 
 # Path to a vertix-archive clone with its LFS files pulled. The
 # VERTIX_ARCHIVE environment variable or --archive override it.
@@ -46,10 +52,21 @@ krp_data = "data/krp"
 balance_dir = "data/balance"
 balance = "best"
 
+# The version string both clients show in their menu footer, as
+# "<version> (CHANGELOG)". Empty: the server's own, "RECON <version>". The
+# admin console's `version` command changes it at run time, to a game
+# version from the research (e.g. "V3.8") or any short string.
+version = ""
+
 # Players per room. A room in the list below can set its own, e.g.
 # { name = "DEV0", mode = "ffa", max_players = 12 }. The client's custom
 # server form can lower a room's limit, never raise it.
 max_players = 8
+
+# Sprays each player can have on the map at once; placing another replaces
+# their oldest. 1 as in KRP. The admin console's `rule sprays_per_player N`
+# changes it while running.
+sprays_per_player = 1
 
 # The rooms opened at start, one per mode as in KRP's dev server. A client
 # picks one in the server browser; mode codes are those in data/krp.
@@ -65,6 +82,37 @@ rooms = [
   { name = "DEV8", mode = "pyro" },
 ]
 
+# "all" opens every room above; "single" opens one (`single_room`, or the
+# first). The admin panel can open and close rooms while running either
+# way. `--single` or `--room NAME` on the command line pick single.
+launch = "all"
+single_room = ""
+
+[content]
+# Cosmetics and mod packs restored from the archive (src/content.rs), read
+# and hash-checked at start-up, never copied into this repository. They
+# are served ahead of the client build, whose copies remain for anything
+# the archive lacks. data/content/ says where each file lives
+# (scripts/import_content.py).
+# Hats 1-116, camos 1-130 and sprays 1-43 from the Aug-2016 Android APK,
+# and Wayback captures; KRP's copies fill in the rest.
+cosmetics = true
+cosmetics_manifest = "data/content/cosmetics.json"
+# When a file has several first-party versions, serve the one live on this
+# day. 2017-07-01 is when v3.8 (the version KRP's client follows) was live.
+date = "2017-07-01"
+# Community mod packs at /mods/ (list) and /mods/<key>/vertixmod.zip.
+# Packs held in the archive's git bundles must first be unpacked with
+# scripts/extract_mods.py into mods_dir.
+mods = true
+mods_manifest = "data/content/mods.json"
+mods_dir = "content/mods"
+# Drop PNG files in this folder to add sprays (read at start-up): a file
+# named after a spray's number (44.png) replaces that spray's image, any
+# other name (My Spray.png) adds a new spray with that name. Each spray is
+# drawn from its own image, so no size or other settings are needed.
+sprays_dir = "content/sprays"
+
 [classic]
 # The archived 2016-08-06 client, kept as a compatibility path. It is
 # served from the archive (never from this repository) on its own port,
@@ -74,6 +122,20 @@ enabled = true
 port = 8081
 room = ""
 manifest = "data/boot/20160806061006.json"
+
+[admin]
+# Admin panel and dev console (docs/ADMIN.md). The panel is a page on its
+# own port; keep it on loopback unless you know who can reach it.
+enabled = true
+bind = "127.0.0.1"
+port = 8082
+# The panel and its API need this token. Empty: a new random one at every
+# start, printed with the panel's address.
+token = ""
+# Also take commands typed into the server's terminal.
+stdin = true
+# Print joins, chat and the kill feed in the terminal.
+stdin_log = false
 
 [engine_io]
 # Socket.IO's defaults, which KRP's server uses.

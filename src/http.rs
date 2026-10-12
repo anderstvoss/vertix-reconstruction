@@ -33,6 +33,7 @@ pub struct AppState {
     pub eio: Arc<eio::Server>,
     pub game: mpsc::UnboundedSender<Ask>,
     pub trace: Trace,
+    pub version: crate::version::Version,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -40,6 +41,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/getIP", get(get_ip))
         .route("/api/getRooms", get(get_rooms))
         .route("/api/getLbs", get(get_lbs))
+        .route("/api/version", get(get_version))
         .route(
             "/socket.io/",
             get(eio_get).post(eio_post).options(eio_options),
@@ -267,6 +269,11 @@ fn content_type(path: &Path) -> &'static str {
     }
 }
 
+/// The version string the menus show.
+async fn get_version(State(s): State<AppState>) -> Response {
+    json_response(&json!({"version": s.version.get(), "label": s.version.label()}))
+}
+
 async fn client_file(State(s): State<AppState>, method: Method, uri: Uri) -> Response {
     if method != Method::GET && method != Method::HEAD {
         return StatusCode::METHOD_NOT_ALLOWED.into_response();
@@ -275,14 +282,22 @@ async fn client_file(State(s): State<AppState>, method: Method, uri: Uri) -> Res
         return StatusCode::NOT_FOUND.into_response();
     };
     for path in tries {
-        if let Ok(bytes) = tokio::fs::read(&path).await {
+        if let Ok(mut bytes) = tokio::fs::read(&path).await {
+            let kind = content_type(&path);
+            // The menu's version label carries the server's version string.
+            let mut relabelled = false;
+            if kind.starts_with("text/html") || kind.starts_with("text/javascript") {
+                if let Some(b) =
+                    crate::version::relabel(&bytes, crate::version::KRP_LABEL, &s.version.label())
+                {
+                    bytes = b;
+                    relabelled = true;
+                }
+            }
             let mut res = Response::new(Body::from(bytes));
             let h = res.headers_mut();
-            h.insert(
-                header::CONTENT_TYPE,
-                HeaderValue::from_static(content_type(&path)),
-            );
-            if content_type(&path).starts_with("text/html") {
+            h.insert(header::CONTENT_TYPE, HeaderValue::from_static(kind));
+            if kind.starts_with("text/html") || relabelled {
                 h.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
             }
             return res;

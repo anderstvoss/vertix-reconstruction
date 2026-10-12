@@ -189,6 +189,12 @@ impl MapSet {
         }
     }
 
+    /// The map with this id, if loaded.
+    #[must_use]
+    pub fn get(&self, id: &str) -> Option<&MapEntry> {
+        self.entries.iter().find(|e| e.id == id)
+    }
+
     /// Picks a map for a mode with a random number.
     #[must_use]
     pub fn pick(&self, mode: &Mode, random: u64) -> (String, Map) {
