@@ -16,12 +16,12 @@
 
 pub mod admin;
 pub mod assumptions;
-pub mod data;
-pub mod map;
 pub mod maps;
-pub mod projectile;
 pub mod room;
 mod tuning;
+
+// The rules shared with the client live in the `vertix_sim` crate.
+pub use vertix_sim::{data, map, projectile};
 
 use std::collections::HashMap;
 use std::time::Duration;

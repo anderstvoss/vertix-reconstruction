@@ -787,7 +787,16 @@ dependencies = [
  "sha2",
  "tokio",
  "toml",
+ "vertix_sim",
  "zip",
+]
+
+[[package]]
+name = "vertix_sim"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
