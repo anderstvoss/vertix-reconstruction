@@ -134,6 +134,41 @@ pub struct Player {
     pub y_speed: f64,
     #[serde(skip)]
     pub hit_flash: f64,
+    /// Position and jump height before the latest input tick, to draw the
+    /// player between ticks (`Options::input` at a fixed rate).
+    #[serde(skip)]
+    pub tick_from: Option<(f64, f64, f64)>,
+    /// Another player's glide to their latest position (`Options::smooth`).
+    #[serde(skip)]
+    pub glide: Option<Glide>,
+}
+
+/// Where another player is drawn while moving to their latest position:
+/// from `from` at `t0`, reaching it after `dur` ms (the time between their
+/// last two moves), so they move steadily instead of jumping at each
+/// update.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Glide {
+    pub from: (f64, f64),
+    pub t0: f64,
+    pub dur: f64,
+    pub last_move: f64,
+}
+
+impl Glide {
+    /// Where to draw a player whose position is `to`, at time `now`.
+    #[must_use]
+    pub fn at(&self, to: (f64, f64), now: f64) -> (f64, f64) {
+        let t = if self.dur > 0.0 {
+            ((now - self.t0) / self.dur).clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+        (
+            self.from.0 + (to.0 - self.from.0) * t,
+            self.from.1 + (to.1 - self.from.1) * t,
+        )
+    }
 }
 
 impl Player {
@@ -211,6 +246,19 @@ pub fn num(v: Option<&Value>) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn glide_moves_evenly_and_stops_at_the_target() {
+        let g = super::Glide {
+            from: (0.0, 0.0),
+            t0: 100.0,
+            dur: 20.0,
+            last_move: 100.0,
+        };
+        assert_eq!(g.at((10.0, 20.0), 100.0), (0.0, 0.0));
+        assert_eq!(g.at((10.0, 20.0), 110.0), (5.0, 10.0));
+        assert_eq!(g.at((10.0, 20.0), 500.0), (10.0, 20.0));
+    }
+
     use super::*;
 
     #[test]

@@ -18,6 +18,7 @@ unsafe extern "C" {
     fn vx_fetch_poll(id: i32) -> JsObject;
     fn vx_page_url() -> JsObject;
     fn vx_report(json: JsObject);
+    fn vx_perf_now() -> f64;
 }
 
 /// Publishes measurements as `window.vertixMetrics` for the test browser.
@@ -31,6 +32,12 @@ pub fn report(json: &str, _options: &[(String, String)]) {
 #[unsafe(no_mangle)]
 pub extern "C" fn vertix_net_crate_version() -> u32 {
     1
+}
+
+/// `performance.now()`.
+pub fn perf_now() -> f64 {
+    // SAFETY: an import from vertix_net.js taking nothing.
+    unsafe { vx_perf_now() }
 }
 
 fn page_url() -> String {

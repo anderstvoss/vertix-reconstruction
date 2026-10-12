@@ -2,7 +2,7 @@
 //! for the browser (WebAssembly) and as a desktop build.
 //!
 //! Launch options (desktop: `--key value`; browser: `?key=value`):
-//! `server`, `room`, `name`, `class`, `input` (`frame` or a rate in Hz),
+//! `server`, `room`, `name`, `class`, `input` (a rate in Hz, default 60, or `frame`), `smooth` (`krp` to turn off),
 //! `display` (`sharp` or `krp`), `floor` (`2016` or `krp`), `effects`
 //! (`persist` or `krp`), `hidden` (`catch-up` or `krp`), `flags` (`2016`
 //! or `krp`), `spray` (an id), `autoplay`,
@@ -89,6 +89,7 @@ impl Metrics {
             "updates_received": game.updates_received,
             "updates_per_second": game.updates_received as f64 / secs.max(0.001),
             "ping_ms": game.ping,
+            "position": [game.me().x, game.me().y],
             "dpi_scale": screen_dpi_scale(),
             "css_size": [screen_width(), screen_height()],
             "log": game.log,

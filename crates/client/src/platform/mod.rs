@@ -31,6 +31,22 @@ pub fn now_ms() -> f64 {
     macroquad::miniquad::date::now() * 1000.0
 }
 
+/// A monotonic clock in milliseconds with sub-millisecond resolution, for
+/// frame times (`performance.now()` in the browser). `now_ms` is whole
+/// milliseconds in the browser, which makes frame times jitter by up to
+/// 1 ms: 15% of a frame at 144 Hz.
+#[must_use]
+pub fn frame_ms() -> f64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        web::perf_now()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        now_ms()
+    }
+}
+
 /// Splits `a=b&c=d` (no leading `?`) into pairs, decoding `%XX` and `+`.
 #[must_use]
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]

@@ -38,7 +38,8 @@ address.
 | `room` | Room to join, e.g. `DEV0` |
 | `name` | Player name |
 | `class` | Class index from the loadout |
-| `input` | `frame` (KRP: one input per drawn frame, the default) or a fixed rate such as `60` (Hz) |
+| `input` | a fixed rate in Hz (default `60`: the player moves in equal steps whatever the display's refresh rate, and is drawn between steps) or `frame` (KRP: one input and one movement step per drawn frame, so speed varies with the frame rate) |
+| `smooth` | on by default: other players glide between the positions the server sends, and the screen shake fades by time; `krp` keeps KRP's (they jump to each position, and the shake fades per frame) |
 | `display` | `sharp` (default, full device resolution) or `krp` (KRP's CSS-pixel canvas, upscaled) |
 | `floor` | `2016` (default: the 2016 ground tiles from the server's `original-2016` mod pack, when it has one) or `krp` (KRP's `res.zip` tiles) |
 | `effects` | `persist` (default: blood, dust and bullet holes stay where they happened, even off screen) or `krp` (only effects that were on screen when they happened, dropped when they leave it) |

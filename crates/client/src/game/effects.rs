@@ -153,12 +153,18 @@ impl Shake {
         }
     }
 
-    /// KRP `updateScreenShake`: halves every frame.
-    pub fn update(&mut self) {
+    /// KRP `updateScreenShake`: halves every frame, so it fades faster on a
+    /// faster display. With `by_time` it halves every 60th of a second (KRP
+    /// at 60 Hz) whatever the frame rate.
+    pub fn update(&mut self, delta: f64, by_time: bool) {
         if self.scale > 0.0 {
             self.x = self.scale * self.dir.cos();
             self.y = self.scale * self.dir.sin();
-            self.scale *= 0.5;
+            self.scale *= if by_time {
+                0.5_f64.powf(delta / (1000.0 / 60.0))
+            } else {
+                0.5
+            };
             if self.scale <= 0.1 {
                 self.scale = 0.0;
             }

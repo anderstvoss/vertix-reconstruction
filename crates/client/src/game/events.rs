@@ -321,6 +321,7 @@ impl Game {
             for p in &mut self.players {
                 p.on_screen = false;
             }
+            let (smooth, now) = (self.opts.smooth, self.frame_now);
             let mut c = 0;
             while c < d.len() {
                 let len = d[c] as usize;
@@ -342,6 +343,7 @@ impl Game {
                             p.isn = at(5);
                         }
                     } else {
+                        let before = (p.x, p.y);
                         if len > 2 {
                             p.x_speed = (p.x - at(2)).abs();
                             p.x = at(2);
@@ -349,6 +351,9 @@ impl Game {
                         if len > 3 {
                             p.y_speed = (p.y - at(3)).abs();
                             p.y = at(3);
+                        }
+                        if smooth && (p.x, p.y) != before {
+                            glide_to(p, before, now);
                         }
                         if len > 4 {
                             p.angle = at(4);
@@ -796,6 +801,21 @@ pub fn fmt_num(v: f64) -> String {
     } else {
         format!("{v}")
     }
+}
+
+/// Starts another player's glide from where they are drawn now (`before`
+/// was their last position) to their new one, over the time since their
+/// last move: their own input rate, so they move at an even pace.
+fn glide_to(p: &mut super::Player, before: (f64, f64), now: f64) {
+    let drawn = p.glide.map_or(before, |g| g.at(before, now));
+    let last = p.glide.map_or(now, |g| g.last_move);
+    let far = (p.x - drawn.0).hypot(p.y - drawn.1) > super::GLIDE_SNAP;
+    p.glide = Some(super::model::Glide {
+        from: if far { (p.x, p.y) } else { drawn },
+        t0: now,
+        dur: (now - last).clamp(8.0, 100.0),
+        last_move: now,
+    });
 }
 
 #[cfg(test)]

@@ -119,7 +119,7 @@ pub fn draw_sprite(
 impl Game {
     /// KRP `doGame`.
     pub(super) fn do_game(&mut self, gfx: &mut Gfx, delta: f64) {
-        self.fx.shake.update();
+        self.fx.shake.update(delta, self.opts.smooth);
         let me = self.me();
         let (mx, my) = (me.x, me.y);
         self.start_x = mx - self.max_w / 2.0 - self.fx.shake.x
