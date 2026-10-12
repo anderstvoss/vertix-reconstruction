@@ -25,6 +25,11 @@
 //   flags     "2016" (hardpoint and zone flags wave 6 times a second on any
 //             display) or "krp" (every 5 drawn frames). Read by the same
 //             patches from localStorage "vertix.flagSpeed".
+//   framerate "steady" (the player moves in fixed 60 Hz steps and is drawn
+//             between them, other players glide between server updates, the
+//             screen shake fades by time) or "krp" (one step per drawn frame,
+//             so speed depends on the display). Read by the same patches from
+//             localStorage "vertix.frameRate". `input` still caps the loop.
 //   name      player name to type into the start menu.
 //   autoplay  press ENTER GAME once the room is joined.
 //   script    scripted keys, the Rust client's format: "d:1500,s:800,a+w:1000,:500".
@@ -48,6 +53,7 @@
 		localStorage.setItem("vertix.hiddenTab", opts.hidden === "krp" ? "krp" : "catch-up");
 		localStorage.setItem("vertix.floor", opts.floor === "krp" ? "krp" : "2016");
 		localStorage.setItem("vertix.flagSpeed", opts.flags === "krp" ? "krp" : "2016");
+		localStorage.setItem("vertix.frameRate", opts.framerate === "krp" ? "krp" : "steady");
 	} catch {
 		// No storage (private window): the patched client persists effects.
 	}

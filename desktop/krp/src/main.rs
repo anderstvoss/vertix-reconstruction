@@ -14,7 +14,7 @@
 //! - `--name NAME`    player name
 //! - `--input frame|HZ`, `--display sharp|krp`, `--effects persist|krp`,
 //!   `--hidden catch-up|krp`, `--floor 2016|krp`,
-//!   `--flags 2016|krp`, `--autoplay`, `--script KEYS` as in `inject.js`
+//!   `--flags 2016|krp`, `--framerate steady|krp`, `--autoplay`, `--script KEYS` as in `inject.js`
 //! - `--duration S`   quit after S seconds and report metrics
 //! - `--metrics PATH` where to write the metrics JSON (stdout otherwise)
 

@@ -180,6 +180,9 @@ def main() -> int:
     ap.add_argument("--hidden", default="krp", help="'krp' or 'catch-up', for every client")
     ap.add_argument("--floor", default="krp", help="'krp' or '2016' (ground tiles), for every client")
     ap.add_argument("--flags", default="krp", help="'krp' or '2016' (flag waving speed), for every client")
+    ap.add_argument("--framerate", default="krp",
+                    help="'krp' or 'steady' (KRP's clients: fixed-step movement and smoothing; the Rust client's smoothing,"
+                         " whose step is --input), for every client")
     ap.add_argument("--shot-at", type=float, default=10, help="seconds in to take screenshots")
     ap.add_argument("--channel", default="", help="browser to use, e.g. chrome or msedge")
     ap.add_argument("--node", default="node")
@@ -205,7 +208,8 @@ def main() -> int:
         return run([args.node, str(ROOT / "scripts" / "ab" / "browser.mjs"), json.dumps(spec)], limit)
 
     common = {"input": args.input, "display": args.display, "effects": args.effects, "hidden": args.hidden,
-              "floor": args.floor, "flags": args.flags, "autoplay": True,
+              "floor": args.floor, "flags": args.flags,
+              "framerate": args.framerate, "smooth": "on" if args.framerate == "steady" else "krp", "autoplay": True,
               "script": script, "duration": str(args.duration)}
     results: dict = {}
     for key in [k.strip().upper() for k in args.clients.split(",") if k.strip()]:
@@ -218,17 +222,18 @@ def main() -> int:
         elif key == "C":
             exe = ROOT / "desktop" / "krp" / "target" / "release" / f"vertix-krp-desktop{EXE}"
             cmd = [str(exe), "--server", server, "--room", args.room, "--name", name, "--autoplay"]
-            for k in ("input", "display", "effects", "hidden", "floor", "flags", "script", "duration"):
+            for k in ("input", "display", "effects", "hidden", "floor", "flags", "framerate", "script", "duration"):
                 cmd += [f"--{k}", str(common[k])]
             r = run(cmd, limit)
         elif key == "D":
-            q = urlencode(common | {"room": args.room, "name": name, "autoplay": "1"})
+            rust = {k: v for k, v in common.items() if k != "framerate"}
+            q = urlencode(rust | {"room": args.room, "name": name, "autoplay": "1"})
             r = browser(f"{server}/rust/?{q}", shot)
         elif key == "E":
             exe = ROOT / "target" / "release" / f"vertix-client{EXE}"
             cmd = [str(exe), "--server", server, "--room", args.room, "--name", name, "--autoplay", "1",
                    "--screenshot", str(shot), "--shot-at", str(args.shot_at)]
-            for k in ("input", "display", "effects", "hidden", "floor", "flags", "script", "duration"):
+            for k in ("input", "display", "effects", "hidden", "floor", "flags", "smooth", "script", "duration"):
                 cmd += [f"--{k}", str(common[k])]
             r = run(cmd, limit)
         else:
@@ -240,7 +245,8 @@ def main() -> int:
 
     settings = {"room": args.room, "seconds each": args.duration, "input": args.input,
                 "display": args.display, "effects": args.effects, "hidden": args.hidden,
-                "floor": args.floor, "flags": args.flags, "browser": args.channel or "Playwright Chromium"}
+                "floor": args.floor, "flags": args.flags,
+                "framerate": args.framerate, "browser": args.channel or "Playwright Chromium"}
     text = report(results | {"_dir": out}, settings)
     (out / "report.md").write_text(text + "\n")
     print(f"report: {out / 'report.md'}")
