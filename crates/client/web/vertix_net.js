@@ -77,6 +77,9 @@
         };
         // Measurements for the comparison tooling (tools/ab), read by the
         // test browser from window.vertixMetrics.
+        importObject.env.vx_perf_now = function () {
+            return performance.now();
+        };
         importObject.env.vx_report = function (json) {
             window.vertixMetrics = JSON.parse(consume_js_object(json));
         };

@@ -44,7 +44,9 @@ pub const TEAM_BLUE: &str = "#5151d9";
 pub enum InputMode {
     /// One `"4"` per rendered frame, as KRP's client does.
     PerFrame,
-    /// One per tick at this rate, whatever the frame rate.
+    /// One per tick at this rate, whatever the frame rate (the default, at
+    /// `DEFAULT_INPUT_HZ`). Every tick moves the player by the same step,
+    /// so speed does not depend on the display.
     Fixed(f64),
 }
 
@@ -76,7 +78,19 @@ pub struct Options {
     pub flag_clock: bool,
     /// The spray to use (its id), as KRP's spray picker sends it.
     pub spray: Option<u32>,
+    /// Other players glide between the positions the server sends instead
+    /// of jumping to each one (and the screen shake fades by time, not by
+    /// frames). `smooth=krp` keeps KRP's.
+    pub smooth: bool,
 }
+
+/// The input rate when none is given: the movement step is the same on any
+/// display, and the player is drawn between steps.
+pub const DEFAULT_INPUT_HZ: f64 = 60.0;
+/// The most input ticks one frame may catch up on.
+const MAX_TICKS_PER_FRAME: u32 = 6;
+/// A move longer than this (a respawn) is shown at once, not glided.
+pub(super) const GLIDE_SNAP: f64 = 150.0;
 
 impl Options {
     #[must_use]
@@ -88,13 +102,14 @@ impl Options {
                 .map(|(_, v)| v.clone())
         };
         let input = match get("input").as_deref() {
-            None | Some("" | "frame") => InputMode::PerFrame,
+            None | Some("") => InputMode::Fixed(DEFAULT_INPUT_HZ),
+            Some("frame" | "krp") => InputMode::PerFrame,
             Some(hz) => hz
                 .trim_end_matches("hz")
                 .parse::<f64>()
                 .ok()
                 .filter(|h| *h >= 10.0 && *h <= 1000.0)
-                .map_or(InputMode::PerFrame, InputMode::Fixed),
+                .map_or(InputMode::Fixed(DEFAULT_INPUT_HZ), InputMode::Fixed),
         };
         Self {
             name: get("name").unwrap_or_default(),
@@ -106,6 +121,7 @@ impl Options {
             persistent_effects: get("effects").as_deref() != Some("krp"),
             catch_up: get("hidden").as_deref() != Some("krp"),
             flag_clock: get("flags").as_deref() != Some("krp"),
+            smooth: get("smooth").as_deref() != Some("krp"),
             spray: get("spray").and_then(|s| s.parse().ok()),
         }
     }
@@ -400,7 +416,13 @@ pub struct Game {
     input_number: f64,
     this_input: Vec<SentInput>,
     current_time: f64,
-    old_time: f64,
+    /// `frame_ms` at the last frame, for sub-millisecond frame times.
+    old_frame: f64,
+    /// `frame_ms` now: when this frame's server messages are taken to have
+    /// arrived, for gliding other players.
+    pub frame_now: f64,
+    /// How far into the next input tick this frame is drawn (0..1).
+    tick_alpha: f64,
     /// When the server event being handled arrived (`now_ms`).
     event_at: f64,
     input_accum: f64,
@@ -525,7 +547,9 @@ impl Game {
             input_number: 0.0,
             this_input: Vec::new(),
             current_time: now,
-            old_time: now,
+            old_frame: crate::platform::frame_ms(),
+            frame_now: crate::platform::frame_ms(),
+            tick_alpha: 1.0,
             event_at: now,
             input_accum: 0.0,
             fps: 0.0,
@@ -728,7 +752,10 @@ impl Game {
     pub fn frame(&mut self, gfx: &mut Gfx, input: &FrameInput) {
         self.frame += 1;
         self.current_time = now_ms().floor();
-        let delta = self.current_time - self.old_time;
+        let frame_now = crate::platform::frame_ms();
+        let delta = (frame_now - self.old_frame).max(0.0);
+        self.old_frame = frame_now;
+        self.frame_now = frame_now;
         self.run_timers();
         self.read_input(input, gfx);
         self.ping_timer += delta;
@@ -746,7 +773,6 @@ impl Game {
             self.fps_delta = 0.0;
             self.fps_samples.clear();
         }
-        self.old_time = self.current_time;
         // The first frame after a stall (a hidden tab) would otherwise move
         // everything by the whole stall at once.
         let delta = if self.opts.catch_up {
@@ -774,41 +800,39 @@ impl Game {
             d /= e;
         }
 
-        // In fixed mode, movement and the input packet happen on ticks.
-        let (send_now, move_delta) = match self.opts.input {
-            InputMode::PerFrame => (true, delta),
-            InputMode::Fixed(hz) => {
-                self.input_accum += delta;
-                let step = 1000.0 / hz;
-                if self.input_accum >= step {
-                    let t = self.input_accum;
-                    self.input_accum = 0.0;
-                    (true, t)
-                } else {
-                    (false, 0.0)
-                }
+        // The movement steps this frame: one of the frame's length (KRP), or
+        // whole input ticks, so a player moves the same on any display. The
+        // server applies each input packet as one step, rounding as here.
+        let mut steps: Vec<f64> = Vec::new();
+        match self.opts.input {
+            InputMode::PerFrame => {
+                steps.push(delta);
+                self.tick_alpha = 1.0;
             }
-        };
+            InputMode::Fixed(hz) => {
+                let step = 1000.0 / hz;
+                self.input_accum += delta;
+                while self.input_accum >= step {
+                    self.input_accum -= step;
+                    if steps.len() < MAX_TICKS_PER_FRAME as usize {
+                        steps.push(step);
+                    }
+                }
+                if self.input_accum >= step {
+                    self.input_accum = 0.0;
+                }
+                self.tick_alpha = self.input_accum / step;
+            }
+        }
 
         let me = self.me;
         let game_over = self.game_over;
         let tf = self.target.f;
-        let mut do_jump = 0;
         let mut i = 0;
         while i < self.players.len() {
             let is_me = Some(self.players[i].index) == me;
             if is_me {
-                let world = self.map.as_ref().map(|m| &m.world);
                 let plr = &mut self.players[i];
-                plr.old_x = plr.x;
-                plr.old_y = plr.y;
-                if !plr.dead && !game_over {
-                    plr.x += b * plr.speed * move_delta;
-                    plr.y += d * plr.speed * move_delta;
-                }
-                wall_col(plr, world);
-                plr.x = plr.x.round();
-                plr.y = plr.y.round();
                 plr.angle = ((tf + PI * 2.0) % (PI * 2.0)) * (180.0 / PI) + 90.0;
                 let front = is_weapon_facing_front(snap_angle(plr.angle));
                 if let Some(w) = plr.weapon_mut() {
@@ -817,16 +841,30 @@ impl Game {
                 if plr.jump_countdown > 0.0 {
                     plr.jump_countdown -= delta;
                 }
-                if self.keys.s && plr.jump_countdown <= 0.0 && !game_over {
-                    player_jump(plr);
-                    do_jump = 1;
-                }
             }
-            {
+            for (n, &step) in steps.iter().enumerate() {
+                let world = self.map.as_ref().map(|m| &m.world);
                 let plr = &mut self.players[i];
+                plr.tick_from = Some((plr.x, plr.y, plr.jump_y));
+                let mut do_jump = 0;
+                if is_me {
+                    plr.old_x = plr.x;
+                    plr.old_y = plr.y;
+                    if !plr.dead && !game_over {
+                        plr.x += b * plr.speed * step;
+                        plr.y += d * plr.speed * step;
+                    }
+                    wall_col(plr, world);
+                    plr.x = plr.x.round();
+                    plr.y = plr.y.round();
+                    if n == 0 && self.keys.s && plr.jump_countdown <= 0.0 && !game_over {
+                        player_jump(plr);
+                        do_jump = 1;
+                    }
+                }
                 if plr.jump_y != 0.0 {
-                    plr.jump_delta -= plr.gravity_strength * delta;
-                    plr.jump_y += plr.jump_delta * delta;
+                    plr.jump_delta -= plr.gravity_strength * step;
+                    plr.jump_y += plr.jump_delta * step;
                     if plr.jump_y > 0.0 {
                         plr.anim_index = 1;
                     } else {
@@ -836,16 +874,14 @@ impl Game {
                     }
                     plr.jump_y = plr.jump_y.round();
                 }
-            }
-            if is_me && !game_over {
-                if send_now {
+                if is_me && !game_over {
                     let isn = self.input_number;
                     self.input_number += 1.0;
                     self.this_input.push(SentInput {
                         hdt: b,
                         vdt: d,
                         isn,
-                        delta: move_delta,
+                        delta: step,
                     });
                     let ts = self.current_time;
                     self.inputs_sent += 1;
@@ -853,9 +889,11 @@ impl Game {
                         "4",
                         // isn goes out as an integer, as KRP's client sends it: the
                         // server reads it as one and would ack nothing otherwise.
-                        vec![json!({"hdt": b, "vdt": d, "ts": ts, "isn": isn as u64, "s": do_jump, "delta": move_delta})],
+                        vec![json!({"hdt": b, "vdt": d, "ts": ts, "isn": isn as u64, "s": do_jump, "delta": step})],
                     );
                 }
+            }
+            if is_me && !game_over {
                 if self.user_scroll != 0.0 {
                     let s = self.user_scroll;
                     self.user_scroll = 0.0;
@@ -909,6 +947,9 @@ impl Game {
         self.players
             .sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap_or(std::cmp::Ordering::Equal));
 
+        // Draw everyone where they are between updates, then put the
+        // simulated positions back.
+        let sim = self.place_for_drawing();
         if !self.kicked {
             if self.game_over {
                 self.do_game(gfx, delta);
@@ -930,6 +971,7 @@ impl Game {
                 self.draw_overlay(gfx, false, false);
             }
         }
+        self.restore_positions(&sim);
         if self.disconnected || self.kicked {
             self.draw_overlay(gfx, false, false);
             let text = if self.kicked {
@@ -1310,6 +1352,41 @@ impl Game {
         w.ammo -= 1.0;
         if w.ammo <= 0.0 {
             self.reload(i, gfx);
+        }
+    }
+
+    /// Moves every player to where they are drawn this frame: our own
+    /// player and everyone's jump between the last two input ticks, other
+    /// players along their glide. Returns the simulated positions for
+    /// `restore_positions`.
+    fn place_for_drawing(&mut self) -> Vec<(u32, f64, f64, f64)> {
+        let (me, a, now) = (self.me, self.tick_alpha, self.frame_now);
+        let fixed = matches!(self.opts.input, InputMode::Fixed(_));
+        let mut sim = Vec::with_capacity(self.players.len());
+        for p in &mut self.players {
+            sim.push((p.index, p.x, p.y, p.jump_y));
+            if let (true, Some((fx, fy, fj))) = (fixed, p.tick_from) {
+                p.jump_y = fj + (p.jump_y - fj) * a;
+                let near = (p.x - fx).hypot(p.y - fy) <= GLIDE_SNAP;
+                if Some(p.index) == me && near {
+                    p.x = fx + (p.x - fx) * a;
+                    p.y = fy + (p.y - fy) * a;
+                }
+            }
+            if Some(p.index) != me && self.opts.smooth {
+                if let Some(g) = p.glide {
+                    (p.x, p.y) = g.at((p.x, p.y), now);
+                }
+            }
+        }
+        sim
+    }
+
+    fn restore_positions(&mut self, sim: &[(u32, f64, f64, f64)]) {
+        for &(index, x, y, jump_y) in sim {
+            if let Some(p) = self.players.iter_mut().find(|p| p.index == index) {
+                (p.x, p.y, p.jump_y) = (x, y, jump_y);
+            }
         }
     }
 
