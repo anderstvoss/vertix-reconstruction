@@ -69,6 +69,13 @@ pub struct Options {
     /// is capped at `MAX_FRAME_MS`. `hidden=krp` keeps KRP's: every shot
     /// fired meanwhile starts at its muzzle in one frame.
     pub catch_up: bool,
+    /// Hardpoint and zone flags wave at the 2016 client's speed (a new
+    /// picture every 5 frames of its 30 fps loop: 6 a second) whatever the
+    /// frame rate. `flags=krp` keeps KRP's: a new picture every 5 drawn
+    /// frames, so faster on faster displays.
+    pub flag_clock: bool,
+    /// The spray to use (its id), as KRP's spray picker sends it.
+    pub spray: Option<u32>,
 }
 
 impl Options {
@@ -98,6 +105,8 @@ impl Options {
             script: get("script"),
             persistent_effects: get("effects").as_deref() != Some("krp"),
             catch_up: get("hidden").as_deref() != Some("krp"),
+            flag_clock: get("flags").as_deref() != Some("krp"),
+            spray: get("spray").and_then(|s| s.parse().ok()),
         }
     }
 }
@@ -193,12 +202,16 @@ pub struct MapState {
 
 pub struct SprayState {
     pub owner: u32,
+    /// Which of the owner's sprays (`sprays_per_player` on the server).
+    pub slot: u32,
     pub src: String,
     pub active: bool,
+    /// The centre.
     pub x: f64,
     pub y: f64,
     pub scale: f64,
     pub alpha: f64,
+    pub resolution: f64,
 }
 
 /// A line in the chat box.
@@ -214,6 +227,8 @@ pub struct ChatLine {
 pub struct Remote {
     pending: HashMap<String, Fetch>,
     pub ready: HashMap<String, Texture2D>,
+    /// Sprays' pixels too, to shrink them to their resolution.
+    pub images: HashMap<String, macroquad::texture::Image>,
     failed: HashSet<String>,
     base: String,
 }
@@ -244,9 +259,13 @@ impl Remote {
         }
         for (k, r) in done {
             self.pending.remove(&k);
-            match r.ok().and_then(|b| crate::assets::texture_from_png(&b)) {
-                Some(t) => {
-                    self.ready.insert(k, t);
+            match r.ok().and_then(|b| crate::assets::image_from_png(&b)) {
+                Some(img) => {
+                    self.ready
+                        .insert(k.clone(), crate::assets::texture_from_image(&img));
+                    if k.contains("/sprays/") {
+                        self.images.insert(k, img);
+                    }
                 }
                 None => {
                     self.failed.insert(k);
@@ -275,6 +294,9 @@ pub struct Gfx {
     pub edge: Option<Texture2D>,
     pub minimap_base: Option<Canvas>,
     pub remote: Remote,
+    /// KRP's `cachedSprays`: each spray shrunk to its resolution, with the
+    /// size it is drawn at, by image and (resolution, scale).
+    pub sprays: HashMap<(String, u32, u32), (Texture2D, f32, f32)>,
 }
 
 impl Gfx {
@@ -298,6 +320,7 @@ impl Gfx {
                 base: base.to_owned(),
                 ..Remote::default()
             },
+            sprays: HashMap::new(),
         }
     }
 
@@ -346,6 +369,10 @@ pub struct Game {
     pub room: Option<String>,
     pub player_name: String,
     pub loadout_class: usize,
+    /// The spray picked (its id); the server's first when none is.
+    pub loadout_spray: Option<u32>,
+    /// Sprays to pick from: KRP's, then the server's own.
+    pub spray_choices: Vec<(u32, String)>,
     pub players: Vec<Player>,
     pub me: Option<u32>,
     placeholder: Player,
@@ -453,6 +480,7 @@ impl Game {
             })
             .unwrap_or(0);
         let player_name = opts.name.clone();
+        let loadout_spray = opts.spray;
         let script = opts.script.as_deref().map(parse_script).unwrap_or_default();
         let now = now_ms().floor();
         Self {
@@ -465,6 +493,8 @@ impl Game {
             room: None,
             player_name,
             loadout_class,
+            loadout_spray,
+            spray_choices: crate::assets::krp_sprays(),
             players: Vec::new(),
             me: None,
             placeholder: Player {

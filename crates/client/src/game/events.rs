@@ -72,13 +72,23 @@ impl Game {
                             Some(i) => self.players[i] = p,
                             None => self.players.push(p),
                         }
+                    } else if p.spray.is_some() {
+                        // KRP ignores `add` for the player themself; take the
+                        // spray from it, as our KRP patch does, so a changed
+                        // spray is the one sprayed next.
+                        if let Some(q) = self.players.iter_mut().find(|q| q.index == p.index) {
+                            q.spray = p.spray;
+                        }
                     }
                 }
             }
             "crtSpr" => {
                 let idx = num(args.first()) as u32;
                 let (x, y) = (num(args.get(1)), num(args.get(2)));
-                self.create_spray(idx, x, y);
+                // This server's 4th value: the slot, one of the player's
+                // `sprays_per_player` sprays (KRP's server sends none).
+                let slot = num(args.get(3)).max(0.0) as u32;
+                self.create_spray(idx, x, y, slot);
             }
             "rem" => {
                 let idx = num(args.first()) as u32;
@@ -218,6 +228,11 @@ impl Game {
             "gotit",
             vec![p, json!(init), json!(now_ms().floor()), json!(false)],
         );
+        // KRP sends the loadout's spray (`cSpray`) when it is picked; send it
+        // on joining too, since this client has no saved loadout.
+        if let Some(id) = self.loadout_spray {
+            self.emit("cSpray", vec![json!(id)]);
+        }
         self.me_mut().dead = true;
         if init {
             self.anim.clear();
@@ -625,22 +640,30 @@ impl Game {
         }
     }
 
-    /// KRP `createSpray`.
-    fn create_spray(&mut self, idx: u32, x: f64, y: f64) {
+    /// KRP `createSpray`, one per (player, slot). The server resends every
+    /// spray of the round after each `gameSetup`, so the same slot is
+    /// reused, never duplicated.
+    fn create_spray(&mut self, idx: u32, x: f64, y: f64, slot: u32) {
         let Some(info) = self.find(idx).and_then(|p| p.spray.clone()) else {
             return;
         };
-        let pos = if let Some(i) = self.sprays.iter().position(|s| s.owner == idx) {
+        let pos = if let Some(i) = self
+            .sprays
+            .iter()
+            .position(|s| s.owner == idx && s.slot == slot)
+        {
             i
         } else {
             self.sprays.push(SprayState {
                 owner: idx,
+                slot,
                 src: String::new(),
                 active: false,
                 x: 0.0,
                 y: 0.0,
                 scale: 0.0,
                 alpha: 0.0,
+                resolution: 0.0,
             });
             self.sprays.len() - 1
         };
@@ -648,8 +671,10 @@ impl Game {
         s.active = true;
         s.scale = info.info.scale;
         s.alpha = info.info.alpha;
-        s.x = x - s.scale / 2.0;
-        s.y = y - s.scale / 2.0;
+        s.resolution = info.info.resolution;
+        // The centre: an image that is not square is centred there too.
+        s.x = x;
+        s.y = y;
         s.src = info.src;
     }
 

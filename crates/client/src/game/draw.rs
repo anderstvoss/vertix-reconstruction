@@ -283,18 +283,33 @@ impl Game {
             if !sp.active {
                 continue;
             }
-            let Some(tex) = gfx.remote.get(&sp.src) else {
+            let key = (sp.src.clone(), sp.resolution as u32, sp.scale as u32);
+            if !gfx.sprays.contains_key(&key) {
+                if gfx.remote.get(&sp.src).is_none() {
+                    continue;
+                }
+                let Some(full) = gfx.remote.images.get(&sp.src) else {
+                    continue;
+                };
+                let (small, shown) =
+                    crate::assets::spray_sizes(full.width, full.height, sp.resolution, sp.scale);
+                let tex = crate::assets::texture_from_image(&crate::assets::shrink(
+                    full, small.0, small.1,
+                ));
+                gfx.sprays.insert(key.clone(), (tex, shown.0, shown.1));
+            }
+            let Some((tex, w, h)) = gfx.sprays.get(&key) else {
                 continue;
             };
-            let img = Image::sprite(tex);
+            let img = Image::sprite(tex.clone());
             gfx.painter.save();
             gfx.painter.set_alpha(sp.alpha as f32);
             gfx.painter.draw_image(
                 &img,
-                (sp.x - self.start_x) as f32,
-                (sp.y - self.start_y) as f32,
-                sp.scale as f32,
-                sp.scale as f32,
+                (sp.x - self.start_x) as f32 - w / 2.0,
+                (sp.y - self.start_y) as f32 - h / 2.0,
+                *w,
+                *h,
             );
             gfx.painter.restore();
         }
@@ -352,9 +367,20 @@ impl Game {
                 Obj::Flag(i) => {
                     let Some(m) = &mut self.map else { continue };
                     let f = &mut m.flags[i];
-                    f.ac -= 1;
-                    if f.ac <= 0 {
-                        f.ac = 5;
+                    // KRP steps the picture every 5th drawn frame; the 2016
+                    // client drew 30 frames a second, so count those
+                    // instead, carrying the remainder so the average holds.
+                    f.ac -= if self.opts.flag_clock {
+                        delta / (1000.0 / 30.0)
+                    } else {
+                        1.0
+                    };
+                    if f.ac <= 0.0 {
+                        f.ac = if self.opts.flag_clock {
+                            (f.ac + 5.0).max(1.0)
+                        } else {
+                            5.0
+                        };
                         f.ai += 1;
                         if f.ai > 2 {
                             f.ai = 0;
