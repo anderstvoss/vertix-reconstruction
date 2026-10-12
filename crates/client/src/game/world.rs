@@ -172,7 +172,7 @@ pub fn setup_map(
                 w: FLAG_WIDTH,
                 h: FLAG_HEIGHT,
                 ai: random_int(0, 2) as usize,
-                ac: 0,
+                ac: 0.0,
             });
         };
         let t = tiles[idx].clone();

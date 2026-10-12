@@ -198,7 +198,9 @@ pub struct Flag {
     pub w: f64,
     pub h: f64,
     pub ai: usize,
-    pub ac: i32,
+    /// Frames until the next picture; fractional when counted in 30 fps
+    /// frames (`Options::flag_clock`).
+    pub ac: f64,
 }
 
 /// Reads a number the way KRP's loose JavaScript would (missing is 0).

@@ -4,7 +4,8 @@
 //! Launch options (desktop: `--key value`; browser: `?key=value`):
 //! `server`, `room`, `name`, `class`, `input` (`frame` or a rate in Hz),
 //! `display` (`sharp` or `krp`), `floor` (`2016` or `krp`), `effects`
-//! (`persist` or `krp`), `hidden` (`catch-up` or `krp`), `autoplay`,
+//! (`persist` or `krp`), `hidden` (`catch-up` or `krp`), `flags` (`2016`
+//! or `krp`), `spray` (an id), `autoplay`,
 //! `script`, `duration` (seconds, then report and quit), `metrics`
 //! (desktop: where to write them), `screenshot` and `shot-at` (desktop).
 

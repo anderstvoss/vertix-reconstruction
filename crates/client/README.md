@@ -43,6 +43,8 @@ address.
 | `floor` | `2016` (default: the 2016 ground tiles from the server's `original-2016` mod pack, when it has one) or `krp` (KRP's `res.zip` tiles) |
 | `effects` | `persist` (default: blood, dust and bullet holes stay where they happened, even off screen) or `krp` (only effects that were on screen when they happened, dropped when they leave it) |
 | `hidden` | `catch-up` (default: after the frame loop stalls, as in a hidden browser tab, other players' shots that arrived meanwhile are dropped and the first frame back is capped at 100 ms) or `krp` (every shot fired meanwhile starts at its muzzle at once) |
+| `flags` | `2016` (default: hardpoint and zone flags wave at the 2016 client's speed, 6 pictures a second at any frame rate) or `krp` (a new picture every 5 drawn frames, faster on faster displays) |
+| `spray` | the spray to use, by id (KRP's sprays and any the server adds); the menu's LOADOUT steps through them too |
 | `autoplay` | Skip the start menu and join straight away |
 | `script` | Scripted input for tests, e.g. `d:1500,s:800,a+w:1000,:500` (keys and milliseconds) |
 | `duration` | Seconds to run, then report metrics and quit |

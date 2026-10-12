@@ -43,6 +43,8 @@ pub struct Menu {
     pub version_label: Option<String>,
     version_fetch: Option<Fetch>,
     version_asked: bool,
+    /// The server's own sprays (`/sprays/index.json`).
+    sprays_fetch: Option<Fetch>,
 }
 
 const WRAP_W: f32 = 1050.0;
@@ -97,6 +99,23 @@ impl Game {
         if !self.menu.version_asked {
             self.menu.version_asked = true;
             self.menu.version_fetch = Some(Fetch::start(&format!("{}/api/version", self.base)));
+            self.menu.sprays_fetch =
+                Some(Fetch::start(&format!("{}/sprays/index.json", self.base)));
+        }
+        if let Some(f) = &mut self.menu.sprays_fetch {
+            if let Some(r) = f.poll() {
+                self.menu.sprays_fetch = None;
+                for s in r
+                    .ok()
+                    .as_deref()
+                    .map(crate::assets::spray_list)
+                    .unwrap_or_default()
+                {
+                    if !self.spray_choices.iter().any(|c| c.0 == s.0) {
+                        self.spray_choices.push(s);
+                    }
+                }
+            }
         }
         if let Some(f) = &mut self.menu.version_fetch {
             if let Some(r) = f.poll() {
@@ -309,26 +328,36 @@ impl Game {
             ui.label("LOADOUT", rx, y, 16.0, gray);
             y += 16.0 * LINE + 3.0;
             let class = self.classes.get(self.loadout_class).cloned();
+            let spray = self
+                .loadout_spray
+                .and_then(|id| self.spray_choices.iter().find(|s| s.0 == id))
+                .or_else(|| self.spray_choices.first())
+                .map_or(String::new(), |s| s.1.clone());
+            // Which row was clicked: 1 class, 2 spray (KRP picks a spray from
+            // a grid; here a click steps to the next).
             let rows = [
                 (
                     "Class: ",
                     class.as_ref().map_or(String::new(), |c| c.name.clone()),
-                    true,
+                    1,
                 ),
                 (
                     "Primary: ",
                     class.as_ref().map_or(String::new(), |c| c.primary.clone()),
-                    false,
+                    0,
                 ),
                 (
                     "Secondary: ",
                     class
                         .as_ref()
                         .map_or(String::new(), |c| c.secondary.clone()),
-                    false,
+                    0,
                 ),
+                ("Spray: ", spray, 2),
             ];
-            for (label, value, clickable) in rows {
+            let mut next_spray = false;
+            for (label, value, action) in rows {
+                let clickable = action != 0;
                 let h = 12.0 * LINE + 10.0;
                 ui.label(label, rx, y + 5.0, 12.0, soft);
                 let lw = ui.measure(label, 12.0);
@@ -349,13 +378,32 @@ impl Game {
                     size,
                     soft,
                 );
-                if click {
+                if click && action == 1 {
                     self.menu.class_screen = true;
                 }
+                next_spray |= click && action == 2;
                 y += h - 5.0;
+            }
+            if next_spray {
+                self.next_spray();
             }
         }
         self.menu.height = top + room_h.max(start_h).max(right_h) + 10.0;
+    }
+
+    /// Steps the loadout to the next spray and tells the server, as KRP's
+    /// spray picker does (`cSpray`).
+    fn next_spray(&mut self) {
+        if self.spray_choices.is_empty() {
+            return;
+        }
+        let current = self
+            .loadout_spray
+            .and_then(|id| self.spray_choices.iter().position(|s| s.0 == id))
+            .unwrap_or(0);
+        let id = self.spray_choices[(current + 1) % self.spray_choices.len()].0;
+        self.loadout_spray = Some(id);
+        self.emit("cSpray", vec![serde_json::json!(id)]);
     }
 
     /// `#linkBoxRight`'s version link, at the window's bottom right (CSS
