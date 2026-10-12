@@ -41,6 +41,8 @@ fi
 git -C "$CHECKOUT" fetch --quiet "$SOURCE" "$KRP_COMMIT" 2>/dev/null || true
 git -C "$CHECKOUT" checkout --quiet --detach "$KRP_COMMIT"
 
+# Our patches to the pinned source (scripts/client-patches/apply.mjs).
+node "$ROOT/scripts/client-patches/apply.mjs" "$CHECKOUT"
 (cd "$CHECKOUT" && pnpm install --frozen-lockfile && pnpm --filter core build)
 
 rm -rf "$DIST"

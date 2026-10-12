@@ -79,6 +79,13 @@ browser (`scripts/build-rust-client.sh`, served at `/rust/`) and as an
 optional desktop build, and joins the same rooms as the other clients; see
 [crates/client/README.md](crates/client/README.md).
 
+The server also has an admin panel and dev console on its own port
+(`[admin]`, 8082 on loopback by default, behind a token it prints at
+start-up): kick players, end rounds with a chosen winner, change mode and
+map, kill everyone, edit rules live, and run any command. The same
+commands can be typed into the server's terminal. See
+[docs/ADMIN.md](docs/ADMIN.md).
+
 `scripts/e2e_smoke.py` starts the server and plays through it over
 long-polling and WebSocket, with no archive or client build needed.
 

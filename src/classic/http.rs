@@ -25,6 +25,7 @@ pub struct AppState {
     pub store: Arc<Store>,
     pub eio: Arc<eio::Server>,
     pub trace: Trace,
+    pub version: crate::version::Version,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -57,7 +58,20 @@ fn asset_response(asset: &Asset) -> Response {
 }
 
 async fn index(State(s): State<AppState>) -> Response {
-    let mut res = asset_response(s.store.page());
+    let page = s.store.page();
+    // The page was relabelled at load; carry the current version string.
+    let mut res =
+        match crate::version::relabel(&page.bytes, &page::version_label(), &s.version.label()) {
+            Some(b) => {
+                let mut r = Response::new(Body::from(b));
+                r.headers_mut().insert(
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_static(page.content_type),
+                );
+                r
+            }
+            None => asset_response(page),
+        };
     let h = res.headers_mut();
     h.insert(
         header::CONTENT_SECURITY_POLICY,

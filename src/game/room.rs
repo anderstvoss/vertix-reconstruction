@@ -23,6 +23,8 @@ use super::maps::MapSet;
 use super::projectile::{Owner, Projectile, Shot, Target};
 use crate::sio::Event;
 
+mod admin;
+
 /// Who an outgoing event is for.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum To {
@@ -102,6 +104,11 @@ pub struct Player {
     pub hat: Option<Value>,
     pub shirt: Option<Value>,
     pub spray: Value,
+    /// Sprays placed so far; picks the next slot (`sprays_per_player`).
+    pub sprays_made: u32,
+    /// Chosen camo per weapon id (`cCamo`, the camo's index; -1 for none).
+    /// Kept apart from `weapons`, which every spawn rebuilds.
+    pub camos: HashMap<usize, f64>,
     /// Bumped on every spawn, so a stale spawn-protection timer is ignored.
     life: u64,
 }
@@ -124,6 +131,10 @@ pub struct Room {
     pub score_blue: f64,
     /// The leader's progress to the score limit, in percent (room list).
     pub score_lb: f64,
+    /// The map the round is played on (`custom` for the custom server form's).
+    pub map_id: String,
+    /// Score limit set from the admin console; the mode's own when `None`.
+    pub score_limit: Option<f64>,
     /// Players the room takes now; the custom server form can lower it.
     pub max_players: usize,
     /// The server's limit for this room; the form cannot go above it.
@@ -138,6 +149,10 @@ pub struct Room {
     round: u64,
     timers: Vec<(f64, Timer)>,
     rng: StdRng,
+    /// Sprays on the map this round, as `crtSpr` sent them (owner, x, y,
+    /// slot): resent to each player as they spawn, since KRP's client
+    /// clears its sprays on every `gameSetup` and a late joiner has none.
+    sprays: Vec<(u32, f64, f64, u32)>,
     pub out: Vec<Out>,
 }
 
@@ -183,7 +198,7 @@ impl Room {
         let scale = screen.tile_scale;
         let mut rng = StdRng::seed_from_u64(seed);
         let mode_index = mode_index.min(data.modes.len() - 1);
-        let (_, map) = maps.pick(&data.modes[mode_index], rng.random());
+        let (map_id, map) = maps.pick(&data.modes[mode_index], rng.random());
         let world = World::new(&map, scale, &data.modes[mode_index], &mut |lo, hi| {
             rng.random_range(lo..=hi)
         });
@@ -196,6 +211,8 @@ impl Room {
             score_red: 0.0,
             score_blue: 0.0,
             score_lb: 0.0,
+            map_id,
+            score_limit: None,
             max_players: rules.max_players,
             player_limit: rules.max_players,
             screen: [
@@ -209,6 +226,7 @@ impl Room {
             bullets: Vec::new(),
             next_bullet: 0,
             next_index: 0,
+            sprays: Vec::new(),
             round: 0,
             timers: Vec::new(),
             rng,
@@ -292,12 +310,20 @@ impl Room {
         _now: f64,
     ) {
         self.round += 1;
+        self.sprays.clear();
         self.score_red = 0.0;
         self.score_blue = 0.0;
         self.score_lb = 0.0;
         self.mode_index = mode_index.min(data.modes.len() - 1);
         let mode = data.modes[self.mode_index].clone();
-        let map = custom_map.unwrap_or_else(|| maps.pick(&mode, self.rng.random()).1);
+        let map = if let Some(m) = custom_map {
+            "custom".clone_into(&mut self.map_id);
+            m
+        } else {
+            let (id, m) = maps.pick(&mode, self.rng.random());
+            self.map_id = id;
+            m
+        };
         let rng = &mut self.rng;
         self.world = World::new(&map, self.world.scale, &mode, &mut |lo, hi| {
             rng.random_range(lo..=hi)
@@ -404,6 +430,8 @@ impl Room {
             hat: None,
             shirt: None,
             spray: with_src(&spray),
+            sprays_made: 0,
+            camos: HashMap::new(),
             life: 0,
         };
         self.players.push(player);
@@ -479,7 +507,10 @@ impl Room {
             .map(|&w| {
                 let mut o = data.weapons[w].json.clone();
                 // Each player carries their own camo (KRP shares one per room).
-                o.entry("camo").or_insert(json!(-1));
+                o.insert(
+                    "camo".into(),
+                    json!(p.camos.get(&w).copied().unwrap_or(-1.0)),
+                );
                 o
             })
             .collect();
@@ -643,12 +674,19 @@ impl Room {
                 let arg = a.first();
                 let weapon = num(arg.and_then(|v| v.get("weaponID")));
                 let camo = num(arg.and_then(|v| v.get("camoID")));
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                 if let (Some(w), Some(c)) = (weapon, camo)
+                    && w >= 0.0
+                    && w.fract() == 0.0
+                    && (w as usize) < data.weapons.len()
                     && let Some(p) = self.player_mut(index)
                 {
+                    // Remembered per weapon, so it survives respawns and
+                    // class changes: KRP's client sends it once.
+                    let w = w as usize;
+                    p.camos.insert(w, c - 1.0);
                     for (slot, &id) in p.weapon_ids.iter().enumerate() {
-                        #[allow(clippy::cast_precision_loss)]
-                        if (id as f64 - w).abs() < f64::EPSILON {
+                        if id == w {
                             p.weapons[slot].insert("camo".into(), json!(c - 1.0));
                         }
                     }
@@ -665,6 +703,15 @@ impl Room {
                     && let Some(p) = self.player_mut(index)
                 {
                     p.spray = s;
+                    // Others only hear a player's spray in `add`, sent on
+                    // spawning: resend it now, or they would draw the old
+                    // spray until the next spawn (KRP did not).
+                    if !p.dead
+                        && let Some(p) = self.player(index)
+                    {
+                        let add = self.player_json(p).to_string();
+                        self.send(To::All, "add", vec![json!(add)]);
+                    }
                 }
             }
             "gotit" => self.on_gotit(data, rules, index, a, now),
@@ -794,7 +841,19 @@ impl Room {
                 let ang = p.target_f + PI;
                 let x = (p.x + muzzle * ang.cos()).round();
                 let y = (p.y - p.jump_y - y_off / 2.0 + muzzle * ang.sin()).round();
-                self.send(To::All, "crtSpr", vec![json!(index), json!(x), json!(y)]);
+                // The slot this spray takes: a new spray replaces the
+                // player's oldest once they have `sprays_per_player`.
+                let slot = p.sprays_made % rules.sprays_per_player.max(1);
+                if let Some(p) = self.player_mut(index) {
+                    p.sprays_made += 1;
+                }
+                self.sprays.retain(|s| (s.0, s.3) != (index, slot));
+                self.sprays.push((index, x, y, slot));
+                self.send(
+                    To::All,
+                    "crtSpr",
+                    vec![json!(index), json!(x), json!(y), json!(slot)],
+                );
             }
             "ftc" => {
                 // The client asks for a player it has not heard of.
@@ -912,6 +971,10 @@ impl Room {
             self.send(me.clone(), "6", msg);
         }
         self.send(To::All, "add", vec![json!(add)]);
+        for (owner, x, y, slot) in self.sprays.clone() {
+            let a = vec![json!(owner), json!(x), json!(y), json!(slot)];
+            self.send(me.clone(), "crtSpr", a);
+        }
         let rsd = self.rsd(None);
         self.send(me.clone(), "rsd", vec![rsd]);
         if self.round_end {
@@ -1308,7 +1371,7 @@ impl Room {
             self.send(To::All, "ts", vec![]);
         }
         let mode = self.mode(data);
-        let limit = mode.score.max(1.0);
+        let limit = self.score_limit.unwrap_or(mode.score).max(1.0);
         let lead = if mode.teams {
             (self.score_red * 100.0 / limit).max(self.score_blue * 100.0 / limit)
         } else {
@@ -1561,6 +1624,8 @@ impl Room {
             return;
         };
         let gone = self.players.remove(at);
+        // A later player can take this index; their sprays go with them.
+        self.sprays.retain(|s| s.0 != index);
         // KRP scores the leaver after removing them: only the boards update.
         self.players.push(gone);
         self.update_score(data, rules, 0.0, index, now);
