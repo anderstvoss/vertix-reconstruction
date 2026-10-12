@@ -50,7 +50,8 @@ sprays, and the patched client shows them in its spray list.
 (1 as in KRP) is how many sprays a player can have on the map at once; a
 new spray replaces their oldest. The admin console's
 `rule sprays_per_player N` changes it while the server runs. The server
-numbers each spray's slot, and the patched client keeps one spray per slot.
+numbers each spray's slot, and the patched client keeps one spray per slot. The 2016 client keeps one spray per player whatever the limit, so it
+shows each player's latest.
 
 **Sprays already on the map.** The server remembers the sprays placed this
 round and sends them to each player as they spawn, so someone who joins
