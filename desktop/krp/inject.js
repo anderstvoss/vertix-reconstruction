@@ -18,6 +18,10 @@
 //   hidden    "catch-up" (shots that arrived while a hidden tab drew no
 //             frames are dropped, not fired late) or "krp". The same
 //             patches read it from localStorage "vertix.hiddenTab".
+//   floor     "2016" (the 2016 ground tiles, with the wooden planks, from
+//             the original-2016 mod pack when the server has it) or "krp"
+//             (the 2020 tiles KRP ships). Read by the same patches from
+//             localStorage "vertix.floor".
 //   name      player name to type into the start menu.
 //   autoplay  press ENTER GAME once the room is joined.
 //   script    scripted keys, the Rust client's format: "d:1500,s:800,a+w:1000,:500".
@@ -39,6 +43,7 @@
 	try {
 		localStorage.setItem("vertix.effects", opts.effects === "krp" ? "krp" : "persist");
 		localStorage.setItem("vertix.hiddenTab", opts.hidden === "krp" ? "krp" : "catch-up");
+		localStorage.setItem("vertix.floor", opts.floor === "krp" ? "krp" : "2016");
 	} catch {
 		// No storage (private window): the patched client persists effects.
 	}

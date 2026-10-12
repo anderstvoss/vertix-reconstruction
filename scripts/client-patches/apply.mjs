@@ -260,6 +260,39 @@ const patches = [
 			"\t\t\tif (serverBullet && serverBullet.owner?.index !== st.player.index) {",
 		].join("\n"),
 	},
+	{
+		// 2016 floor tiles (docs/DEVIATIONS.md): KRP's res.zip has the
+		// plainer 2020 ground tiles. The 2016 ones (specks, cracks, and the
+		// planks on ground2, which maps place on their yellow cells) come
+		// from this server's original-2016 pack when it has one.
+		// localStorage "vertix.floor" = "krp" keeps KRP's tiles.
+		file: "core/src/app.tsx",
+		find: [
+			"\t\tspriteIndex = 0;",
+			"\t\tloadPlayerSprites(\"sprites/\");",
+			"\t\tloadDefaultSprites(\"sprites/\");",
+		].join("\n"),
+		replace: [
+			"\t\tif (isBaseAssets && localStorage.getItem(\"vertix.floor\") !== \"krp\") {",
+			"\t\t\ttry {",
+			"\t\t\t\tconst floorReader = new zip.ZipReader(new zip.HttpReader(\"/mods/original-2016/vertixmod.zip\"));",
+			"\t\t\t\tfor (const floorEntry of await floorReader.getEntries()) {",
+			"\t\t\t\t\tif (floorEntry.directory) continue;",
+			"\t\t\t\t\tconst name = floorEntry.filename.replace(\"vertixmod/\", \"\");",
+			"\t\t\t\t\tif (!/^sprites\\/ground[123]\\.png$/.test(name)) continue;",
+			"\t\t\t\t\tconst blob = await floorEntry.getData(new zip.BlobWriter(\"image/png\"));",
+			"\t\t\t\t\tlocalStorage.setItem(name, URL.createObjectURL(blob));",
+			"\t\t\t\t}",
+			"\t\t\t\tawait floorReader.close();",
+			"\t\t\t} catch (err) {",
+			"\t\t\t\tconsole.warn(\"2016 floor tiles not loaded\", err);",
+			"\t\t\t}",
+			"\t\t}",
+			"\t\tspriteIndex = 0;",
+			"\t\tloadPlayerSprites(\"sprites/\");",
+			"\t\tloadDefaultSprites(\"sprites/\");",
+		].join("\n"),
+	},
 ];
 
 // Restore each file once, so several patches can apply to the same file.
