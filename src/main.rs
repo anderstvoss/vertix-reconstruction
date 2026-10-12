@@ -2,7 +2,8 @@
 //! a `KrunkerRevival` client build.
 //!
 //! ```text
-//! vertix-server [--config config/server.toml] [--archive PATH] [--trace FILE] [--port N]
+//! vertix-server [--config config/server.toml] [--archive PATH] [--trace FILE] [--port N] [--strict-port]
+//!               [--single] [--room NAME]
 //! vertix-server --explain-rules [--config FILE]
 //! ```
 
@@ -12,21 +13,27 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::mpsc;
-use vertix_reconstruction::config::{Config, MapSourceKind};
+use vertix_reconstruction::config::{Config, Launch, MapSourceKind};
+use vertix_reconstruction::content::{self, Content};
 use vertix_reconstruction::game::Game;
 use vertix_reconstruction::game::assumptions::Assumptions;
 use vertix_reconstruction::game::data::GameData;
 use vertix_reconstruction::game::maps::{ArchiveGenData, MapSet, MapSource, TextFiles};
 use vertix_reconstruction::originals::{BootManifest, Store};
+use vertix_reconstruction::ports::Binder;
 use vertix_reconstruction::trace::Trace;
-use vertix_reconstruction::{classic, eio, http};
+use vertix_reconstruction::version::Version;
+use vertix_reconstruction::{admin, classic, eio, http};
 
 struct Args {
     config: PathBuf,
     archive: Option<String>,
     trace: Option<String>,
     port: Option<u16>,
+    strict_port: bool,
     explain_rules: bool,
+    single: bool,
+    room: Option<String>,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -35,7 +42,10 @@ fn parse_args() -> Result<Args, String> {
         archive: None,
         trace: None,
         port: None,
+        strict_port: false,
         explain_rules: false,
+        single: false,
+        room: None,
     };
     let mut it = std::env::args().skip(1);
     while let Some(flag) = it.next() {
@@ -48,9 +58,13 @@ fn parse_args() -> Result<Args, String> {
                 args.port = Some(value()?.parse().map_err(|_| "--port needs a number")?);
             }
             "--explain-rules" => args.explain_rules = true,
+            "--strict-port" => args.strict_port = true,
+            "--single" => args.single = true,
+            "--room" => args.room = Some(value()?),
             "-h" | "--help" => {
                 return Err("usage: vertix-server [--config FILE] [--archive PATH] \
-                     [--trace FILE] [--port N] [--explain-rules]"
+                     [--trace FILE] [--port N] [--strict-port] [--single] [--room NAME] \
+                     [--explain-rules]"
                     .into());
             }
             other => return Err(format!("unknown argument {other}")),
@@ -80,12 +94,38 @@ fn load_maps(config: &Config, archive: Option<&Path>) -> Result<MapSet, String> 
     MapSet::new(loaded).map_err(|e| format!("maps: {e}"))
 }
 
+/// Cosmetics and mod packs restored from the archive, and sprays from the
+/// sprays folder (added to `data`). Their routes answer before the client
+/// build's fallback, so recovered and added files win.
+fn restored(
+    config: &Config,
+    archive: Option<&Path>,
+    data: &mut GameData,
+) -> Result<Content, String> {
+    let mut restored = Content::load(&config.content, archive)?;
+    eprintln!("{}", restored.summary());
+    for w in restored.add_folder_sprays(&config.content.sprays_dir, &mut data.cosmetics.sprays) {
+        eprintln!("sprays: {w}");
+    }
+    if !restored.folder_sprays.is_empty() {
+        let added = restored.folder_sprays.iter().filter(|s| s.2).count();
+        eprintln!(
+            "sprays: {} from {} ({added} new, {} replaced)",
+            restored.folder_sprays.len(),
+            config.content.sprays_dir.display(),
+            restored.folder_sprays.len() - added
+        );
+    }
+    Ok(restored)
+}
+
 /// The 2016 client's routes, if the archive that holds it is given.
 fn classic_app(
     config: &Config,
     archive: Option<&Path>,
     events: mpsc::UnboundedSender<classic::eio3::TransportEvent>,
     trace: &Trace,
+    version: &Version,
 ) -> Result<Option<axum::Router>, String> {
     let Some(root) = archive else {
         eprintln!("2016 client: off, it is served from the archive (pass --archive)");
@@ -112,14 +152,152 @@ fn classic_app(
         store: Arc::new(store),
         eio: server,
         trace: trace.clone(),
+        version: version.clone(),
     })))
 }
 
+/// The trace file from `--trace`, else the config's, else none.
+fn open_trace(cli: Option<String>, config: &Config) -> Result<Trace, String> {
+    let path = cli.or_else(|| (!config.trace.is_empty()).then(|| config.trace.clone()));
+    match path {
+        Some(p) => {
+            Trace::to_file(p.as_ref(), &config.trace_brief).map_err(|e| format!("trace {p}: {e}"))
+        }
+        None => Ok(Trace::disabled()),
+    }
+}
+
+/// The version string from the config, or the server's own.
+fn server_version(config: &Config) -> Result<Version, String> {
+    let v = Version::default();
+    if !config.game.version.is_empty() {
+        v.set(&config.game.version)
+            .map_err(|e| format!("[game] version: {e}"))?;
+    }
+    Ok(v)
+}
+
+fn admin_paths(config: &Config) -> vertix_reconstruction::game::admin::Paths {
+    vertix_reconstruction::game::admin::Paths {
+        krp_data: config.game.krp_data.clone(),
+        balance_dir: config.game.balance_dir.clone(),
+        rules: config.rules.clone(),
+        sprays_per_player: config.game.sprays_per_player,
+    }
+}
+
+/// Starts the terminal console and the admin panel, as configured.
+async fn start_admin(
+    cfg: &vertix_reconstruction::config::Admin,
+    game: &mpsc::UnboundedSender<vertix_reconstruction::game::Ask>,
+    log: Option<admin::Log>,
+    ports: &mut Binder,
+) -> Result<(), String> {
+    if cfg.stdin {
+        let echo = if cfg.stdin_log { log.clone() } else { None };
+        tokio::spawn(admin::stdin::run(game.clone(), echo));
+    }
+    let (true, Some(log)) = (cfg.enabled, log) else {
+        return Ok(());
+    };
+    let token = if cfg.token.is_empty() {
+        admin::random_token()
+    } else {
+        cfg.token.clone()
+    };
+    let listener = ports.bind(&cfg.bind, "admin", cfg.port).await?;
+    let addr = listener.local_addr().map_err(|e| e.to_string())?;
+    if !addr.ip().is_loopback() {
+        eprintln!("warning: the admin panel is reachable from other machines on {addr}");
+    }
+    eprintln!("admin panel on http://{addr}/#token={token}");
+    let app = admin::http::router(admin::http::AdminState {
+        game: game.clone(),
+        log,
+        token: token.into(),
+    });
+    tokio::spawn(async move {
+        if let Err(e) = axum::serve(listener, app).await {
+            eprintln!("admin server: {e}");
+        }
+    });
+    Ok(())
+}
+
+/// Pings Engine.IO clients every `every`.
+fn spawn_heartbeat(eio: Arc<eio::Server>, every: Duration) {
+    tokio::spawn(async move {
+        let mut tick = tokio::time::interval(every);
+        tick.tick().await;
+        loop {
+            tick.tick().await;
+            eio.heartbeat();
+        }
+    });
+}
+
+/// Applies `--single` and `--room` over `[game] launch`.
+fn choose_rooms(config: &mut Config, single: bool, room: Option<String>) {
+    if single || room.is_some() {
+        config.game.launch = Launch::Single;
+    }
+    if let Some(r) = room {
+        config.game.single_room = r;
+    }
+}
+
+fn room_list(specs: &[vertix_reconstruction::game::RoomSpec]) -> String {
+    specs
+        .iter()
+        .map(|r| format!("{} ({})", r.name, r.mode))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// Seats the 2016 client in `[classic] room` when that room is open.
+fn classic_room(
+    game: &mut Game,
+    room: &str,
+    specs: &[vertix_reconstruction::game::RoomSpec],
+) -> Result<(), String> {
+    if specs.iter().any(|r| r.name == room) {
+        game.set_classic_room(room)
+    } else {
+        if !room.is_empty() {
+            eprintln!(
+                "2016 client: room {room} is not open, using {}",
+                specs[0].name
+            );
+        }
+        Ok(())
+    }
+}
+
+/// The rule layers, with the server's own `[game] sprays_per_player`.
+fn load_rules(
+    config: &Config,
+) -> Result<
+    (
+        Assumptions,
+        vertix_reconstruction::game::assumptions::Provenance,
+    ),
+    String,
+> {
+    let (mut rules, provenance) =
+        Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
+    if config.game.sprays_per_player == 0 {
+        return Err("[game] sprays_per_player must be at least 1".into());
+    }
+    rules.rules.sprays_per_player = config.game.sprays_per_player;
+    Ok((rules, provenance))
+}
+
 async fn run() -> Result<(), String> {
-    let args = parse_args()?;
-    let config = Config::load(&args.config)?;
-    let (rules, provenance) = Assumptions::load_layers(&config.rules).map_err(|e| e.to_string())?;
-    let data = GameData::load(
+    let mut args = parse_args()?;
+    let mut config = Config::load(&args.config)?;
+    choose_rooms(&mut config, args.single, args.room.take());
+    let (rules, provenance) = load_rules(&config)?;
+    let mut data = GameData::load(
         &config.game.krp_data,
         &config.game.balance_dir,
         &config.game.balance,
@@ -152,56 +330,49 @@ async fn run() -> Result<(), String> {
         );
     }
 
-    let trace_path = args
-        .trace
-        .or_else(|| (!config.trace.is_empty()).then(|| config.trace.clone()));
-    let trace = match trace_path {
-        Some(p) => Trace::to_file(p.as_ref(), &config.trace_brief)
-            .map_err(|e| format!("trace {p}: {e}"))?,
-        None => Trace::disabled(),
-    };
+    let restored = restored(&config, archive.as_deref(), &mut data)?;
+    let trace = open_trace(args.trace, &config)?;
 
     let (tx, rx) = mpsc::unbounded_channel();
     let (ask_tx, ask_rx) = mpsc::unbounded_channel();
     let (classic_tx, classic_rx) = mpsc::unbounded_channel();
     let timing = config.engine_io.timing();
     let eio = eio::Server::new(timing, tx, trace.clone());
-    let mut game = Game::new(rules, data, maps, &config.game.room_specs(), trace.clone())?;
+    let specs = config.game.room_specs()?;
+    eprintln!("rooms: {}", room_list(&specs));
+    let mut game = Game::new(rules, data, maps, &specs, trace.clone())?;
+    let version = server_version(&config)?;
     let classic_app = if config.classic.enabled {
-        if !config.classic.room.is_empty() {
-            game.set_classic_room(&config.classic.room)?;
-        }
-        classic_app(&config, archive.as_deref(), classic_tx, &trace)?
+        classic_room(&mut game, &config.classic.room, &specs)?;
+        classic_app(&config, archive.as_deref(), classic_tx, &trace, &version)?
     } else {
         None
     };
+    let a = &config.admin;
+    let log = (a.enabled || (a.stdin && a.stdin_log)).then(admin::log_channel);
+    game.set_admin(log.clone(), admin_paths(&config), version.clone());
     tokio::spawn(game.run(rx, ask_rx, classic_rx));
-    let beat = eio.clone();
-    tokio::spawn(async move {
-        let mut every = tokio::time::interval(timing.ping_interval);
-        every.tick().await;
-        loop {
-            every.tick().await;
-            beat.heartbeat();
-        }
-    });
+    let mut ports = Binder::new(args.strict_port || config.strict_ports);
+    let listener = ports
+        .bind(&config.bind, "krp", args.port.unwrap_or(config.port))
+        .await?;
+    let addr = listener.local_addr().map_err(|e| e.to_string())?;
+    start_admin(a, &ask_tx, log, &mut ports).await?;
+    spawn_heartbeat(eio.clone(), timing.ping_interval);
 
-    let app = http::router(http::AppState {
+    let restored = Arc::new(restored);
+    let app = content::router(restored.clone()).merge(http::router(http::AppState {
         client_dir: Arc::new(config.client_dir.clone()),
         eio,
         game: ask_tx,
         trace,
-    });
-    let port = args.port.unwrap_or(config.port);
-    let listener = tokio::net::TcpListener::bind((config.bind.as_str(), port))
-        .await
-        .map_err(|e| format!("bind {}:{port}: {e}", config.bind))?;
-    let addr = listener.local_addr().map_err(|e| e.to_string())?;
-    if let Some(app) = classic_app {
-        let port = config.classic.port;
-        let listener = tokio::net::TcpListener::bind((config.bind.as_str(), port))
-            .await
-            .map_err(|e| format!("bind {}:{port}: {e}", config.bind))?;
+        version,
+    }));
+    // The 2016 client loads hats, camos and sprays too.
+    if let Some(app) = classic_app.map(|a| content::router(restored).merge(a)) {
+        let listener = ports
+            .bind(&config.bind, "classic", config.classic.port)
+            .await?;
         let addr = listener.local_addr().map_err(|e| e.to_string())?;
         eprintln!("2016 client on http://{addr}/");
         tokio::spawn(async move {
@@ -209,6 +380,9 @@ async fn run() -> Result<(), String> {
                 eprintln!("2016 client server: {e}");
             }
         });
+    }
+    if !config.ports_file.is_empty() {
+        ports.write(config.ports_file.as_ref())?;
     }
     eprintln!("listening on http://{addr}/");
     axum::serve(listener, app)

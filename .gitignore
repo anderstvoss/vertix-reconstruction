@@ -71,3 +71,6 @@ __pycache__/
 
 # Playwright for scripts/ab (npm install --no-save) and comparison runs
 scripts/ab/node_modules/
+
+# Mod packs unpacked from the archive (scripts/extract_mods.py)
+/content/

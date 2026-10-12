@@ -47,6 +47,135 @@ const patches = [
 		].join("\n"),
 	},
 	{
+		// "No mods" (see the mod tab): remember the client's own menu title
+		// and classes before any pack replaces them.
+		file: "core/src/app.tsx",
+		find: 'var linkedMod = location.hash.replace("#", "");',
+		replace: [
+			"const baseTitle = mainTitleText.innerHTML;",
+			"const baseCharacterClasses = st.characterClasses;",
+			'var linkedMod = location.hash.replace("#", "");',
+		].join("\n"),
+	},
+	{
+		// window.unloadModPack: back to the client's own art, title and
+		// classes, without pack sounds (the stock game is silent).
+		file: "core/src/app.tsx",
+		find: [
+			"\t\tloadModPack: typeof loadModPack;",
+			"\t}",
+			"}",
+			"window.loadModPack = loadModPack;",
+		].join("\n"),
+		replace: [
+			"\t\tloadModPack: typeof loadModPack;",
+			"\t\tunloadModPack: typeof unloadModPack;",
+			"\t}",
+			"}",
+			"window.loadModPack = loadModPack;",
+			"window.unloadModPack = unloadModPack;",
+			"async function unloadModPack() {",
+			"\tif (loadingTexturePack) return;",
+			"\tmainTitleText.innerHTML = baseTitle;",
+			"\tst.characterClasses = baseCharacterClasses;",
+			"\tst.loadout.class = st.characterClasses.find(",
+			"\t\t(c) => c.folderName === st.loadout.class.folderName,",
+			"\t)!;",
+			'\tawait loadModPack("", true);',
+			'\tsetModInfoText("No mod pack loaded");',
+			"}",
+		].join("\n"),
+	},
+	{
+		// The mod tab lists every pack this server restored
+		// (/mods/index.json) plus "No mods", instead of KRP's one Sonic
+		// button. Without a pack list (mods turned off) the Sonic button
+		// stays.
+		file: "core/src/components/tabs/ModTab.svelte",
+		find: "\tlet textureModInput: HTMLInputElement;",
+		replace: [
+			"\tlet textureModInput: HTMLInputElement;",
+			"\tconst modPacks: Promise<{ key: string; name: string; bytes: number }[]> = fetch(\"/mods/index.json\")",
+			"\t\t.then((r) => (r.ok ? r.json() : Promise.reject(r.status)))",
+			"\t\t.then((d) => d.packs);",
+			"\tconst packSize = (bytes: number) =>",
+			"\t\tbytes < 1048576 ? `${Math.ceil(bytes / 1024)} kb` : `${Math.round(bytes / 1048576)} mb`;",
+		].join("\n"),
+	},
+	{
+		file: "core/src/components/tabs/ModTab.svelte",
+		find: "\t<div class=\"modBtn\" onclick={() => window.loadModPack('13xlc5n3ipudqsn', false)}>Sonic Mod Pack</div>",
+		replace: [
+			"\t<div class=\"modBtn\" onclick={() => window.unloadModPack()}>No mods (default art)</div>",
+			"\t{#await modPacks then packs}",
+			"\t\t{#each packs as pack (pack.key)}",
+			"\t\t\t<div class=\"modBtn\" onclick={() => window.loadModPack(pack.key, false)}>{pack.name} ({packSize(pack.bytes)})</div>",
+			"\t\t{/each}",
+			"\t{:catch}",
+			"\t\t<div class=\"modBtn\" onclick={() => window.loadModPack('13xlc5n3ipudqsn', false)}>Sonic Mod Pack</div>",
+			"\t{/await}",
+		].join("\n"),
+	},
+	{
+		// Sprays: placed by their centre, so an image that is not square
+		// (see cacheSpray below) is still centred where it was sprayed.
+		file: "core/src/app.tsx",
+		find: "\ttmpSpray.xPos = x - tmpSpray.scale! / 2;\n\ttmpSpray.yPos = y - tmpSpray.scale! / 2;",
+		replace: "\t// The spray's centre; cacheSpray sizes it.\n\ttmpSpray.xPos = x;\n\ttmpSpray.yPos = y;",
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "function cacheSpray(img: Sprite) {\n\tconst tmpIndex = `${img.src}`;\n\tlet tmpSpray = cachedSprays[tmpIndex];\n\tif (tmpSpray || img.width === 0) return;\n\n\tlet initialCanvas = document.createElement(\"canvas\");\n\tlet initialCtx = initialCanvas.getContext(\"2d\")!;\n\tinitialCanvas.width = img.resolution!;\n\tinitialCanvas.height = img.resolution!;\n\tinitialCtx.drawImage(img, 0, 0, img.resolution!, img.resolution!);\n\tlet finalCanvas = document.createElement(\"canvas\");\n\tlet finalCtx = finalCanvas.getContext(\"2d\")!;\n\tfinalCanvas.width = img.scale!;\n\tfinalCanvas.height = img.scale!;\n\tfinalCtx.imageSmoothingEnabled = false;\n\tfinalCtx.globalAlpha = img.alpha!;\n\tfinalCtx.drawImage(initialCanvas, 0, 0, img.scale!, img.scale!);\n\ttmpSpray = finalCanvas;\n\tcachedSprays[tmpIndex] = tmpSpray;\n}\nfunction drawSprays() {\n\tif (!st.settings.showSprays) return;\n\tfor (const sp of userSprays) {\n\t\tif (!sp.active) continue;\n\t\tlet tmpSpray = cachedSprays[`${sp.src}`];\n\t\tif (!tmpSpray) continue;\n\t\tgraph.drawImage(tmpSpray, sp.xPos! - st.startX, sp.yPos! - st.startY);\n\t}\n}",
+		replace: "// Sprays are sized as in the 2016 client and KRP: the image is shrunk to\n// the spray's `resolution` (30 px) and blown up to its `scale` (64 px)\n// with hard pixels. The one change: an image that is not square keeps its\n// shape inside that square instead of being stretched to fill it.\nconst sprayDrawSize: Record<string, [number, number]> = {};\nfunction cacheSpray(img: Sprite) {\n\tconst tmpIndex = `${img.src}`;\n\tif (cachedSprays[tmpIndex] || img.naturalWidth === 0) return;\n\tconst w = img.naturalWidth;\n\tconst h = img.naturalHeight;\n\tconst k = Math.max(w, h);\n\tconst res = img.resolution || 30;\n\tconst scale = img.scale || 64;\n\tconst small = document.createElement(\"canvas\");\n\tsmall.width = Math.max(1, Math.round((res * w) / k));\n\tsmall.height = Math.max(1, Math.round((res * h) / k));\n\tsmall.getContext(\"2d\")!.drawImage(img, 0, 0, small.width, small.height);\n\tconst canvas = document.createElement(\"canvas\");\n\tconst ctx = canvas.getContext(\"2d\")!;\n\tcanvas.width = Math.max(1, Math.round((scale * w) / k));\n\tcanvas.height = Math.max(1, Math.round((scale * h) / k));\n\tctx.imageSmoothingEnabled = false;\n\tctx.globalAlpha = img.alpha ?? 1;\n\tctx.drawImage(small, 0, 0, canvas.width, canvas.height);\n\tcachedSprays[tmpIndex] = canvas;\n\tsprayDrawSize[tmpIndex] = [canvas.width, canvas.height];\n}\nfunction drawSprays() {\n\tif (!st.settings.showSprays) return;\n\tfor (const sp of userSprays) {\n\t\tif (!sp.active) continue;\n\t\tconst tmpSpray = cachedSprays[`${sp.src}`];\n\t\tconst size = sprayDrawSize[`${sp.src}`];\n\t\tif (!tmpSpray || !size) continue;\n\t\tconst [dw, dh] = size;\n\t\tgraph.drawImage(tmpSpray, sp.xPos! - dw / 2 - st.startX, sp.yPos! - dh / 2 - st.startY);\n\t}\n}",
+	},
+	{
+		// Sprays added on the server (`[content] sprays_dir`) join the
+		// spray list.
+		file: "core/src/state.svelte.ts",
+		find: "window.st = st;",
+		replace: "window.st = st;\n\n// Sprays the server adds (PNG files in its sprays folder). The saved choice\n// is read now, before the loadout tab clears a spray it does not know yet.\nconst savedSpray = localStorage.getItem(\"prevSpray\");\nfetch(\"/sprays/index.json\")\n\t.then((r) => (r.ok ? r.json() : { sprays: [] }))\n\t.then((d: { sprays: (typeof sprays)[number][] }) => {\n\t\tfor (const spray of d.sprays) {\n\t\t\tif (!st.sprays.some((s) => s.id === spray.id)) st.sprays.push(spray);\n\t\t}\n\t\tif (!st.loadout.spray && savedSpray) {\n\t\t\tst.loadout.spray = st.sprays.find((s) => String(s.id) === savedSpray) ?? null;\n\t\t}\n\t})\n\t.catch(() => {});",
+	},
+	{
+		// Several sprays per player (`sprays_per_player` on the server).
+		file: "core/src/app.tsx",
+		find: "function createSpray(plrIdx: number, x: number, y: number) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find((s) => s.owner === plrIdx);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite;\n\t\timg.owner = plrIdx;",
+		replace: "// `slot` (from this server) lets a player keep several sprays on the map:\n// the server cycles it through `sprays_per_player` slots.\nfunction createSpray(plrIdx: number, x: number, y: number, slot = 0) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find(\n\t\t(s) => s.owner === plrIdx && ((s as Sprite & { spraySlot?: number }).spraySlot ?? 0) === slot,\n\t);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite & { spraySlot?: number };\n\t\t// Not `slot`: every element already has a string `slot` property.\n\t\timg.spraySlot = slot;\n\t\timg.owner = plrIdx;",
+	},
+	{
+		// KRP ignores `add` for the player themself, so after changing spray in
+		// game they kept placing the old one (others saw the new one). Take
+		// the spray from it; nothing else of their own is replaced.
+		file: "core/src/app.tsx",
+		find: "\t\t\tst.players[st.players.indexOf(existingUser)] = parsed;\n\t\t}\n\t}\n}",
+		replace: "\t\t\tst.players[st.players.indexOf(existingUser)] = parsed;\n\t\t}\n\t} else if (parsed.spray) {\n\t\tst.player.spray = parsed.spray;\n\t\tconst me = findUserByIndex(parsed.index);\n\t\tif (me) me.spray = parsed.spray;\n\t}\n}",
+	},
+	{
+		// Hidden tabs: drop shots that arrived while frames were stalled
+		file: "core/src/app.tsx",
+		find: "function someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t}\n\t}\n}",
+		replace: "// Hidden tabs: the browser stops drawing frames but shots keep arriving.\n// KRP armed them all with the frozen frame clock and fired them together\n// when the tab came back. Here a shot remembers when it arrived and is\n// dropped if frames did not run soon after (Projectile.update), shots that\n// arrive while frames are stalled play no sound, and one frame never runs\n// a longer step than MAX_FRAME_MS. localStorage `vertix.hiddenTab` = \"krp\"\n// restores KRP's behaviour.\nconst KRP_HIDDEN_TAB = (() => {\n\ttry {\n\t\treturn localStorage.getItem(\"vertix.hiddenTab\") === \"krp\";\n\t} catch {\n\t\treturn false;\n\t}\n})();\nconst STALE_SHOT_MS = 200;\nconst MAX_FRAME_MS = 100;\nfunction someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tconst now = Date.now();\n\t\t\tif (!KRP_HIDDEN_TAB) {\n\t\t\t\tbullet.silent = document.hidden || now - currentTime > STALE_SHOT_MS;\n\t\t\t}\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t\tif (!KRP_HIDDEN_TAB) bullet.arrivedAt = now;\n\t\t}\n\t}\n}",
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "\tdelta = currentTime - oldTime;\n",
+		replace: "\tdelta = currentTime - oldTime;\n\t// After a hidden tab one frame would run the whole gap as one step.\n\tif (!KRP_HIDDEN_TAB) delta = Math.min(delta, MAX_FRAME_MS);\n",
+	},
+	{
+		file: "core/src/logic/projectile.ts",
+		find: "\tselfDamage = false;\n\tupdate(",
+		replace: "\tselfDamage = false;\n\t// Set by someoneShot (hidden-tab handling, see app.tsx).\n\tarrivedAt = 0;\n\tsilent = false;\n\tupdate(",
+	},
+	{
+		file: "core/src/logic/projectile.ts",
+		find: "\t\t\tif (this.skipMove) {\n\t\t\t\tlifetime = 0;\n\t\t\t\tthis.startTime = currentTime;\n\t\t\t}",
+		replace: "\t\t\tif (this.skipMove) {\n\t\t\t\t// A shot that arrived while frames were not running is in\n\t\t\t\t// the past: drop it instead of firing it late.\n\t\t\t\tconst late = this.arrivedAt ? currentTime - this.arrivedAt : 0;\n\t\t\t\tthis.arrivedAt = 0;\n\t\t\t\tif (late > 200) {\n\t\t\t\t\tthis.active = false;\n\t\t\t\t\tthis.trailAlpha = 0;\n\t\t\t\t\tthis.skipMove = false;\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tlifetime = 0;\n\t\t\t\tthis.startTime = currentTime;\n\t\t\t}",
+	},
+	{
+		file: "core/src/logic/projectile.ts",
+		find: "\t\tthis.active = true;\n\t\tif (typeof window !== \"undefined\") playSound(`shot${this.weaponIndex}`, this.x, this.y);",
+		replace: "\t\tthis.active = true;\n\t\tthis.arrivedAt = 0;\n\t\tif (typeof window !== \"undefined\" && !this.silent) {\n\t\t\tplaySound(`shot${this.weaponIndex}`, this.x, this.y);\n\t\t}\n\t\tthis.silent = false;",
+	},
+	{
 		// The mod tab's link to a Reddit thread of (mostly dead) Dropbox
 		// links now opens this server's list of restored packs.
 		file: "core/src/components/tabs/ModTab.svelte",
@@ -130,32 +259,6 @@ const patches = [
 			"\t\t\t}",
 			"\t\t\tif (serverBullet && serverBullet.owner?.index !== st.player.index) {",
 		].join("\n"),
-	},
-	{
-		// Hidden tabs: drop shots that arrived while frames were stalled
-		file: "core/src/app.tsx",
-		find: "function someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t}\n\t}\n}",
-		replace: "// Hidden tabs: the browser stops drawing frames but shots keep arriving.\n// KRP armed them all with the frozen frame clock and fired them together\n// when the tab came back. Here a shot remembers when it arrived and is\n// dropped if frames did not run soon after (Projectile.update), shots that\n// arrive while frames are stalled play no sound, and one frame never runs\n// a longer step than MAX_FRAME_MS. localStorage `vertix.hiddenTab` = \"krp\"\n// restores KRP's behaviour.\nconst KRP_HIDDEN_TAB = (() => {\n\ttry {\n\t\treturn localStorage.getItem(\"vertix.hiddenTab\") === \"krp\";\n\t} catch {\n\t\treturn false;\n\t}\n})();\nconst STALE_SHOT_MS = 200;\nconst MAX_FRAME_MS = 100;\nfunction someoneShot(evt: ShootEvent) {\n\tif (evt.i !== st.player.index) {\n\t\tconst tmpPlayer = findUserByIndex(evt.i);\n\t\tconst bullet = findServerBullet(evt.si);\n\t\tif (tmpPlayer && bullet) {\n\t\t\tconst now = Date.now();\n\t\t\tif (!KRP_HIDDEN_TAB) {\n\t\t\t\tbullet.silent = document.hidden || now - currentTime > STALE_SHOT_MS;\n\t\t\t}\n\t\t\tshootNextBullet(evt, tmpPlayer, target.d, currentTime, bullet);\n\t\t\tif (!KRP_HIDDEN_TAB) bullet.arrivedAt = now;\n\t\t}\n\t}\n}",
-	},
-	{
-		file: "core/src/app.tsx",
-		find: "\tdelta = currentTime - oldTime;\n",
-		replace: "\tdelta = currentTime - oldTime;\n\t// After a hidden tab one frame would run the whole gap as one step.\n\tif (!KRP_HIDDEN_TAB) delta = Math.min(delta, MAX_FRAME_MS);\n",
-	},
-	{
-		file: "core/src/logic/projectile.ts",
-		find: "\tselfDamage = false;\n\tupdate(",
-		replace: "\tselfDamage = false;\n\t// Set by someoneShot (hidden-tab handling, see app.tsx).\n\tarrivedAt = 0;\n\tsilent = false;\n\tupdate(",
-	},
-	{
-		file: "core/src/logic/projectile.ts",
-		find: "\t\t\tif (this.skipMove) {\n\t\t\t\tlifetime = 0;\n\t\t\t\tthis.startTime = currentTime;\n\t\t\t}",
-		replace: "\t\t\tif (this.skipMove) {\n\t\t\t\t// A shot that arrived while frames were not running is in\n\t\t\t\t// the past: drop it instead of firing it late.\n\t\t\t\tconst late = this.arrivedAt ? currentTime - this.arrivedAt : 0;\n\t\t\t\tthis.arrivedAt = 0;\n\t\t\t\tif (late > 200) {\n\t\t\t\t\tthis.active = false;\n\t\t\t\t\tthis.trailAlpha = 0;\n\t\t\t\t\tthis.skipMove = false;\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tlifetime = 0;\n\t\t\t\tthis.startTime = currentTime;\n\t\t\t}",
-	},
-	{
-		file: "core/src/logic/projectile.ts",
-		find: "\t\tthis.active = true;\n\t\tif (typeof window !== \"undefined\") playSound(`shot${this.weaponIndex}`, this.x, this.y);",
-		replace: "\t\tthis.active = true;\n\t\tthis.arrivedAt = 0;\n\t\tif (typeof window !== \"undefined\" && !this.silent) {\n\t\t\tplaySound(`shot${this.weaponIndex}`, this.x, this.y);\n\t\t}\n\t\tthis.silent = false;",
 	},
 ];
 
