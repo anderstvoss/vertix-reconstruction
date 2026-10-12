@@ -139,7 +139,7 @@ const patches = [
 		// Several sprays per player (`sprays_per_player` on the server).
 		file: "core/src/app.tsx",
 		find: "function createSpray(plrIdx: number, x: number, y: number) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find((s) => s.owner === plrIdx);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite;\n\t\timg.owner = plrIdx;",
-		replace: "// `slot` (from this server) lets a player keep several sprays on the map:\n// the server cycles it through `sprays_per_player` slots.\nfunction createSpray(plrIdx: number, x: number, y: number, slot = 0) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find(\n\t\t(s) => s.owner === plrIdx && ((s as Sprite & { slot?: number }).slot ?? 0) === slot,\n\t);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite & { slot?: number };\n\t\timg.slot = slot;\n\t\timg.owner = plrIdx;",
+		replace: "// `slot` (from this server) lets a player keep several sprays on the map:\n// the server cycles it through `sprays_per_player` slots.\nfunction createSpray(plrIdx: number, x: number, y: number, slot = 0) {\n\tlet tmpPlayer = findUserByIndex(plrIdx);\n\tif (!tmpPlayer) return;\n\tlet tmpSpray = userSprays.find(\n\t\t(s) => s.owner === plrIdx && ((s as Sprite & { spraySlot?: number }).spraySlot ?? 0) === slot,\n\t);\n\tif (!tmpSpray) {\n\t\tconst img = new Image() as Sprite & { spraySlot?: number };\n\t\t// Not `slot`: every element already has a string `slot` property.\n\t\timg.spraySlot = slot;\n\t\timg.owner = plrIdx;",
 	},
 	{
 		// KRP ignores `add` for the player themself, so after changing spray in
