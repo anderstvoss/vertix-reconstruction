@@ -54,6 +54,7 @@ desktop/krp/target/release/vertix-krp-desktop --room DEV0
 | `--display sharp\|krp` | Device-pixel canvas (default) or KRP's CSS-pixel canvas |
 | `--effects persist\|krp` | Effects stay where they happened, even off screen (default), or KRP's on-screen-only effects. Needs the server's client built with `scripts/client-patches` |
 | `--hidden catch-up\|krp` | Drop shots that arrived while the window drew no frames (default), or KRP's late burst. Needs the patched client, as `--effects` does |
+| `--flags 2016\|krp` | Hardpoint and zone flags wave at the 2016 speed on any display (default), or KRP's once per 5 drawn frames. Needs the patched client |
 | `--floor 2016\|krp` | The 2016 ground tiles, with the wooden planks, from the server's `original-2016` mod pack (default, when the server has it), or the tiles in KRP's `res.zip`. Needs the patched client |
 | `--autoplay` | Press ENTER GAME once the room is joined |
 | `--script KEYS` | Scripted keys, e.g. `d:1500,s:800,a+w:1000,:500` |
