@@ -183,6 +183,7 @@ fn admin_paths(config: &Config) -> vertix_reconstruction::game::admin::Paths {
         balance_dir: config.game.balance_dir.clone(),
         rules: config.rules.clone(),
         sprays_per_player: config.game.sprays_per_player,
+        bullet_holes: config.game.bullet_holes,
     }
 }
 
@@ -273,7 +274,8 @@ fn classic_room(
     }
 }
 
-/// The rule layers, with the server's own `[game] sprays_per_player`.
+/// The rule layers, with the server's own `[game] sprays_per_player` and
+/// `bullet_holes`.
 fn load_rules(
     config: &Config,
 ) -> Result<
@@ -289,6 +291,7 @@ fn load_rules(
         return Err("[game] sprays_per_player must be at least 1".into());
     }
     rules.rules.sprays_per_player = config.game.sprays_per_player;
+    rules.rules.bullet_holes = config.game.bullet_holes;
     Ok((rules, provenance))
 }
 

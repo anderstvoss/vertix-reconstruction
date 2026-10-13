@@ -183,6 +183,9 @@ pub struct Effects {
     /// Keep (and age) particles while they are off screen, instead of
     /// dropping them as KRP does.
     pub persistent: bool,
+    /// The server's `bulletHoles` rule from gameSetup. When off, bullets
+    /// hitting a wall leave no hole sprite (the sparks still fly).
+    pub bullet_holes: bool,
 }
 
 const MAX_SHAKE_DIST: f64 = 2000.0;
@@ -200,6 +203,7 @@ impl Effects {
             glow_index: 0,
             shake: Shake::default(),
             show_particles: true,
+            bullet_holes: true,
             persistent: true,
         }
     }
@@ -264,6 +268,7 @@ impl Effects {
         if !self.show_particles {
             return;
         }
+        let hole = add_bullet_hole && self.bullet_holes;
         for i in 0..count {
             let t = self.ready();
             t.force_show = false;
@@ -279,7 +284,7 @@ impl Effects {
             t.sprite_index = 0;
             t.max_duration = -1.0;
             t.duration = 0.0;
-            if i == 0 && sprite_index == 2 && add_bullet_hole {
+            if i == 0 && sprite_index == 2 && hole {
                 t.sprite_index = 3;
                 t.layer = 0;
             } else {
@@ -447,5 +452,31 @@ impl Effects {
 impl Default for Effects {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn holes(fx: &Effects) -> usize {
+        fx.particles
+            .iter()
+            .filter(|p| p.active && p.sprite_index == 3)
+            .count()
+    }
+
+    #[test]
+    fn bullet_holes_follow_the_server_rule() {
+        let mut fx = Effects::default();
+        fx.particle_cone(4, 10.0, 10.0, 0.0, 0.5, 1.0, 1.0, 2, true);
+        assert_eq!(holes(&fx), 1);
+        let mut fx = Effects {
+            bullet_holes: false,
+            ..Effects::default()
+        };
+        fx.particle_cone(4, 10.0, 10.0, 0.0, 0.5, 1.0, 1.0, 2, true);
+        assert_eq!(holes(&fx), 0);
+        assert_eq!(fx.particles.iter().filter(|p| p.active).count(), 4);
     }
 }

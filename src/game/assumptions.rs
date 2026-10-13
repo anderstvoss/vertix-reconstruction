@@ -102,6 +102,10 @@ pub struct Rules {
     /// setting, `[game] sprays_per_player`, not a rule layer value.
     #[serde(default = "one")]
     pub sprays_per_player: u32,
+    /// Whether clients draw bullet holes where shots hit walls (KRP: yes).
+    /// A server setting, `[game] bullet_holes`, sent in `gameSetup`.
+    #[serde(default = "yes")]
+    pub bullet_holes: bool,
     pub name_max_len: usize,
 }
 
@@ -382,6 +386,10 @@ impl Assumptions {
 
 const fn one() -> u32 {
     1
+}
+
+const fn yes() -> bool {
+    true
 }
 
 /// The committed layers, for tests.

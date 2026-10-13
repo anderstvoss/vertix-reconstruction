@@ -292,6 +292,11 @@ impl Game {
             self.chat_visible = true;
         }
         self.keys.lm = false;
+        // Servers that predate the rule do not send it: draw holes as KRP did.
+        self.fx.bullet_holes = setup
+            .get("bulletHoles")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
         let vm = num(setup.get("viewMult"));
         self.max_h = num(setup.get("maxScreenHeight")) * vm;
         self.max_w = num(setup.get("maxScreenWidth")) * vm;

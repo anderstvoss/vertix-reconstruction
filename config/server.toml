@@ -68,6 +68,13 @@ max_players = 8
 # changes it while running.
 sprays_per_player = 1
 
+# Bullet holes where shots hit walls. On in KRP and the 2016 client; off
+# here until they get clearer art (they read as stray dots on the wall).
+# KRP's patched client and the Rust client follow this; the 2016 client
+# always draws them. `rule bullet_holes true` turns them on while running
+# (for players who join or respawn after).
+bullet_holes = false
+
 # The rooms opened at start, one per mode as in KRP's dev server. A client
 # picks one in the server browser; mode codes are those in data/krp.
 rooms = [
