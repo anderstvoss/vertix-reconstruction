@@ -86,6 +86,13 @@ map, kill everyone, edit rules live, and run any command. The same
 commands can be typed into the server's terminal. See
 [docs/ADMIN.md](docs/ADMIN.md).
 
+`desktop/krp` opens KRP's client from the server in a desktop window and
+adds an input-rate cap, a sharp display and metrics at run time, without
+containing any KRP code ([desktop/krp/README.md](desktop/krp/README.md)).
+`scripts/ab_compare.py` runs KRP's client and the Rust client with the same
+scripted input, in the browser and on the desktop, and writes a report
+comparing them.
+
 `scripts/e2e_smoke.py` starts the server and plays through it over
 long-polling and WebSocket, with no archive or client build needed.
 

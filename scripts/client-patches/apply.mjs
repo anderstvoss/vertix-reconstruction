@@ -194,6 +194,203 @@ const patches = [
 		find: 'href="https://www.reddit.com/r/VertixOnline/comments/4vypx9/texture_mods_please_post_all_texture_mods_here/"',
 		replace: 'href="/mods/"',
 	},
+	{
+		// Effects persist off screen (docs/DEVIATIONS.md): KRP deactivates
+		// a particle (blood, dust, bullet hole) as soon as it is off screen.
+		// Now it keeps ageing there and is drawn when it is back in view.
+		// localStorage "vertix.effects" = "krp" restores KRP's behaviour.
+		file: "core/src/visual/particle.ts",
+		find: [
+			"\tfor (let i = 0; i < cachedParticles.length; ++i) {",
+			"\t\tif (",
+			"\t\t\t(st.settings.showParticles || cachedParticles[i].forceShow) &&",
+			"\t\t\tcachedParticles[i].active &&",
+			"\t\t\tcanSee(",
+			"\t\t\t\tcachedParticles[i].x - st.startX,",
+			"\t\t\t\tcachedParticles[i].y - st.startY,",
+			"\t\t\t\tcachedParticles[i].scale,",
+			"\t\t\t\tcachedParticles[i].scale,",
+			"\t\t\t)",
+			"\t\t) {",
+			"\t\t\tif (layer === cachedParticles[i].layer) {",
+			"\t\t\t\tcachedParticles[i].update(delta);",
+			"\t\t\t\tcachedParticles[i].draw();",
+			"\t\t\t}",
+		].join("\n"),
+		replace: [
+			"\tconst persist = localStorage.getItem(\"vertix.effects\") !== \"krp\";",
+			"\tfor (let i = 0; i < cachedParticles.length; ++i) {",
+			"\t\tconst visible = canSee(",
+			"\t\t\tcachedParticles[i].x - st.startX,",
+			"\t\t\tcachedParticles[i].y - st.startY,",
+			"\t\t\tcachedParticles[i].scale,",
+			"\t\t\tcachedParticles[i].scale,",
+			"\t\t);",
+			"\t\tif (",
+			"\t\t\t(st.settings.showParticles || cachedParticles[i].forceShow) &&",
+			"\t\t\tcachedParticles[i].active &&",
+			"\t\t\t(visible || persist)",
+			"\t\t) {",
+			"\t\t\tif (layer === cachedParticles[i].layer) {",
+			"\t\t\t\tcachedParticles[i].update(delta);",
+			"\t\t\t\tif (visible) cachedParticles[i].draw();",
+			"\t\t\t}",
+		].join("\n"),
+	},
+	{
+		// Bullet holes follow the server (docs/DEVIATIONS.md): gameSetup
+		// carries `bulletHoles`, and when it is false a bullet hitting a
+		// wall leaves no hole sprite. A server that does not send it keeps
+		// KRP's holes.
+		file: "core/src/visual/particle.ts",
+		find: "\t\tif (i === 0 && spriteIndex === 2 && addBulletHole) {",
+		replace: "\t\tif (i === 0 && spriteIndex === 2 && addBulletHole && particleRules.bulletHoles) {",
+	},
+	{
+		file: "core/src/visual/particle.ts",
+		find: "export function updateParticles(delta: number, layer: number) {",
+		replace: [
+			"export const particleRules = { bulletHoles: true };",
+			"",
+			"export function updateParticles(delta: number, layer: number) {",
+		].join("\n"),
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "\tparticleCone,\n\tstillDustParticle,\n\tupdateParticles,\n} from \"./visual/particle.ts\";",
+		replace: "\tparticleCone,\n\tparticleRules,\n\tstillDustParticle,\n\tupdateParticles,\n} from \"./visual/particle.ts\";",
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "\t\t\tconst setupData = JSON.parse(setupJson);",
+		replace: [
+			"\t\t\tconst setupData = JSON.parse(setupJson);",
+			"\t\t\tparticleRules.bulletHoles = setupData.bulletHoles !== false;",
+		].join("\n"),
+	},
+	{
+		// Blood for hits this client cannot see (docs/DEVIATIONS.md): KRP
+		// only bleeds a player who is on screen, so a hit off screen leaves
+		// nothing to find later. The hit message has no position, so the
+		// blood goes where the bullet is.
+		file: "core/src/app.tsx",
+		find: [
+			"\t\t\tlet serverBullet = findServerBullet(healthUpdate.bulletIndex);",
+			"\t\t\tif (serverBullet && serverBullet.owner?.index !== st.player.index) {",
+		].join("\n"),
+		replace: [
+			"\t\t\tlet serverBullet = findServerBullet(healthUpdate.bulletIndex);",
+			"\t\t\tif (",
+			"\t\t\t\tserverBullet &&",
+			"\t\t\t\t!player?.onScreen &&",
+			"\t\t\t\thealthDelta < 0 &&",
+			"\t\t\t\tserverBullet.spriteIndex !== 2 &&",
+			"\t\t\t\tlocalStorage.getItem(\"vertix.effects\") !== \"krp\"",
+			"\t\t\t) {",
+			"\t\t\t\tparticleCone(",
+			"\t\t\t\t\t12,",
+			"\t\t\t\t\tserverBullet.x,",
+			"\t\t\t\t\tserverBullet.y,",
+			"\t\t\t\t\tserverBullet.dir + Math.PI,",
+			"\t\t\t\t\tMath.PI / randomInt(5, 7),",
+			"\t\t\t\t\t0.5,",
+			"\t\t\t\t\t16,",
+			"\t\t\t\t\t0,",
+			"\t\t\t\t\ttrue,",
+			"\t\t\t\t);",
+			"\t\t\t\tcreateLiquid(serverBullet.x, serverBullet.y, serverBullet.dir, 4);",
+			"\t\t\t}",
+			"\t\t\tif (serverBullet && serverBullet.owner?.index !== st.player.index) {",
+		].join("\n"),
+	},
+	{
+		// 2016 floor tiles (docs/DEVIATIONS.md): KRP's res.zip has the
+		// plainer 2020 ground tiles. The 2016 ones (specks, cracks, and the
+		// planks on ground2, which maps place on their yellow cells) come
+		// from this server's original-2016 pack when it has one.
+		// localStorage "vertix.floor" = "krp" keeps KRP's tiles.
+		file: "core/src/app.tsx",
+		find: [
+			"\t\tspriteIndex = 0;",
+			"\t\tloadPlayerSprites(\"sprites/\");",
+			"\t\tloadDefaultSprites(\"sprites/\");",
+		].join("\n"),
+		replace: [
+			"\t\tif (isBaseAssets && localStorage.getItem(\"vertix.floor\") !== \"krp\") {",
+			"\t\t\ttry {",
+			"\t\t\t\tconst floorReader = new zip.ZipReader(new zip.HttpReader(\"/mods/original-2016/vertixmod.zip\"));",
+			"\t\t\t\tfor (const floorEntry of await floorReader.getEntries()) {",
+			"\t\t\t\t\tif (floorEntry.directory) continue;",
+			"\t\t\t\t\tconst name = floorEntry.filename.replace(\"vertixmod/\", \"\");",
+			"\t\t\t\t\tif (!/^sprites\\/ground[123]\\.png$/.test(name)) continue;",
+			"\t\t\t\t\tconst blob = await floorEntry.getData(new zip.BlobWriter(\"image/png\"));",
+			"\t\t\t\t\tlocalStorage.setItem(name, URL.createObjectURL(blob));",
+			"\t\t\t\t}",
+			"\t\t\t\tawait floorReader.close();",
+			"\t\t\t} catch (err) {",
+			"\t\t\t\tconsole.warn(\"2016 floor tiles not loaded\", err);",
+			"\t\t\t}",
+			"\t\t}",
+			"\t\tspriteIndex = 0;",
+			"\t\tloadPlayerSprites(\"sprites/\");",
+			"\t\tloadDefaultSprites(\"sprites/\");",
+		].join("\n"),
+	},
+	{
+		// Frame rate: sub-millisecond frame times and the helpers below (docs/DEVIATIONS.md).
+		file: "core/src/app.tsx",
+		find: "function updateGameLoop() {\n\tdelta = currentTime - oldTime;",
+		replace: "// Frame rate (docs/DEVIATIONS.md): KRP moves the player by each frame's\n// length, rounding to whole pixels every frame, so the speed depends on the\n// display, and it times frames with Date.now() (whole milliseconds). Here\n// the player moves in fixed 60 Hz input steps (the server applies one step\n// per packet, rounding the same way) and is drawn between steps, other\n// players glide between the positions the server sends instead of jumping,\n// and the screen shake fades by time. localStorage `vertix.frameRate` =\n// \"krp\" restores KRP's.\nconst KRP_FRAME_RATE = (() => {\n\ttry {\n\t\treturn localStorage.getItem(\"vertix.frameRate\") === \"krp\";\n\t} catch {\n\t\treturn false;\n\t}\n})();\nconst INPUT_STEP_MS = 1000 / 60;\nconst MAX_STEPS_PER_FRAME = 6;\nconst GLIDE_SNAP = 150;\ntype VxGlide = { fromX: number; fromY: number; t0: number; dur: number; lastMove: number };\nlet vxFrameClock = performance.now();\nlet vxFrameNow = vxFrameClock;\nlet vxInputAccum = 0;\nlet vxTickAlpha = 1;\nconst vxTickFrom = new Map<number, [number, number, number]>();\nconst vxGlides = new Map<number, VxGlide>();\nfunction vxGlideAt(g: VxGlide, toX: number, toY: number, now: number): [number, number] {\n\tconst t = g.dur > 0 ? Math.min(1, Math.max(0, (now - g.t0) / g.dur)) : 1;\n\treturn [g.fromX + (toX - g.fromX) * t, g.fromY + (toY - g.fromY) * t];\n}\n// Another player moved: glide from where they are drawn now to the new\n// position, over the time since their last move (their own input rate).\nfunction vxGlideTo(p: Player, before: [number, number]) {\n\tconst now = performance.now();\n\tconst g = vxGlides.get(p.index);\n\tconst [dx, dy] = g ? vxGlideAt(g, before[0], before[1], now) : before;\n\tconst far = Math.hypot(p.x - dx, p.y - dy) > GLIDE_SNAP;\n\tvxGlides.set(p.index, {\n\t\tfromX: far ? p.x : dx,\n\t\tfromY: far ? p.y : dy,\n\t\tt0: now,\n\t\tdur: Math.min(100, Math.max(8, now - (g ? g.lastMove : now))),\n\t\tlastMove: now,\n\t});\n}\n// Moves everyone to where they are drawn this frame; vxRestorePositions\n// puts the simulated positions back afterwards.\nfunction vxPlaceForDrawing() {\n\tconst sim: [Player, number, number, number][] = [];\n\tconst own: [number, number] = [st.player.x, st.player.y];\n\tif (KRP_FRAME_RATE) return { sim, own };\n\tfor (const p of st.players) {\n\t\tsim.push([p, p.x, p.y, p.jumpY]);\n\t\tconst from = vxTickFrom.get(p.index);\n\t\tif (from) {\n\t\t\tp.jumpY = from[2] + (p.jumpY - from[2]) * vxTickAlpha;\n\t\t\tif (p.index === st.player.index && Math.hypot(p.x - from[0], p.y - from[1]) <= GLIDE_SNAP) {\n\t\t\t\tp.x = from[0] + (p.x - from[0]) * vxTickAlpha;\n\t\t\t\tp.y = from[1] + (p.y - from[1]) * vxTickAlpha;\n\t\t\t}\n\t\t}\n\t\tif (p.index === st.player.index) {\n\t\t\t// The camera follows st.player.\n\t\t\tst.player.x = p.x;\n\t\t\tst.player.y = p.y;\n\t\t} else {\n\t\t\tconst g = vxGlides.get(p.index);\n\t\t\tif (g) [p.x, p.y] = vxGlideAt(g, p.x, p.y, vxFrameNow);\n\t\t}\n\t}\n\treturn { sim, own };\n}\nfunction vxRestorePositions(saved: ReturnType<typeof vxPlaceForDrawing>) {\n\tfor (const [p, x, y, jumpY] of saved.sim) {\n\t\tp.x = x;\n\t\tp.y = y;\n\t\tp.jumpY = jumpY;\n\t}\n\tst.player.x = saved.own[0];\n\tst.player.y = saved.own[1];\n}\nfunction updateGameLoop() {\n\tvxFrameNow = performance.now();\n\tdelta = KRP_FRAME_RATE ? currentTime - oldTime : vxFrameNow - vxFrameClock;\n\tvxFrameClock = vxFrameNow;",
+	},
+	{
+		// Frame rate: the player moves in whole input steps (docs/DEVIATIONS.md).
+		file: "core/src/app.tsx",
+		find: "\tconst clientPrediction = true;\n\tif (clientPrediction) {\n\t\tfor (const plr of st.players) {\n\t\t\tif (plr.index === st.player.index) {\n\t\t\t\tplr.oldX = plr.x;\n\t\t\t\tplr.oldY = plr.y;\n\t\t\t\tif (!plr.dead && !st.gameOver) {\n\t\t\t\t\tplr.x += b * plr.speed * delta;\n\t\t\t\t\tplr.y += d * plr.speed * delta;\n\t\t\t\t}\n\t\t\t\twallCol(plr, st.gameMap.tiles, clutter);\n\t\t\t\tplr.x = Math.round(plr.x);\n\t\t\t\tplr.y = Math.round(plr.y);\n\t\t\t\tplr.angle = ((target.f + Math.PI * 2) % (Math.PI * 2)) * (180 / Math.PI) + 90;\n\t\t\t\tconst currentWeapon = getCurrentWeapon(plr);\n\t\t\t\tif (currentWeapon) {\n\t\t\t\t\tcurrentWeapon.front = isWeaponFacingFront(snapAngleToCardinal(plr.angle));\n\t\t\t\t}\n\t\t\t\tif (plr.jumpCountdown > 0) {\n\t\t\t\t\tplr.jumpCountdown -= delta;\n\t\t\t\t}\n\t\t\t\tif (keys.s && plr.jumpCountdown <= 0 && !st.gameOver) {\n\t\t\t\t\tplayerJump(plr);\n\t\t\t\t\tdoJump = 1;\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (plr.jumpY !== 0) {\n\t\t\t\tplr.jumpDelta -= plr.gravityStrength * delta;\n\t\t\t\tplr.jumpY += plr.jumpDelta * delta;\n\t\t\t\tif (plr.jumpY > 0) {\n\t\t\t\t\tplr.animIndex = 1;\n\t\t\t\t} else {\n\t\t\t\t\tplr.jumpY = 0;\n\t\t\t\t\tplr.jumpDelta = 0;\n\t\t\t\t\tplr.jumpCountdown = 250;\n\t\t\t\t}\n\t\t\t\tplr.jumpY = Math.round(plr.jumpY);\n\t\t\t}\n\t\t\tif (plr.index === st.player.index && !st.gameOver) {\n\t\t\t\tlet sendData = {\n\t\t\t\t\thdt: b,\n\t\t\t\t\tvdt: d,\n\t\t\t\t\tts: currentTime,\n\t\t\t\t\tisn: inputNumber,\n\t\t\t\t\ts: doJump,\n\t\t\t\t\tdelta,\n\t\t\t\t};\n\t\t\t\tinputNumber++;\n\t\t\t\tthisInput.push(sendData);\n\t\t\t\tsocket.emit(\"4\", sendData);\n",
+		replace: "\t// Whole input steps this frame (KRP: one step of the frame's length).\n\tconst steps: number[] = [];\n\tif (KRP_FRAME_RATE) {\n\t\tsteps.push(delta);\n\t\tvxTickAlpha = 1;\n\t} else {\n\t\tvxInputAccum += delta;\n\t\twhile (vxInputAccum >= INPUT_STEP_MS) {\n\t\t\tvxInputAccum -= INPUT_STEP_MS;\n\t\t\tif (steps.length < MAX_STEPS_PER_FRAME) steps.push(INPUT_STEP_MS);\n\t\t}\n\t\tif (vxInputAccum >= INPUT_STEP_MS) vxInputAccum = 0;\n\t\tvxTickAlpha = vxInputAccum / INPUT_STEP_MS;\n\t}\n\tconst clientPrediction = true;\n\tif (clientPrediction) {\n\t\tfor (const plr of st.players) {\n\t\t\tconst isMe = plr.index === st.player.index;\n\t\t\tif (isMe) {\n\t\t\t\tplr.angle = ((target.f + Math.PI * 2) % (Math.PI * 2)) * (180 / Math.PI) + 90;\n\t\t\t\tconst currentWeapon = getCurrentWeapon(plr);\n\t\t\t\tif (currentWeapon) {\n\t\t\t\t\tcurrentWeapon.front = isWeaponFacingFront(snapAngleToCardinal(plr.angle));\n\t\t\t\t}\n\t\t\t\tif (plr.jumpCountdown > 0) {\n\t\t\t\t\tplr.jumpCountdown -= delta;\n\t\t\t\t}\n\t\t\t}\n\t\t\tfor (let n = 0; n < steps.length; n++) {\n\t\t\t\tconst step = steps[n];\n\t\t\t\tvxTickFrom.set(plr.index, [plr.x, plr.y, plr.jumpY]);\n\t\t\t\tlet stepJump = 0;\n\t\t\t\tif (isMe) {\n\t\t\t\t\tplr.oldX = plr.x;\n\t\t\t\t\tplr.oldY = plr.y;\n\t\t\t\t\tif (!plr.dead && !st.gameOver) {\n\t\t\t\t\t\tplr.x += b * plr.speed * step;\n\t\t\t\t\t\tplr.y += d * plr.speed * step;\n\t\t\t\t\t}\n\t\t\t\t\twallCol(plr, st.gameMap.tiles, clutter);\n\t\t\t\t\tplr.x = Math.round(plr.x);\n\t\t\t\t\tplr.y = Math.round(plr.y);\n\t\t\t\t\tif (n === 0 && keys.s && plr.jumpCountdown <= 0 && !st.gameOver) {\n\t\t\t\t\t\tplayerJump(plr);\n\t\t\t\t\t\tstepJump = 1;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tif (plr.jumpY !== 0) {\n\t\t\t\t\tplr.jumpDelta -= plr.gravityStrength * step;\n\t\t\t\t\tplr.jumpY += plr.jumpDelta * step;\n\t\t\t\t\tif (plr.jumpY > 0) {\n\t\t\t\t\t\tplr.animIndex = 1;\n\t\t\t\t\t} else {\n\t\t\t\t\t\tplr.jumpY = 0;\n\t\t\t\t\t\tplr.jumpDelta = 0;\n\t\t\t\t\t\tplr.jumpCountdown = 250;\n\t\t\t\t\t}\n\t\t\t\t\tplr.jumpY = Math.round(plr.jumpY);\n\t\t\t\t}\n\t\t\t\tif (isMe && !st.gameOver) {\n\t\t\t\t\tconst sendData = {\n\t\t\t\t\t\thdt: b,\n\t\t\t\t\t\tvdt: d,\n\t\t\t\t\t\tts: currentTime,\n\t\t\t\t\t\tisn: inputNumber,\n\t\t\t\t\t\ts: stepJump,\n\t\t\t\t\t\tdelta: step,\n\t\t\t\t\t};\n\t\t\t\t\tinputNumber++;\n\t\t\t\t\tthisInput.push(sendData);\n\t\t\t\t\tsocket.emit(\"4\", sendData);\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (plr.index === st.player.index && !st.gameOver) {\n",
+	},
+	{
+		// Frame rate: draw everyone between updates.
+		file: "core/src/app.tsx",
+		find: "\tst.players.sort(sortUsersByPosition);\n\tif (!st.kicked) {",
+		replace: "\tst.players.sort(sortUsersByPosition);\n\tconst vxDrawn = vxPlaceForDrawing();\n\tif (!st.kicked) {",
+	},
+	{
+		// Frame rate: put the simulated positions back.
+		file: "core/src/app.tsx",
+		find: "\tif (disconnected || st.kicked) {\n\t\tdrawOverlay(graph, false, false);",
+		replace: "\tvxRestorePositions(vxDrawn);\n\tif (disconnected || st.kicked) {\n\t\tdrawOverlay(graph, false, false);",
+	},
+	{
+		// Frame rate: remember where another player was before this update.
+		file: "core/src/app.tsx",
+		find: "\t\t\t} else if (tmpUser != null) {\n",
+		replace: "\t\t\t} else if (tmpUser != null) {\n\t\t\t\tconst vxBefore: [number, number] = [tmpUser.x, tmpUser.y];\n",
+	},
+	{
+		// Frame rate: other players glide to their new position.
+		file: "core/src/app.tsx",
+		find: "\t\t\t\t\ttmpUser.nameYOffset = data[5 + cursor];\n\t\t\t\t}\n",
+		replace: "\t\t\t\t\ttmpUser.nameYOffset = data[5 + cursor];\n\t\t\t\t}\n\t\t\t\tif (!KRP_FRAME_RATE && (tmpUser.x !== vxBefore[0] || tmpUser.y !== vxBefore[1])) {\n\t\t\t\t\tvxGlideTo(tmpUser, vxBefore);\n\t\t\t\t}\n",
+	},
+	{
+		// Frame rate: the screen shake fades by time (0: KRP's, per frame).
+		file: "core/src/app.tsx",
+		find: "\tupdateScreenShake(/*delta*/);",
+		replace: "\tupdateScreenShake(KRP_FRAME_RATE ? 0 : delta);",
+	},
+	{
+		// Frame rate: KRP halves the shake every frame, so it fades faster on
+		// a faster display; given the frame time it halves every 60th of a
+		// second (KRP at 60 Hz) instead.
+		file: "core/src/visual/shake.ts",
+		find: "export function updateScreenShake() {",
+		replace: "export function updateScreenShake(delta = 0) {",
+	},
+	{
+		file: "core/src/visual/shake.ts",
+		find: "\t\tst.shake.scale = st.shake.scale * screenSkRed;",
+		replace: "\t\tst.shake.scale = st.shake.scale * (delta > 0 ? Math.pow(screenSkRed, delta / (1000 / 60)) : screenSkRed);",
+	},
 ];
 
 // Restore each file once, so several patches can apply to the same file.
