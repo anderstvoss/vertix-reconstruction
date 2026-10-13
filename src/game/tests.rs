@@ -983,6 +983,21 @@ fn other_players_see_a_spray_change() {
 }
 
 #[test]
+fn game_setup_tells_clients_whether_to_draw_bullet_holes() {
+    let mut b = Bench::new("ffa");
+    let i = b.join();
+    b.take();
+    let doc = |out: &[Out]| -> Value {
+        serde_json::from_str(one(out, "gameSetup").event.args[0].as_str().unwrap()).unwrap()
+    };
+    // KRP draws them.
+    assert_eq!(doc(&b.spawn(i, "a", 0))["bulletHoles"], json!(true));
+    b.rules.rules.bullet_holes = false;
+    b.p_mut(i).dead = true;
+    assert_eq!(doc(&b.spawn(i, "a", 0))["bulletHoles"], json!(false));
+}
+
+#[test]
 fn sprays_cycle_through_the_players_slots() {
     let mut b = Bench::new("ffa");
     b.rules.rules.sprays_per_player = 3;

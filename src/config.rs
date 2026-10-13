@@ -120,6 +120,11 @@ pub struct Game {
     /// their oldest. 1 as in KRP.
     #[serde(default = "default_sprays_per_player")]
     pub sprays_per_player: u32,
+    /// Whether clients draw bullet holes where shots hit walls. On in KRP;
+    /// clients that support it (KRP's patched client, the Rust client)
+    /// leave them out when off.
+    #[serde(default = "default_bullet_holes")]
+    pub bullet_holes: bool,
     /// The rooms opened at start, in the room list's order.
     pub rooms: Vec<crate::game::RoomSpec>,
     /// `all` opens every room in `rooms`; `single` opens only one of them
@@ -153,6 +158,10 @@ const fn default_max_players() -> usize {
 
 const fn default_sprays_per_player() -> u32 {
     1
+}
+
+const fn default_bullet_holes() -> bool {
+    true
 }
 
 impl Game {
