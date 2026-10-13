@@ -238,6 +238,37 @@ const patches = [
 		].join("\n"),
 	},
 	{
+		// Bullet holes follow the server (docs/DEVIATIONS.md): gameSetup
+		// carries `bulletHoles`, and when it is false a bullet hitting a
+		// wall leaves no hole sprite. A server that does not send it keeps
+		// KRP's holes.
+		file: "core/src/visual/particle.ts",
+		find: "\t\tif (i === 0 && spriteIndex === 2 && addBulletHole) {",
+		replace: "\t\tif (i === 0 && spriteIndex === 2 && addBulletHole && particleRules.bulletHoles) {",
+	},
+	{
+		file: "core/src/visual/particle.ts",
+		find: "export function updateParticles(delta: number, layer: number) {",
+		replace: [
+			"export const particleRules = { bulletHoles: true };",
+			"",
+			"export function updateParticles(delta: number, layer: number) {",
+		].join("\n"),
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "\tparticleCone,\n\tstillDustParticle,\n\tupdateParticles,\n} from \"./visual/particle.ts\";",
+		replace: "\tparticleCone,\n\tparticleRules,\n\tstillDustParticle,\n\tupdateParticles,\n} from \"./visual/particle.ts\";",
+	},
+	{
+		file: "core/src/app.tsx",
+		find: "\t\t\tconst setupData = JSON.parse(setupJson);",
+		replace: [
+			"\t\t\tconst setupData = JSON.parse(setupJson);",
+			"\t\t\tparticleRules.bulletHoles = setupData.bulletHoles !== false;",
+		].join("\n"),
+	},
+	{
 		// Blood for hits this client cannot see (docs/DEVIATIONS.md): KRP
 		// only bleeds a player who is on screen, so a hit off screen leaves
 		// nothing to find later. The hit message has no position, so the
