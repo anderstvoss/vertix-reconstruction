@@ -19,6 +19,8 @@ pub struct Paths {
     pub rules: Vec<PathBuf>,
     /// `[game] sprays_per_player`, kept over a rules reload.
     pub sprays_per_player: u32,
+    /// `[game] bullet_holes`, kept over a rules reload.
+    pub bullet_holes: bool,
 }
 
 /// The admin console's own state in the game.
@@ -535,6 +537,7 @@ impl Game {
                 let (mut rules, prov) =
                     Assumptions::load_layers(&paths).map_err(|e| e.to_string())?;
                 rules.rules.sprays_per_player = self.admin.paths.sprays_per_player;
+                rules.rules.bullet_holes = self.admin.paths.bullet_holes;
                 self.rules = rules;
                 Ok(Reply::ok(format!("rules reloaded: {}", prov.summary())))
             }

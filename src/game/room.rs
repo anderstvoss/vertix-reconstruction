@@ -954,6 +954,8 @@ impl Room {
             "maxScreenHeight": w[1],
             "viewMult": w[2],
             "tileScale": self.world.scale,
+            // This server's: clients that read it leave bullet holes out.
+            "bulletHoles": rules.bullet_holes,
             "usersInRoom": users,
             "you": self.player_json(p),
         });

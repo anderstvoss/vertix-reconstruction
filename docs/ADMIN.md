@@ -152,7 +152,9 @@ something that happens in a normal game:
   and objectives stop, but players can still walk on their own screens.
 - `healthmult`, `speedmult`, `balance` and `rename` apply when each player
   next spawns. `rule max_players` and `rule bullet_pool` apply to new rooms
-  and new rounds; per-room limits are `maxplayers`.
+  and new rounds; per-room limits are `maxplayers`. `rule bullet_holes
+  true` turns bullet holes back on for players who join or respawn after it
+  (the 2016 client always draws them).
 
 ## Version string
 
