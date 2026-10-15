@@ -25,7 +25,7 @@ toml = { version = "0.9", default-features = false, features = ["parse", "serde"
 # Every original file is checked against its recorded SHA-256 before use.
 sha2 = "0.10"
 # The APK is a zip; its members are read without unpacking it to disk.
-zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+zip = { version = "7", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Engine.IO session ids must not be guessable.
 rand = "0.9"
 
