@@ -27,7 +27,7 @@ sha2 = "0.10"
 # The APK is a zip; its members are read without unpacking it to disk.
 zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Engine.IO session ids must not be guessable.
-rand = "0.9"
+rand = "0.10"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["test-util"] }
