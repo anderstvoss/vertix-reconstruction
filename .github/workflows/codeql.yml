@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           # CodeQL pulls bundle + database from a wider set of GitHub
           # CDN endpoints than the standard rust-toolchain flow, so
@@ -79,7 +79,7 @@ jobs:
         # requires an explicit toolchain input. `stable` here is a
         # baseline; rust-toolchain.toml at the repo root drives the
         # actual cargo invocations via rustup.
-        uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
         with:
           toolchain: stable
 
