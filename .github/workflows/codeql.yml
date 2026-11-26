@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@351661ca32ac09a36dc5ee2d536e3128f2a3c8ed # v2.22.0
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         with:
           # CodeQL pulls bundle + database from a wider set of GitHub
           # CDN endpoints than the standard rust-toolchain flow, so
@@ -79,13 +79,13 @@ jobs:
         # requires an explicit toolchain input. `stable` here is a
         # baseline; rust-toolchain.toml at the repo root drives the
         # actual cargo invocations via rustup.
-        uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
+        uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc
         with:
           toolchain: stable
 
       - name: Cache cargo
         if: matrix.language == 'rust'
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           key: codeql-${{ matrix.language }}
 
